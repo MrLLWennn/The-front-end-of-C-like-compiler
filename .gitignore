@@ -8,5 +8,6 @@ build/
 # 临时日志目录
 temp_log/
 
-#暂未实现的编译器后端
+#暂未实现的编译器后端、网页前端可视化
 back_end/
+web visualization/
