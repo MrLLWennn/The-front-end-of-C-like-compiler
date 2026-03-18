@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="GBK">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>文件内容展示</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f4f4f9;
+        }
+        .container {
+            width: 90%;
+            max-width: 800px;
+            margin: 20px auto;
+        }
+        .file-display {
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            margin-bottom: 20px;
+            box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+            background-color: #fff;
+        }
+        .file-header {
+            background-color: #3e8ef7;
+            color: #fff;
+            padding: 10px;
+            font-size: 18px;
+            font-weight: bold;
+        }
+        .file-content {
+            padding: 15px;
+            white-space: pre-wrap;
+            font-family: monospace;
+            font-size: 14px;
+            color: #333;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div class="file-display">
+        <div class="file-header">00-source.txt</div>
+        <pre id="content-00" class="file-content">加载中...</pre>
+    </div>
+    <div class="file-display">
+        <div class="file-header">01-uncomment.txt</div>
+        <pre id="content-01" class="file-content">加载中...</pre>
+    </div>
+    <div class="file-display">
+        <div class="file-header">02-pretreatment.txt</div>
+        <pre id="content-02" class="file-content">加载中...</pre>
+    </div>
+    <div class="file-display">
+        <div class="file-header">03-lexer.txt</div>
+        <pre id="content-03" class="file-content">加载中...</pre>
+    </div>
+</div>
+
+<script>
+    // 定义文件路径和ID对应的映射
+    const files = [
+        { path: '../my_compiler/00-source.txt', elementId: 'content-00' },
+        { path: '../my_compiler/01-uncomment.txt', elementId: 'content-01' },
+        { path: '../my_compiler/02-pretreatment.txt', elementId: 'content-02' },
+        { path: '../my_compiler/03-lexer.txt', elementId: 'content-03' }
+    ];
+
+    // 通过fetch函数获取并展示文件内容
+    files.forEach(file => {
+        fetch(file.path)
+            .then(response => {
+                if (!response.ok) throw new Error("无法加载文件: " + file.path);
+                return response.text();
+            })
+            .then(content => {
+                document.getElementById(file.elementId).textContent = content;
+            })
+            .catch(error => {
+                document.getElementById(file.elementId).textContent = "加载失败：" + error.message;
+            });
+    });
+</script>
+
+</body>
+</html>

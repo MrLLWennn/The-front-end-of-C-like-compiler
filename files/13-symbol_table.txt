@@ -1,0 +1,56 @@
+my_compiler -- 符号表
+
+符号名                                  符号属性                                                    符号地址                                                    
+input                                   default global function                                     0xd198bfe3b0                                                
+output                                  default global function                                     0xd198bfe480                                                
+gcd                                     global function                                             0xd198bfc5f0                                                
+main                                    global function                                             0xd198bfc5f0                                                
+a                                       global struct                                               0xd198bfc540                                                
+
+
+        全局函数-子符号表
+
+            全局函数名：input                   -
+            参数名              参数属性                                参数类型            参数地址            
+            局部变量名          局部变量属性                            局部变量类型        局部变量地址        
+            调用函数名          调用函数属性                            调用函数类型        调用函数地址        
+
+            全局函数名：output                  -
+            参数名              参数属性                                参数类型            参数地址            
+            局部变量名          局部变量属性                            局部变量类型        局部变量地址        
+            调用函数名          调用函数属性                            调用函数类型        调用函数地址        
+
+            全局函数名：gcd                     int
+            参数名              参数属性                                参数类型            参数地址            
+            u                   global function parameter               int                 0xd198bfc6c0        
+            v                   global function parameter               int                 0xd198bfc6c0        
+            局部变量名          局部变量属性                            局部变量类型        局部变量地址        
+            调用函数名          调用函数属性                            调用函数类型        调用函数地址        
+            gcd                 global function                         int                 0xd198bfc5f0        
+
+            全局函数名：main                    void
+            参数名              参数属性                                参数类型            参数地址            
+            局部变量名          局部变量属性                            局部变量类型        局部变量地址        
+            x                   global function local symbol            int                 0xd198bfc6c0        
+            y                   global function local symbol            int                 0xd198bfc6c0        
+            调用函数名          调用函数属性                            调用函数类型        调用函数地址        
+            input               default global function                 -                   0xd198bfe3b0        
+            output              default global function                 -                   0xd198bfe480        
+
+
+
+        结构体-子符号表
+
+            结构体名：a
+                成员变量表
+                成员变量名          成员变量属性                            成员变量类型        成员变量地址        
+                aaa                 struct member symbol                    int                 0xd198bfc6c0        
+                成员函数表
+                    成员函数名：b                       double
+                    参数名              参数属性                                参数类型            参数地址            
+                    e                   member function parameter               const int           0xd198bfc6c0        
+                    局部变量名          局部变量属性                            局部变量类型        局部变量地址        
+                    c                   member function local symbol            int                 0xd198bfc6c0        
+                    调用函数名          调用函数属性                            调用函数类型        调用函数地址        
+                    input               default global function                 -                   0xd198bfe3b0        
+

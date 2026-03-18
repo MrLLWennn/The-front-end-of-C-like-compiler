@@ -1,0 +1,47 @@
+<S> -> <program>
+<program> -> <declaration-list>
+<declaration-list> -> <declaration-list> <declaration> | <declaration>
+<declaration> -> <var-declaration> | <func-declaration> | <struct-declaration>
+<var-declaration> -> <type-specifier> identifier ; | <type-specifier> identifier [ number ] ;
+<type-specifier> -> <const-type> | <type>
+<const-type> -> const int | const double | const float
+<type> -> int | float | double | void | bool
+<func-declaration> -> <type-specifier> identifier-function ( <params> ) ; | <type-specifier> identifier-function ( <params> ) <compound-stmt>
+<struct-declaration> -> struct identifier-struct <struct-stmt> ; | struct identifier-struct identifier [ number ] ;
+<params> -> <params-list> | void | empty
+<params-list> -> <params-list> , <param> | <param>
+<param> -> <type-specifier> identifier | <type-specifier> identifier [ ] | const <type-specifier> identifier | const <type-specifier> identifier [ ]
+<compound-stmt> -> { <local-declarations> <statement-list> }
+<struct-stmt> -> { <declaration-list> }
+<local-declarations> -> <local-declarations> <var-declaration> | empty
+<statement-list> -> <statement-list> <statement> | empty
+<statement> -> <expression-stmt> | <compound-stmt> | <selection-stmt> | <while-stmt> | <for-stmt> | <jump-stmt> | <break-stmt> | <continue-stmt> | <switch-case-default-stmt>
+<expression-stmt> -> ; | <expression> ;
+<selection-stmt> -> if ( <expression> ) <statement> | if ( <expression> ) <statement> else <statement>
+<for-stmt> -> for ( <assign-expression> ; <expression> ; <in-de-expression> ) <compound-stmt>
+<assign-expression> -> <type-specifier> <expression> | <expression>
+<while-stmt> -> while ( <expression> ) <compound-stmt>
+<jump-stmt> -> return ; | return <expression> ;
+<break-stmt> -> break ;
+<continue-stmt> -> continue ;
+<switch-case-default-stmt> -> switch ( <expression> ) { <case-stmt-list> default : <statement-list> }
+<case-stmt-list> -> <case-stmt-list> <case-stmt> | <case-stmt>
+<case-stmt> -> case number : <statement-list> | empty
+<expression> -> <var1> <assignment-op> <expression> | <simple-expression> | <boolean>
+<boolean> -> true | false
+<in-de-expression> -> <in-de> <var> | <var> <in-de>
+<in-de> -> ++ | --
+<assignment-op> -> = | <compound-assignment-op>
+<compound-assignment-op> -> += | -= | *= | /=
+<var> -> identifier | identifier [ <expression> ]
+<var1> -> identifier1 | identifier1 [ <expression> ]
+<simple-expression> -> <additive-expression> <compare-operator> <additive-expression> | <additive-expression>
+<compare-operator> -> <= | < | > | >= | == | !=
+<additive-expression> -> <additive-expression> <add_sub_op> <term> | <term>
+<add_sub_op> -> + | -
+<term> -> <term> <mul_div_op> <factor> | <factor>
+<mul_div_op> -> * | /
+<factor> -> ( <expression> ) | <var> | <call> | <boolean> | number
+<call> -> identifier-function ( <args> )
+<args> -> <arg-list> | empty
+<arg-list> -> <arg-list> , <expression> | <expression>

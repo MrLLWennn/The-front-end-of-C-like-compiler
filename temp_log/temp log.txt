@@ -1,0 +1,513 @@
+//                    // 处理分隔符和运算符
+//                    switch (ch) //其他OP类字符
+//                    {
+//                        case '=':
+//                            current_column_++;
+//                            ch = file_in_.get();
+//                            if (ch == '=')
+//                            {
+//                                current_column_++;
+//                                file_out_ << "== COP" << " " << current_line_ << " " << current_column_ - 2 << endl;
+//                            }
+//                            else
+//                            {
+//                                file_out_ << "=  AOP" << " " << current_line_ << " " << current_column_ - 1 << endl;
+//                                retract(file_in_);
+//                            }
+//                            break;
+//                        case '<':
+//                            current_column_++;
+//                            ch = file_in_.get();
+//                            if (ch == '=')
+//                            {
+//                                current_column_++;
+//                                file_out_ << "<= COP" << " " << current_line_ << " " << current_column_ - 2 << endl;
+//                            }
+//                            else
+//                            {
+//                                file_out_ << "<  COP" << " " << current_line_ << " " << current_column_ - 1 << endl;
+//                                retract(file_in_);
+//                            }
+//                            break;
+//                        case '>':
+//                            current_column_++;
+//                            ch = file_in_.get();
+//                            if (ch == '=')
+//                            {
+//                                current_column_++;
+//                                file_out_ << ">=  COP" << " " << current_line_ << " " << current_column_ - 2 << endl;
+//                            }
+//                            else
+//                            {
+//                                file_out_ << ">  COP" << " " << current_line_ << " " << current_column_ - 1 << endl;
+//                                retract(file_in_);
+//                            }
+//                            break;
+//                        case '!':
+//                            current_column_++;
+//                            ch = file_in_.get();
+//                            if (ch == '=')
+//                            {
+//                                current_column_++;
+//                                file_out_ << "!=  COP" << " " << current_line_ << " " << current_column_ - 2 << endl;
+//                            }
+//                            else
+//                            {
+//                                file_out_ << "[Lexical ERROR] " << " [" << current_line_ << "," << current_column_ - 1 << "] " << "Invalid COP ";
+//                                retract(file_in_);
+//                            }
+//                            break;
+//                        case '+':
+//                        case '-':
+//                        case '/':
+//                        case '*':
+//                            current_column_++;
+//                            file_out_ << ch << " OOP" << " " << current_line_ << " " << current_column_ - 1 << endl;
+//                            break;
+//                        case ';':
+//                            current_column_++;
+//                            file_out_ << ch << " EOP" << " " << current_line_ << " " << current_column_ - 1 << endl;
+//                            break;
+//                        case '(':
+//                        case ')':
+//                        case ',':
+//                        case '[':
+//                        case ']':
+//                        case '{':
+//                        case '}':
+//                            current_column_++;
+//                            file_out_ << ch << " SOP" << " " << current_line_ << " " << current_column_ - 1 << endl;
+//                            break;
+//                        default:	//未识别成功的信息 显示出错信息
+//                            current_column_++;
+//                            file_out_ << "[Lexical ERROR] " << " [" << current_line_ << "," << current_column_ - 1 << "] " << "UNKNOW EXPRESSION " << ch << endl;
+//                    }
+
+
+
+
+
+
+
+
+<program>
+<declaration-list>
+<declaration>
+<declaration-list>'
+<var-declaration>
+<const-var-declaration>
+<func-declaration>
+<struct-declaration>
+<identifier>
+<type-specifier>
+<var-declaration>'
+<number>
+<const-var-declaration>'
+<identifier-func>
+<params>
+<func-declaration>'
+<compound-stmt>
+<params-list>
+<param>
+<params-list>'
+<param>'
+<local-declarations>
+<statement-list>
+<local-declarations>'
+<statement-list>'
+<statement>
+<expression-stmt>
+<selection-stmt>
+<while-stmt>
+<for-stmt>
+<jump-stmt>
+<switch-case-default-stmt>
+<expression>
+<selection-stmt>'
+<case-stmt-list>
+<case-stmt>
+<case-stmt-list>'
+<default-stmt>
+<assignment-op>
+<var1>
+<simple-expression>
+<compound-assignment-op>
+<var>
+<var>'
+<identifier1>
+<var1>'
+<additive-expression>
+<simple-expression>'
+<compare-operator>
+<term>
+<additive-expression>'
+<add_sub_op>
+<factor>
+<term>'
+<mul_div_op>
+<call>
+<args>
+<identifier-function>
+<arg-list>
+<empty>
+<arg-list>'
+<identifier-tail>
+<integer>
+<float>
+<integer-tail>
+<float-tail>
+
+
+
+***** productions *****
+<float-tail> --->>> digit <float-tail>, empty,
+<float> --->>> <integer> . digit <float-tail>,
+<integer> --->>> digit <integer-tail>,
+<number> --->>> <integer>, <float>,
+<jump-stmt> --->>> return ;, return <expression> ;, break ;, continue ;,
+<selection-stmt>' --->>> empty, else <statement>,
+<statement> --->>> <expression-stmt>, <compound-stmt>, <selection-stmt>, <while-stmt>, <for-stmt>, <jump-stmt>, <switch-
+case-default-stmt>,
+<while-stmt> --->>> while ( <expression> ) { <statement-list> },
+<arg-list>' --->>> , <expression> <arg-list>', empty,
+<param> --->>> <type-specifier> <identifier> <param>',
+<assignment-op> --->>> =, <compound-assignment-op>,
+<simple-expression> --->>> <additive-expression> <simple-expression>',
+<statement-list> --->>> empty, <statement-list>',
+<expression-stmt> --->>> <expression> ;, ;,
+<local-declarations> --->>> empty, <local-declarations>',
+<case-stmt> --->>> case <number> : <statement-list>,
+<statement-list>' --->>> <statement> <statement-list>', empty,
+<local-declarations>' --->>> <var-declaration> <local-declarations>', empty,
+<param>' --->>> empty, [ ],
+<simple-expression>' --->>> <compare-operator> <additive-expression>empty, ,
+<identifier-tail> --->>> letter <identifier-tail>, digit <identifier-tail>, _ <identifier-tail>, empty,
+<params-list>' --->>> , <param> <params-list>', empty,
+<program> --->>> <declaration-list>,
+<declaration-list> --->>> <declaration> <declaration-list>',
+<compound-stmt> --->>> { <local-declarations> <statement-list> },
+<declaration-list>' --->>> <declaration> <declaration-list>', empty,
+<var1>' --->>> empty, [ <expression> ],
+<case-stmt-list> --->>> <case-stmt> <case-stmt-list>',
+<var>' --->>> empty, [ <expression> ],
+<var-declaration>' --->>> ;, [ <number> ] ;,
+<default-stmt> --->>> default : <statement-list>, default : empty,
+<const-var-declaration> --->>> const <type-specifier> <identifier> <const-var-declaration>',
+<selection-stmt> --->>> if ( <expression> ) <statement> <selection-stmt>',
+<params-list> --->>> <param> <params-list>',
+<switch-case-default-stmt> --->>> switch ( <expression> ) { <case-stmt-list> <default-stmt>},
+<declaration> --->>> <var-declaration>, <const-var-declaration>, <func-declaration>, <struct-declaration>,
+<const-var-declaration>' --->>> ;, [ <number> ] ;,
+<factor> --->>> ( <expression> ), <var>, <call>, <number>,
+<type-specifier> --->>> int, void, double, float,
+<func-declaration> --->>> <type-specifier> <identifier-function> ( <params> ) <func-declaration>',
+<integer-tail> --->>> digit <integer-tail>, empty,
+<for-stmt> --->>> for ( <expression> ; <expression> ; <expression> ) { <statement-list> },
+<term> --->>> <factor> <term>',
+<func-declaration>' --->>> ;, <compound-stmt>,
+<var1> --->>> <identifier1> <var1>',
+<additive-expression> --->>> <term> <additive-expression>',
+<params> --->>> <params-list>, void,
+<case-stmt-list>' --->>> <case-stmt> <case-stmt-list>', empty,
+<compare-operator> --->>> <=, <, >, >=, ==, !=,
+<expression> --->>> <var1> <assignment-op> <expression>, <simple-expression>,
+<compound-assignment-op> --->>> +=, -=, *=, ^=, /=,
+<additive-expression>' --->>> <add_sub_op> <term> <additive-expression>', empty,
+<struct-declaration> --->>> struct <identifier> <compound-stmt> ;,
+<args> --->>> <arg-list>, empty,
+<var> --->>> <identifier> <var>',
+<add_sub_op> --->>> +, -,
+<term>' --->>> <mul_div_op> <factor> <term>', empty,
+<mul_div_op> --->>> *, /, ^,
+<call> --->>> <identifier-function> ( <args> ),
+<arg-list> --->>> <expression> <arg-list>',
+<identifier1> --->>> <identifier>,
+<identifier-function> --->>> <identifier>,
+<var-declaration> --->>> <type-specifier> <identifier> <var-declaration>',
+<identifier> --->>> letter <identifier-tail>,
+
+
+
+
+            for(const auto& non : predictive_analysis_table_.Vn_)
+            {
+                for(const auto& ter : predictive_analysis_table_.Vt_)
+                {
+                    cout << non << ", " << ter << " === ";
+                    if(predictive_analysis_table_.table_[non][ter].empty())
+                    {
+                        cout << "no production";
+                    }
+                    else
+                    {
+                        cout << predictive_analysis_table_.table_[non][ter][0];
+                    }
+                    cout << endl;
+                }
+                cout << endl;
+            }
+
+
+
+            map<size_t, vector<Token>> mapper;
+                vector<string> input;
+                for(const auto& t : tokens_)
+                {
+                    if(t.get_token_name_() == TokenType::IDENTIFIER)
+                    {
+                        //分解为 letter和_
+                        for(const auto& s : t.get_attribute_value())
+                        {
+                            if(isalpha(s))
+                            {
+                                input.emplace_back("letter");
+                            }
+                            else if(s == '_')
+                            {
+                                input.emplace_back("_");
+                            }
+                        }
+                    }
+                    else if(t.get_token_name_() == TokenType::NUMBER)
+                    {
+                        //分解为 digit . 的组合
+                        for(const auto& s : t.get_attribute_value())
+                        {
+                            if(isdigit(s))
+                            {
+                                input.emplace_back("digit");
+                            }
+                            else if(s == '.')
+                            {
+                                input.emplace_back(".");
+                            }
+                        }
+                    }
+                    else
+                    {
+                        // 对其他Token，如： Delimiter("+")
+                        string s = t.get_attribute_value();
+                        input.emplace_back(s);
+                    }
+                    mapper[t.get_line()].emplace_back(t);
+                }
+                //最后加入 $
+                input.emplace_back("$");
+
+                for (const auto& non : predictive_analysis_table_.Vn_)
+                {
+                    for (const auto& ter : predictive_analysis_table_.Vt_)
+                    {
+                        auto productions = predictive_analysis_table_.table_[non][ter];
+                        if(productions.size() <= 1)
+                        {
+                            continue;
+                        }
+                        for(size_t i = 0;i < productions.size();i++)
+                        {
+                            if(productions[i] == "empty" && i < (productions.size() - 1))
+                            {
+                                std::swap(productions[i], productions[productions.size() - 1]);
+                            }
+                        }
+                        predictive_analysis_table_.table_[non][ter].resize(1);
+                    }
+                }
+
+            //    for(const auto& non : predictive_analysis_table_.Vn_)
+            //    {
+            //        for(const auto& ter : predictive_analysis_table_.Vt_)
+            //        {
+            //            cout << non << ", " << ter << " === ";
+            //            if(predictive_analysis_table_.table_[non][ter].empty())
+            //            {
+            //                cout << "no production";
+            //            }
+            //            else
+            //            {
+            //                cout << predictive_analysis_table_.table_[non][ter][0];
+            //            }
+            //            cout << endl;
+            //        }
+            //        cout << endl;
+            //    }
+
+                //经过以上的处理，此时的预测分析表各表项只具有一个值
+                struct stack_node
+                {
+                    vector<Stack<string>> prev_stack_;
+                    vector<string> prev_cur_;
+                };
+                stack_node history_stack;
+                string temp;
+                //此时, vector<string> input保存了输入序列
+                Stack<string> pre_stack;
+                //指向栈顶
+                string top = stack_.top();
+                //设置输入指针，指向输入序列的第一个符号
+                auto cur = input.begin();
+                cout << stack_ << endl;
+                history_stack.prev_stack_.push_back(stack_);
+                history_stack.prev_cur_.push_back(*cur);
+                bool backtrack = false;
+                //栈顶不为 $,即栈非空
+                while(top != "$")
+                {
+                    //如果 top 为当前扫描到的元素
+                    if(top == *cur)
+                    {
+                        //执行弹栈操作，并将 cur 前移
+                        stack_.pop();
+                        ++cur;
+                    }
+                    else if(std::find(predictive_analysis_table_.Vt_.begin(), predictive_analysis_table_.Vt_.end(), top)
+                            != predictive_analysis_table_.Vt_.end())   // top 是一个终结符号 由于经过第一步的判断，即栈顶终结符号不为读入的符号，说明发生了错误
+                    {
+                        cout << "当前产生式有误" << endl;
+
+                        // 获取当前栈顶和当前输入符号
+                        string current = *cur;
+
+                        // 输出错误信息
+                        cout << "语法错误: ";
+                        cout << "栈顶符号: " << top << ", 当前输入符号: " << current << endl;
+
+                        // 错误恢复策略
+                        if(backtrack)
+                        {
+                            cout <<"回溯过后的错误恢复：";
+                            stack_ = history_stack.prev_stack_[history_stack.prev_stack_.size() - 2];
+                            cout << "        上一步的栈：" << stack_ << endl;
+                            *cur = history_stack.prev_cur_[history_stack.prev_cur_.size() - 2];
+                            cout << "上一步栈的栈顶：" << stack_.top() << ", 上一步的输入符号：" << *cur << endl;
+                            bool normal = false;
+                            for(const auto& p : predictive_analysis_table_.productions_)
+                            {
+                                for(size_t i = 0;i < p.second.size();i++)
+                                {
+                                    if(p.second[i] == stack_.top() && !p.second[i + 1].empty() && p.second[i + 1] != "empty")
+                                    {
+                                        normal = true;
+                                        stack_.pop();
+                                        vector<string> split = split_string(p.second[i + 1]);
+                                        if(split.size() == 1)
+                                        {
+                                            stack_.emplace(split[0]);
+                                        }
+                                        else
+                                        {
+                                            for(auto iter = split.rbegin(); iter != split.rend(); ++iter)
+                                            {
+                                                stack_.emplace(*iter);
+                                            }
+                                        }
+                                        break;
+                                    }
+                                    if(normal)
+                                    {
+                                        break;
+                                    }
+                                }
+                            }
+                        }
+
+
+                        // 4. 重新检查栈顶符号
+                        if (!stack_.empty())
+                        {
+                            top = stack_.top();
+                            cout << "恢复后栈顶符号: " << top << endl;
+                        }
+                        else
+                        {
+                            cout << "栈已空，无法继续分析。" << endl;
+                        }
+                    }
+                    else if(predictive_analysis_table_.table_[top][*cur].empty())
+                    {
+                        backtrack = true;
+                        //进行回溯
+                        cout << "进行回溯" << endl;
+                        //进行回溯处理
+                        auto primary_stack = stack_;
+                        for(size_t i = 0;i < history_stack.prev_stack_.size();i++)
+                        {
+                            auto temp_top = history_stack.prev_stack_[i].top();
+                            //如果回溯之前的栈中，还有其他的产生式选择
+                            if(is_non_terminal(temp_top))
+                            {
+                                bool normal = false;
+                                vector<string> split;
+                                for(const auto& p : predictive_analysis_table_.productions_[temp_top])
+                                {
+                                    split = split_string(p);
+                                    if(p != "empty" && is_non_terminal(split[0]) && split[0] != history_stack.prev_stack_[i + 1].top())
+                                    {
+                                        normal = true;
+                                        break;
+                                    }
+                                }
+                                if(normal)
+                                {
+                                    stack_ = history_stack.prev_stack_[i];
+                                    *cur = history_stack.prev_cur_[i];
+                                    stack_.pop();
+                                    if(split.size() == 1)
+                                    {
+                                        stack_.emplace(split[0]);
+                                    }
+                                    else
+                                    {
+                                        for(auto iter = split.rbegin(); iter != split.rend(); ++iter)
+                                        {
+                                            stack_.emplace(*iter);
+                                        }
+                                    }
+                                    break;
+                                }
+                            }
+                        }
+
+                    }
+                    else
+                    {
+                        string prod = predictive_analysis_table_.table_[top][*cur][0];
+                        //输出产生式
+                        cout << prod << endl;
+                        //弹出栈顶
+                        stack_.pop();
+                        //压入栈中, 从后往前
+                        size_t index = prod.find("->");
+                        string right = prod.substr(index + 2);
+                        remove_front_back_blank(right);
+                        vector<string> split = split_string(right);
+                        if(split.size() == 1)
+                        {
+                            stack_.emplace(split[0]);
+                        }
+                        else
+                        {
+                            for(auto iter = split.rbegin(); iter != split.rend(); ++iter)
+                            {
+                                stack_.emplace(*iter);
+                            }
+                        }
+                        backtrack = false;
+                    }
+                    cout << stack_ << endl;
+                    top = stack_.top();
+                    cout << "     栈顶元素为：" << stack_.top() << "， 当前输入符号为：" << *cur << endl;
+                    pre_stack = stack_;
+                    temp = *cur;
+                    history_stack.prev_stack_.push_back(pre_stack);
+                    history_stack.prev_cur_.push_back(temp);
+                }
+
+
+
+
+改进：采用 set<> 数据结构能够直接避免重复加入，而不用重复调用非重复加入
+
+
+函数main 符号7: x(int)   函数main 符号8: x(int)   符号8: y(int)   47x
+

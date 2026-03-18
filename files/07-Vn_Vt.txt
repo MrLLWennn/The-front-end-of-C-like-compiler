@@ -1,0 +1,116 @@
+非终结符号集合 Vn : 
+<S>
+<program>
+<declaration-list>
+<declaration>
+<declaration-list>'
+<var-declaration>
+<func-declaration>
+<struct-declaration>
+<type-specifier>
+<var-declaration>'
+<const-type>
+<type>
+<const-type>'
+<params>
+<func-declaration>'
+<compound-stmt>
+<struct-declaration>'
+<struct-stmt>
+<params-list>
+<param>
+<params-list>'
+<local-declarations>
+<statement-list>
+<local-declarations>'
+<statement-list>'
+<statement>
+<expression-stmt>
+<selection-stmt>
+<while-stmt>
+<for-stmt>
+<jump-stmt>
+<break-stmt>
+<continue-stmt>
+<switch-case-default-stmt>
+<expression>
+<selection-stmt>'
+<assign-expression>
+<in-de-expression>
+<jump-stmt>'
+<case-stmt-list>
+<case-stmt>
+<case-stmt-list>'
+<assignment-op>
+<var1>
+<simple-expression>
+<boolean>
+<in-de>
+<var>
+<compound-assignment-op>
+<var>'
+<var1>'
+<additive-expression>
+<simple-expression>'
+<compare-operator>
+<term>
+<additive-expression>'
+<add_sub_op>
+<factor>
+<term>'
+<mul_div_op>
+<call>
+<args>
+<arg-list>
+<arg-list>'
+终结符号集合 Vt : 
+empty      ε        
+identifier identifier
+;          Delimiter 
+[          Delimiter 
+]          Delimiter 
+number     number    
+const      Keyword   
+int        Keyword   
+double     Keyword   
+float      Keyword   
+void       Keyword   
+bool       Keyword   
+(          Delimiter 
+)          Delimiter 
+identifier-function identifier-function
+identifier-struct identifier-struct
+struct     Keyword   
+,          Delimiter 
+{          Delimiter 
+}          Delimiter 
+if         Keyword   
+else       Keyword   
+for        Keyword   
+while      Keyword   
+return     Keyword   
+break      Keyword   
+:          Delimiter 
+default    Keyword   
+switch     Keyword   
+case       Keyword   
+true       Boolean   
+false      Boolean   
+++         In-Decrement
+--         In-Decrement
+=          Assignment-Operator
++=         Compound-Assignment-Operator
+-=         Compound-Assignment-Operator
+*=         Compound-Assignment-Operator
+/=         Compound-Assignment-Operator
+identifier1 identifier1
+<=         Compare-Operator
+<          Compare-Operator
+>          Compare-Operator
+>=         Compare-Operator
+==         Compare-Operator
+!=         Compare-Operator
++          Arithmetic-Operator
+-          Arithmetic-Operator
+*          Arithmetic-Operator
+/          Arithmetic-Operator

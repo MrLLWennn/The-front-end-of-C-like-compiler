@@ -1,0 +1,130 @@
+非终结符号的 FIRST 集合：
+<S>                           的 FIRST 集合为：const               int                 float               double              void                bool                struct              
+<program>                     的 FIRST 集合为：const               int                 float               double              void                bool                struct              
+<declaration-list>            的 FIRST 集合为：const               int                 float               double              void                bool                struct              
+<declaration>                 的 FIRST 集合为：const               int                 float               double              void                bool                struct              
+<declaration-list>'           的 FIRST 集合为：const               int                 float               double              void                bool                struct              empty               
+<var-declaration>             的 FIRST 集合为：const               int                 float               double              void                bool                
+<func-declaration>            的 FIRST 集合为：const               int                 float               double              void                bool                
+<struct-declaration>          的 FIRST 集合为：struct              
+<type-specifier>              的 FIRST 集合为：const               int                 float               double              void                bool                
+<var-declaration>'            的 FIRST 集合为：;                   [                   
+<const-type>                  的 FIRST 集合为：const               
+<type>                        的 FIRST 集合为：int                 float               double              void                bool                
+<const-type>'                 的 FIRST 集合为：int                 double              float               
+<params>                      的 FIRST 集合为：const               int                 float               double              void                bool                empty               
+<func-declaration>'           的 FIRST 集合为：;                   {                   
+<compound-stmt>               的 FIRST 集合为：{                   
+<struct-declaration>'         的 FIRST 集合为：{                   identifier          
+<struct-stmt>                 的 FIRST 集合为：{                   
+<params-list>                 的 FIRST 集合为：const               int                 float               double              void                bool                
+<param>                       的 FIRST 集合为：const               int                 float               double              void                bool                
+<params-list>'                的 FIRST 集合为：,                   empty               
+<local-declarations>          的 FIRST 集合为：empty               const               int                 float               double              void                bool                
+<statement-list>              的 FIRST 集合为：empty               ;                   identifier1         (                   identifier          identifier-function true                false               number              {                   if                  while               for                 return              break               continue            switch              
+<local-declarations>'         的 FIRST 集合为：const               int                 float               double              void                bool                empty               
+<statement-list>'             的 FIRST 集合为：;                   identifier1         (                   identifier          identifier-function true                false               number              {                   if                  while               for                 return              break               continue            switch              empty               
+<statement>                   的 FIRST 集合为：;                   identifier1         (                   identifier          identifier-function true                false               number              {                   if                  while               for                 return              break               continue            switch              
+<expression-stmt>             的 FIRST 集合为：;                   identifier1         (                   identifier          identifier-function true                false               number              
+<selection-stmt>              的 FIRST 集合为：if                  
+<while-stmt>                  的 FIRST 集合为：while               
+<for-stmt>                    的 FIRST 集合为：for                 
+<jump-stmt>                   的 FIRST 集合为：return              
+<break-stmt>                  的 FIRST 集合为：break               
+<continue-stmt>               的 FIRST 集合为：continue            
+<switch-case-default-stmt>    的 FIRST 集合为：switch              
+<expression>                  的 FIRST 集合为：identifier1         (                   identifier          identifier-function true                false               number              
+<selection-stmt>'             的 FIRST 集合为：empty               else                
+<assign-expression>           的 FIRST 集合为：const               int                 float               double              void                bool                identifier1         (                   identifier          identifier-function true                false               number              
+<in-de-expression>            的 FIRST 集合为：++                  --                  identifier          
+<jump-stmt>'                  的 FIRST 集合为：;                   identifier1         (                   identifier          identifier-function true                false               number              
+<case-stmt-list>              的 FIRST 集合为：case                empty               
+<case-stmt>                   的 FIRST 集合为：case                empty               
+<case-stmt-list>'             的 FIRST 集合为：case                empty               
+<assignment-op>               的 FIRST 集合为：=                   +=                  -=                  *=                  /=                  
+<var1>                        的 FIRST 集合为：identifier1         
+<simple-expression>           的 FIRST 集合为：(                   identifier          identifier-function true                false               number              
+<boolean>                     的 FIRST 集合为：true                false               
+<in-de>                       的 FIRST 集合为：++                  --                  
+<var>                         的 FIRST 集合为：identifier          
+<compound-assignment-op>      的 FIRST 集合为：+=                  -=                  *=                  /=                  
+<var>'                        的 FIRST 集合为：empty               [                   
+<var1>'                       的 FIRST 集合为：empty               [                   
+<additive-expression>         的 FIRST 集合为：(                   identifier          identifier-function true                false               number              
+<simple-expression>'          的 FIRST 集合为：<=                  <                   >                   >=                  ==                  !=                  empty               
+<compare-operator>            的 FIRST 集合为：<=                  <                   >                   >=                  ==                  !=                  
+<term>                        的 FIRST 集合为：(                   identifier          identifier-function true                false               number              
+<additive-expression>'        的 FIRST 集合为：+                   -                   empty               
+<add_sub_op>                  的 FIRST 集合为：+                   -                   
+<factor>                      的 FIRST 集合为：(                   identifier          identifier-function true                false               number              
+<term>'                       的 FIRST 集合为：*                   /                   empty               
+<mul_div_op>                  的 FIRST 集合为：*                   /                   
+<call>                        的 FIRST 集合为：identifier-function 
+<args>                        的 FIRST 集合为：identifier1         (                   identifier          identifier-function true                false               number              empty               
+<arg-list>                    的 FIRST 集合为：identifier1         (                   identifier          identifier-function true                false               number              
+<arg-list>'                   的 FIRST 集合为：,                   empty               
+非终结符号的 FOLLOW 集合：
+<S>                           的 FOLLOW 集合为：$                   
+<program>                     的 FOLLOW 集合为：$                   
+<declaration-list>            的 FOLLOW 集合为：$                   }                   
+<declaration>                 的 FOLLOW 集合为：const               int                 float               double              void                bool                struct              $                   }                   
+<declaration-list>'           的 FOLLOW 集合为：$                   }                   
+<var-declaration>             的 FOLLOW 集合为：const               int                 float               double              void                bool                struct              $                   ;                   identifier1         (                   identifier          identifier-function true                false               number              {                   if                  while               for                 return              break               continue            switch              }                   else                case                default             
+<func-declaration>            的 FOLLOW 集合为：const               int                 float               double              void                bool                struct              $                   }                   
+<struct-declaration>          的 FOLLOW 集合为：const               int                 float               double              void                bool                struct              $                   }                   
+<type-specifier>              的 FOLLOW 集合为：identifier          identifier-function identifier1         (                   true                false               number              
+<var-declaration>'            的 FOLLOW 集合为：const               int                 float               double              void                bool                struct              $                   ;                   identifier1         (                   identifier          identifier-function true                false               number              {                   if                  while               for                 return              break               continue            switch              }                   else                case                default             
+<const-type>                  的 FOLLOW 集合为：identifier          identifier-function identifier1         (                   true                false               number              
+<type>                        的 FOLLOW 集合为：identifier          identifier-function identifier1         (                   true                false               number              
+<const-type>'                 的 FOLLOW 集合为：identifier          identifier-function identifier1         (                   true                false               number              
+<params>                      的 FOLLOW 集合为：)                   
+<func-declaration>'           的 FOLLOW 集合为：const               int                 float               double              void                bool                struct              $                   }                   
+<compound-stmt>               的 FOLLOW 集合为：const               int                 float               double              void                bool                struct              $                   ;                   identifier1         (                   identifier          identifier-function true                false               number              {                   if                  while               for                 return              break               continue            switch              }                   else                case                default             
+<struct-declaration>'         的 FOLLOW 集合为：const               int                 float               double              void                bool                struct              $                   }                   
+<struct-stmt>                 的 FOLLOW 集合为：;                   
+<params-list>                 的 FOLLOW 集合为：)                   
+<param>                       的 FOLLOW 集合为：,                   )                   
+<params-list>'                的 FOLLOW 集合为：)                   
+<local-declarations>          的 FOLLOW 集合为：;                   identifier1         (                   identifier          identifier-function true                false               number              {                   if                  while               for                 return              break               continue            switch              const               int                 float               double              void                bool                struct              $                   }                   else                case                default             
+<statement-list>              的 FOLLOW 集合为：}                   case                default             
+<local-declarations>'         的 FOLLOW 集合为：;                   identifier1         (                   identifier          identifier-function true                false               number              {                   if                  while               for                 return              break               continue            switch              const               int                 float               double              void                bool                struct              $                   }                   else                case                default             
+<statement-list>'             的 FOLLOW 集合为：}                   case                default             
+<statement>                   的 FOLLOW 集合为：;                   identifier1         (                   identifier          identifier-function true                false               number              {                   if                  while               for                 return              break               continue            switch              }                   else                case                default             
+<expression-stmt>             的 FOLLOW 集合为：;                   identifier1         (                   identifier          identifier-function true                false               number              {                   if                  while               for                 return              break               continue            switch              }                   else                case                default             
+<selection-stmt>              的 FOLLOW 集合为：;                   identifier1         (                   identifier          identifier-function true                false               number              {                   if                  while               for                 return              break               continue            switch              }                   else                case                default             
+<while-stmt>                  的 FOLLOW 集合为：;                   identifier1         (                   identifier          identifier-function true                false               number              {                   if                  while               for                 return              break               continue            switch              }                   else                case                default             
+<for-stmt>                    的 FOLLOW 集合为：;                   identifier1         (                   identifier          identifier-function true                false               number              {                   if                  while               for                 return              break               continue            switch              }                   else                case                default             
+<jump-stmt>                   的 FOLLOW 集合为：;                   identifier1         (                   identifier          identifier-function true                false               number              {                   if                  while               for                 return              break               continue            switch              }                   else                case                default             
+<break-stmt>                  的 FOLLOW 集合为：;                   identifier1         (                   identifier          identifier-function true                false               number              {                   if                  while               for                 return              break               continue            switch              }                   else                case                default             
+<continue-stmt>               的 FOLLOW 集合为：;                   identifier1         (                   identifier          identifier-function true                false               number              {                   if                  while               for                 return              break               continue            switch              }                   else                case                default             
+<switch-case-default-stmt>    的 FOLLOW 集合为：;                   identifier1         (                   identifier          identifier-function true                false               number              {                   if                  while               for                 return              break               continue            switch              }                   else                case                default             
+<expression>                  的 FOLLOW 集合为：;                   )                   ]                   ,                   
+<selection-stmt>'             的 FOLLOW 集合为：;                   identifier1         (                   identifier          identifier-function true                false               number              {                   if                  while               for                 return              break               continue            switch              }                   else                case                default             
+<assign-expression>           的 FOLLOW 集合为：;                   
+<in-de-expression>            的 FOLLOW 集合为：)                   
+<jump-stmt>'                  的 FOLLOW 集合为：;                   identifier1         (                   identifier          identifier-function true                false               number              {                   if                  while               for                 return              break               continue            switch              }                   else                case                default             
+<case-stmt-list>              的 FOLLOW 集合为：default             
+<case-stmt>                   的 FOLLOW 集合为：case                default             
+<case-stmt-list>'             的 FOLLOW 集合为：default             
+<assignment-op>               的 FOLLOW 集合为：identifier1         (                   identifier          identifier-function true                false               number              
+<var1>                        的 FOLLOW 集合为：=                   +=                  -=                  *=                  /=                  
+<simple-expression>           的 FOLLOW 集合为：;                   )                   ]                   ,                   
+<boolean>                     的 FOLLOW 集合为：;                   )                   *                   /                   +                   -                   <=                  <                   >                   >=                  ==                  !=                  ]                   ,                   
+<in-de>                       的 FOLLOW 集合为：identifier          )                   
+<var>                         的 FOLLOW 集合为：)                   ++                  --                  *                   /                   +                   -                   <=                  <                   >                   >=                  ==                  !=                  ;                   ]                   ,                   
+<compound-assignment-op>      的 FOLLOW 集合为：identifier1         (                   identifier          identifier-function true                false               number              
+<var>'                        的 FOLLOW 集合为：)                   ++                  --                  *                   /                   +                   -                   <=                  <                   >                   >=                  ==                  !=                  ;                   ]                   ,                   
+<var1>'                       的 FOLLOW 集合为：=                   +=                  -=                  *=                  /=                  
+<additive-expression>         的 FOLLOW 集合为：<=                  <                   >                   >=                  ==                  !=                  ;                   )                   ]                   ,                   
+<simple-expression>'          的 FOLLOW 集合为：;                   )                   ]                   ,                   
+<compare-operator>            的 FOLLOW 集合为：(                   identifier          identifier-function true                false               number              
+<term>                        的 FOLLOW 集合为：+                   -                   <=                  <                   >                   >=                  ==                  !=                  ;                   )                   ]                   ,                   
+<additive-expression>'        的 FOLLOW 集合为：<=                  <                   >                   >=                  ==                  !=                  ;                   )                   ]                   ,                   
+<add_sub_op>                  的 FOLLOW 集合为：(                   identifier          identifier-function true                false               number              
+<factor>                      的 FOLLOW 集合为：*                   /                   +                   -                   <=                  <                   >                   >=                  ==                  !=                  ;                   )                   ]                   ,                   
+<term>'                       的 FOLLOW 集合为：+                   -                   <=                  <                   >                   >=                  ==                  !=                  ;                   )                   ]                   ,                   
+<mul_div_op>                  的 FOLLOW 集合为：(                   identifier          identifier-function true                false               number              
+<call>                        的 FOLLOW 集合为：*                   /                   +                   -                   <=                  <                   >                   >=                  ==                  !=                  ;                   )                   ]                   ,                   
+<args>                        的 FOLLOW 集合为：)                   
+<arg-list>                    的 FOLLOW 集合为：)                   
+<arg-list>'                   的 FOLLOW 集合为：)                   

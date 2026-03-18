@@ -1,0 +1,64 @@
+<S> -> <program>
+<program> -> <declaration-list>
+<declaration-list> -> <declaration> <declaration-list>'
+<declaration-list>' -> <declaration> <declaration-list>' | empty
+<declaration> -> <var-declaration> | <func-declaration> | <struct-declaration>
+<var-declaration> -> <type-specifier> identifier <var-declaration>'
+<var-declaration>' -> ; | [ number ] ;
+<type-specifier> -> <const-type> | <type>
+<const-type> -> const <const-type>'
+<const-type>' -> int | double | float
+<type> -> int | float | double | void | bool
+<func-declaration> -> <type-specifier> identifier-function ( <params> ) <func-declaration>'
+<func-declaration>' -> ; | <compound-stmt>
+<struct-declaration> -> struct identifier-struct <struct-declaration>'
+<struct-declaration>' -> <struct-stmt> ; | identifier [ number ] ;
+<params> -> <params-list> | void | empty
+<params-list> -> <param> <params-list>'
+<params-list>' -> , <param> <params-list>' | empty
+<param> -> <type-specifier> identifier | <type-specifier> identifier [ ] | const <type-specifier> identifier | const <type-specifier> identifier [ ]
+<compound-stmt> -> { <local-declarations> <statement-list> }
+<struct-stmt> -> { <declaration-list> }
+<local-declarations> -> empty | <local-declarations>'
+<local-declarations>' -> <var-declaration> <local-declarations>' | empty
+<statement-list> -> empty | <statement-list>'
+<statement-list>' -> <statement> <statement-list>' | empty
+<statement> -> <expression-stmt> | <compound-stmt> | <selection-stmt> | <while-stmt> | <for-stmt> | <jump-stmt> | <break-stmt> | <continue-stmt> | <switch-case-default-stmt>
+<expression-stmt> -> ; | <expression> ;
+<selection-stmt> -> if ( <expression> ) <statement> <selection-stmt>'
+<selection-stmt>' -> empty | else <statement>
+<for-stmt> -> for ( <assign-expression> ; <expression> ; <in-de-expression> ) <compound-stmt>
+<assign-expression> -> <type-specifier> <expression> | <expression>
+<while-stmt> -> while ( <expression> ) <compound-stmt>
+<jump-stmt> -> return <jump-stmt>'
+<jump-stmt>' -> ; | <expression> ;
+<break-stmt> -> break ;
+<continue-stmt> -> continue ;
+<switch-case-default-stmt> -> switch ( <expression> ) { <case-stmt-list> default : <statement-list> }
+<case-stmt-list> -> <case-stmt> <case-stmt-list>'
+<case-stmt-list>' -> <case-stmt> <case-stmt-list>' | empty
+<case-stmt> -> case number : <statement-list> | empty
+<expression> -> <var1> <assignment-op> <expression> | <simple-expression> | <boolean>
+<boolean> -> true | false
+<in-de-expression> -> <in-de> <var> | <var> <in-de>
+<in-de> -> ++ | --
+<assignment-op> -> = | <compound-assignment-op>
+<compound-assignment-op> -> += | -= | *= | /=
+<var> -> identifier <var>'
+<var>' -> empty | [ <expression> ]
+<var1> -> identifier1 <var1>'
+<var1>' -> empty | [ <expression> ]
+<simple-expression> -> <additive-expression> <simple-expression>'
+<simple-expression>' -> <compare-operator> <additive-expression> | empty
+<compare-operator> -> <= | < | > | >= | == | !=
+<additive-expression> -> <term> <additive-expression>'
+<additive-expression>' -> <add_sub_op> <term> <additive-expression>' | empty
+<add_sub_op> -> + | -
+<term> -> <factor> <term>'
+<term>' -> <mul_div_op> <factor> <term>' | empty
+<mul_div_op> -> * | /
+<factor> -> ( <expression> ) | <var> | <call> | <boolean> | number
+<call> -> identifier-function ( <args> )
+<args> -> <arg-list> | empty
+<arg-list> -> <expression> <arg-list>'
+<arg-list>' -> , <expression> <arg-list>' | empty

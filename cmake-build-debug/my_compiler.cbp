@@ -1,0 +1,191 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CodeBlocks_project_file>
+	<FileVersion major="1" minor="6"/>
+	<Project>
+		<Option title="my_compiler"/>
+		<Option makefile_is_custom="1"/>
+		<Option compiler="gcc"/>
+		<Option virtualFolders="CMake Files\;"/>
+		<Build>
+			<Target title="all">
+				<Option working_dir="/mnt/d/clion/my_compiler/cmake-build-debug"/>
+				<Option type="4"/>
+				<MakeCommands>
+					<Build command="/usr/bin/gmake -j12 -f &quot;/mnt/d/clion/my_compiler/cmake-build-debug/Makefile&quot;  VERBOSE=1 all"/>
+					<CompileFile command="/usr/bin/gmake -j12 -f &quot;/mnt/d/clion/my_compiler/cmake-build-debug/Makefile&quot;  VERBOSE=1 &quot;$file&quot;"/>
+					<Clean command="/usr/bin/gmake -j12 -f &quot;/mnt/d/clion/my_compiler/cmake-build-debug/Makefile&quot;  VERBOSE=1 clean"/>
+					<DistClean command="/usr/bin/gmake -j12 -f &quot;/mnt/d/clion/my_compiler/cmake-build-debug/Makefile&quot;  VERBOSE=1 clean"/>
+				</MakeCommands>
+			</Target>
+			<Target title="my_compiler">
+				<Option output="/mnt/d/clion/my_compiler/cmake-build-debug/my_compiler" prefix_auto="0" extension_auto="0"/>
+				<Option working_dir="/mnt/d/clion/my_compiler/cmake-build-debug"/>
+				<Option object_output="./"/>
+				<Option type="1"/>
+				<Option compiler="gcc"/>
+				<Compiler>
+					<Add directory="/usr/include/c++/11"/>
+					<Add directory="/usr/include/x86_64-linux-gnu/c++/11"/>
+					<Add directory="/usr/include/c++/11/backward"/>
+					<Add directory="/usr/lib/gcc/x86_64-linux-gnu/11/include"/>
+					<Add directory="/usr/local/include"/>
+					<Add directory="/usr/include/x86_64-linux-gnu"/>
+					<Add directory="/usr/include"/>
+				</Compiler>
+				<MakeCommands>
+					<Build command="/usr/bin/gmake -j12 -f &quot;/mnt/d/clion/my_compiler/cmake-build-debug/Makefile&quot;  VERBOSE=1 my_compiler"/>
+					<CompileFile command="/usr/bin/gmake -j12 -f &quot;/mnt/d/clion/my_compiler/cmake-build-debug/Makefile&quot;  VERBOSE=1 &quot;$file&quot;"/>
+					<Clean command="/usr/bin/gmake -j12 -f &quot;/mnt/d/clion/my_compiler/cmake-build-debug/Makefile&quot;  VERBOSE=1 clean"/>
+					<DistClean command="/usr/bin/gmake -j12 -f &quot;/mnt/d/clion/my_compiler/cmake-build-debug/Makefile&quot;  VERBOSE=1 clean"/>
+				</MakeCommands>
+			</Target>
+			<Target title="my_compiler/fast">
+				<Option output="/mnt/d/clion/my_compiler/cmake-build-debug/my_compiler" prefix_auto="0" extension_auto="0"/>
+				<Option working_dir="/mnt/d/clion/my_compiler/cmake-build-debug"/>
+				<Option object_output="./"/>
+				<Option type="1"/>
+				<Option compiler="gcc"/>
+				<Compiler>
+					<Add directory="/usr/include/c++/11"/>
+					<Add directory="/usr/include/x86_64-linux-gnu/c++/11"/>
+					<Add directory="/usr/include/c++/11/backward"/>
+					<Add directory="/usr/lib/gcc/x86_64-linux-gnu/11/include"/>
+					<Add directory="/usr/local/include"/>
+					<Add directory="/usr/include/x86_64-linux-gnu"/>
+					<Add directory="/usr/include"/>
+				</Compiler>
+				<MakeCommands>
+					<Build command="/usr/bin/gmake -j12 -f &quot;/mnt/d/clion/my_compiler/cmake-build-debug/Makefile&quot;  VERBOSE=1 my_compiler/fast"/>
+					<CompileFile command="/usr/bin/gmake -j12 -f &quot;/mnt/d/clion/my_compiler/cmake-build-debug/Makefile&quot;  VERBOSE=1 &quot;$file&quot;"/>
+					<Clean command="/usr/bin/gmake -j12 -f &quot;/mnt/d/clion/my_compiler/cmake-build-debug/Makefile&quot;  VERBOSE=1 clean"/>
+					<DistClean command="/usr/bin/gmake -j12 -f &quot;/mnt/d/clion/my_compiler/cmake-build-debug/Makefile&quot;  VERBOSE=1 clean"/>
+				</MakeCommands>
+			</Target>
+			<Target title="edit_cache">
+				<Option working_dir="/mnt/d/clion/my_compiler/cmake-build-debug"/>
+				<Option type="4"/>
+				<MakeCommands>
+					<Build command="/usr/bin/gmake -j12 -f &quot;/mnt/d/clion/my_compiler/cmake-build-debug/Makefile&quot;  VERBOSE=1 edit_cache"/>
+					<CompileFile command="/usr/bin/gmake -j12 -f &quot;/mnt/d/clion/my_compiler/cmake-build-debug/Makefile&quot;  VERBOSE=1 &quot;$file&quot;"/>
+					<Clean command="/usr/bin/gmake -j12 -f &quot;/mnt/d/clion/my_compiler/cmake-build-debug/Makefile&quot;  VERBOSE=1 clean"/>
+					<DistClean command="/usr/bin/gmake -j12 -f &quot;/mnt/d/clion/my_compiler/cmake-build-debug/Makefile&quot;  VERBOSE=1 clean"/>
+				</MakeCommands>
+			</Target>
+			<Target title="rebuild_cache">
+				<Option working_dir="/mnt/d/clion/my_compiler/cmake-build-debug"/>
+				<Option type="4"/>
+				<MakeCommands>
+					<Build command="/usr/bin/gmake -j12 -f &quot;/mnt/d/clion/my_compiler/cmake-build-debug/Makefile&quot;  VERBOSE=1 rebuild_cache"/>
+					<CompileFile command="/usr/bin/gmake -j12 -f &quot;/mnt/d/clion/my_compiler/cmake-build-debug/Makefile&quot;  VERBOSE=1 &quot;$file&quot;"/>
+					<Clean command="/usr/bin/gmake -j12 -f &quot;/mnt/d/clion/my_compiler/cmake-build-debug/Makefile&quot;  VERBOSE=1 clean"/>
+					<DistClean command="/usr/bin/gmake -j12 -f &quot;/mnt/d/clion/my_compiler/cmake-build-debug/Makefile&quot;  VERBOSE=1 clean"/>
+				</MakeCommands>
+			</Target>
+		</Build>
+		<Unit filename="/mnt/d/clion/my_compiler/ErrorHandler/ErrorDefines.h">
+			<Option target="my_compiler"/>
+		</Unit>
+		<Unit filename="/mnt/d/clion/my_compiler/ErrorHandler/ErrorTable.cpp">
+			<Option target="my_compiler"/>
+		</Unit>
+		<Unit filename="/mnt/d/clion/my_compiler/ErrorHandler/ErrorTable.h">
+			<Option target="my_compiler"/>
+		</Unit>
+		<Unit filename="/mnt/d/clion/my_compiler/SymbolTable/SymbolTable.cpp">
+			<Option target="my_compiler"/>
+		</Unit>
+		<Unit filename="/mnt/d/clion/my_compiler/SymbolTable/SymbolTable.h">
+			<Option target="my_compiler"/>
+		</Unit>
+		<Unit filename="/mnt/d/clion/my_compiler/compiler.cpp">
+			<Option target="my_compiler"/>
+		</Unit>
+		<Unit filename="/mnt/d/clion/my_compiler/compiler.h">
+			<Option target="my_compiler"/>
+		</Unit>
+		<Unit filename="/mnt/d/clion/my_compiler/front_end/front_end.cpp">
+			<Option target="my_compiler"/>
+		</Unit>
+		<Unit filename="/mnt/d/clion/my_compiler/front_end/front_end.h">
+			<Option target="my_compiler"/>
+		</Unit>
+		<Unit filename="/mnt/d/clion/my_compiler/front_end/lexer/lexer.h">
+			<Option target="my_compiler"/>
+		</Unit>
+		<Unit filename="/mnt/d/clion/my_compiler/front_end/lexer/state_transition/state_transition.h">
+			<Option target="my_compiler"/>
+		</Unit>
+		<Unit filename="/mnt/d/clion/my_compiler/front_end/name_generator.h">
+			<Option target="my_compiler"/>
+		</Unit>
+		<Unit filename="/mnt/d/clion/my_compiler/front_end/parser/context_free_grammar.cpp">
+			<Option target="my_compiler"/>
+		</Unit>
+		<Unit filename="/mnt/d/clion/my_compiler/front_end/parser/context_free_grammar.h">
+			<Option target="my_compiler"/>
+		</Unit>
+		<Unit filename="/mnt/d/clion/my_compiler/front_end/parser/grammatical_analysis_tree.cpp">
+			<Option target="my_compiler"/>
+		</Unit>
+		<Unit filename="/mnt/d/clion/my_compiler/front_end/parser/grammatical_analysis_tree.h">
+			<Option target="my_compiler"/>
+		</Unit>
+		<Unit filename="/mnt/d/clion/my_compiler/front_end/parser/parser.cpp">
+			<Option target="my_compiler"/>
+		</Unit>
+		<Unit filename="/mnt/d/clion/my_compiler/front_end/parser/parser.h">
+			<Option target="my_compiler"/>
+		</Unit>
+		<Unit filename="/mnt/d/clion/my_compiler/header_files.cpp">
+			<Option target="my_compiler"/>
+		</Unit>
+		<Unit filename="/mnt/d/clion/my_compiler/header_files.h">
+			<Option target="my_compiler"/>
+		</Unit>
+		<Unit filename="/mnt/d/clion/my_compiler/main.cpp">
+			<Option target="my_compiler"/>
+		</Unit>
+		<Unit filename="/mnt/d/clion/my_compiler/token/delimiter/delimiter_token.cpp">
+			<Option target="my_compiler"/>
+		</Unit>
+		<Unit filename="/mnt/d/clion/my_compiler/token/delimiter/delimiter_token.h">
+			<Option target="my_compiler"/>
+		</Unit>
+		<Unit filename="/mnt/d/clion/my_compiler/token/identifier/identifier_token.cpp">
+			<Option target="my_compiler"/>
+		</Unit>
+		<Unit filename="/mnt/d/clion/my_compiler/token/identifier/identifier_token.h">
+			<Option target="my_compiler"/>
+		</Unit>
+		<Unit filename="/mnt/d/clion/my_compiler/token/keyword/keyword_token.cpp">
+			<Option target="my_compiler"/>
+		</Unit>
+		<Unit filename="/mnt/d/clion/my_compiler/token/keyword/keyword_token.h">
+			<Option target="my_compiler"/>
+		</Unit>
+		<Unit filename="/mnt/d/clion/my_compiler/token/number/number_token.cpp">
+			<Option target="my_compiler"/>
+		</Unit>
+		<Unit filename="/mnt/d/clion/my_compiler/token/number/number_token.h">
+			<Option target="my_compiler"/>
+		</Unit>
+		<Unit filename="/mnt/d/clion/my_compiler/token/operator/operator_token.cpp">
+			<Option target="my_compiler"/>
+		</Unit>
+		<Unit filename="/mnt/d/clion/my_compiler/token/operator/operator_token.h">
+			<Option target="my_compiler"/>
+		</Unit>
+		<Unit filename="/mnt/d/clion/my_compiler/token/token.cpp">
+			<Option target="my_compiler"/>
+		</Unit>
+		<Unit filename="/mnt/d/clion/my_compiler/token/token.h">
+			<Option target="my_compiler"/>
+		</Unit>
+		<Unit filename="/mnt/d/clion/my_compiler/token/token_header.h">
+			<Option target="my_compiler"/>
+		</Unit>
+		<Unit filename="/mnt/d/clion/my_compiler/CMakeLists.txt">
+			<Option virtualFolder="CMake Files\"/>
+		</Unit>
+	</Project>
+</CodeBlocks_project_file>

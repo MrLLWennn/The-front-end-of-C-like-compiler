@@ -1,0 +1,128 @@
+1 <S> -> <program>
+2 <program> -> <declaration-list>
+3 <declaration-list> -> <declaration> <declaration-list>'
+4 <declaration-list>' -> <declaration> <declaration-list>' 
+5 <declaration-list>' -> empty
+6 <declaration> -> <var-declaration> 
+7 <declaration> -> <func-declaration> 
+8 <declaration> -> <struct-declaration>
+9 <var-declaration> -> <type-specifier> identifier <var-declaration>'
+10 <var-declaration>' -> ; 
+11 <var-declaration>' -> [ number ] ;
+12 <type-specifier> -> <const-type> 
+13 <type-specifier> -> <type>
+14 <const-type> -> const <const-type>'
+15 <const-type>' -> int 
+16 <const-type>' -> double 
+17 <const-type>' -> float
+18 <type> -> int 
+19 <type> -> float 
+20 <type> -> double 
+21 <type> -> void 
+22 <type> -> bool
+23 <func-declaration> -> <type-specifier> identifier-function ( <params> ) <func-declaration>'
+24 <func-declaration>' -> ; 
+25 <func-declaration>' -> <compound-stmt>
+26 <struct-declaration> -> struct identifier-struct <struct-declaration>'
+27 <struct-declaration>' -> <struct-stmt> ; 
+28 <struct-declaration>' -> identifier [ number ] ;
+29 <params> -> <params-list> 
+30 <params> -> void 
+31 <params> -> empty
+32 <params-list> -> <param> <params-list>'
+33 <params-list>' -> , <param> <params-list>' 
+34 <params-list>' -> empty
+35 <param> -> <type-specifier> identifier 
+36 <param> -> <type-specifier> identifier [ ] 
+37 <param> -> const <type-specifier> identifier 
+38 <param> -> const <type-specifier> identifier [ ]
+39 <compound-stmt> -> { <local-declarations> <statement-list> }
+40 <struct-stmt> -> { <declaration-list> }
+41 <local-declarations> -> empty 
+42 <local-declarations> -> <local-declarations>'
+43 <local-declarations>' -> <var-declaration> <local-declarations>' 
+44 <local-declarations>' -> empty
+45 <statement-list> -> empty 
+46 <statement-list> -> <statement-list>'
+47 <statement-list>' -> <statement> <statement-list>' 
+48 <statement-list>' -> empty
+49 <statement> -> <expression-stmt> 
+50 <statement> -> <compound-stmt> 
+51 <statement> -> <selection-stmt> 
+52 <statement> -> <while-stmt> 
+53 <statement> -> <for-stmt> 
+54 <statement> -> <jump-stmt> 
+55 <statement> -> <break-stmt> 
+56 <statement> -> <continue-stmt> 
+57 <statement> -> <switch-case-default-stmt>
+58 <expression-stmt> -> ; 
+59 <expression-stmt> -> <expression> ;
+60 <selection-stmt> -> if ( <expression> ) <statement> <selection-stmt>'
+61 <selection-stmt>' -> empty 
+62 <selection-stmt>' -> else <statement>
+63 <for-stmt> -> for ( <assign-expression> ; <expression> ; <in-de-expression> ) <compound-stmt>
+64 <assign-expression> -> <type-specifier> <expression> 
+65 <assign-expression> -> <expression>
+66 <while-stmt> -> while ( <expression> ) <compound-stmt>
+67 <jump-stmt> -> return <jump-stmt>'
+68 <jump-stmt>' -> ; 
+69 <jump-stmt>' -> <expression> ;
+70 <break-stmt> -> break ;
+71 <continue-stmt> -> continue ;
+72 <switch-case-default-stmt> -> switch ( <expression> ) { <case-stmt-list> default : <statement-list> }
+73 <case-stmt-list> -> <case-stmt> <case-stmt-list>'
+74 <case-stmt-list>' -> <case-stmt> <case-stmt-list>' 
+75 <case-stmt-list>' -> empty
+76 <case-stmt> -> case number : <statement-list> 
+77 <case-stmt> -> empty
+78 <expression> -> <var1> <assignment-op> <expression> 
+79 <expression> -> <simple-expression> 
+80 <expression> -> <boolean>
+81 <boolean> -> true 
+82 <boolean> -> false
+83 <in-de-expression> -> <in-de> <var> 
+84 <in-de-expression> -> <var> <in-de>
+85 <in-de> -> ++ 
+86 <in-de> -> --
+87 <assignment-op> -> = 
+88 <assignment-op> -> <compound-assignment-op>
+89 <compound-assignment-op> -> += 
+90 <compound-assignment-op> -> -= 
+91 <compound-assignment-op> -> *= 
+92 <compound-assignment-op> -> /=
+93 <var> -> identifier <var>'
+94 <var>' -> empty 
+95 <var>' -> [ <expression> ]
+96 <var1> -> identifier1 <var1>'
+97 <var1>' -> empty 
+98 <var1>' -> [ <expression> ]
+99 <simple-expression> -> <additive-expression> <simple-expression>'
+100 <simple-expression>' -> <compare-operator> <additive-expression> 
+101 <simple-expression>' -> empty
+102 <compare-operator> -> <= 
+103 <compare-operator> -> < 
+104 <compare-operator> -> > 
+105 <compare-operator> -> >= 
+106 <compare-operator> -> == 
+107 <compare-operator> -> !=
+108 <additive-expression> -> <term> <additive-expression>'
+109 <additive-expression>' -> <add_sub_op> <term> <additive-expression>' 
+110 <additive-expression>' -> empty
+111 <add_sub_op> -> + 
+112 <add_sub_op> -> -
+113 <term> -> <factor> <term>'
+114 <term>' -> <mul_div_op> <factor> <term>' 
+115 <term>' -> empty
+116 <mul_div_op> -> * 
+117 <mul_div_op> -> /
+118 <factor> -> ( <expression> ) 
+119 <factor> -> <var> 
+120 <factor> -> <call> 
+121 <factor> -> <boolean> 
+122 <factor> -> number
+123 <call> -> identifier-function ( <args> )
+124 <args> -> <arg-list> 
+125 <args> -> empty
+126 <arg-list> -> <expression> <arg-list>'
+127 <arg-list>' -> , <expression> <arg-list>' 
+128 <arg-list>' -> empty
