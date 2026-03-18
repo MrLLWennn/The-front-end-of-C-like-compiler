@@ -1,6 +1,5 @@
 # 构建输出目录
 cmake-build-debug/
-cmake-build-release/
 build/
 
 # IDE 配置文件
@@ -8,3 +7,6 @@ build/
 
 # 临时日志目录
 temp_log/
+
+#暂未实现的编译器后端
+back_end/
