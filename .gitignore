@@ -1,13 +1,20 @@
-# 构建输出目录
-cmake-build-debug/
+# CLion IDE
+.idea/
+*.iml
+
+# CMake 构建输出
+cmake-build-*/
 build/
 
-# IDE 配置文件
-.idea/
+# 编译产物
+*.exe
+*.o
 
-# 临时日志目录
+# 临时文件/日志
 temp_log/
 
 #暂未实现的编译器后端、网页前端可视化
 back_end/
-web visualization/
+
+
+web_visualization/
