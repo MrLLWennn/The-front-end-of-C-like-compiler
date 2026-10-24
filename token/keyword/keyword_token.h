@@ -1,5 +1,5 @@
 //
-// Created by 86198 on 2024/10/20.
+// 创建者：86198；日期：2024/10/20。
 //
 
 #ifndef MY_COMPILER_KEYWORD_TOKEN_H
@@ -144,7 +144,7 @@ namespace my_compiler_token
             }
             else
             {
-                return out << "[Error]" << ERROR << endl;
+                return out << "[Error] unsupported Keyword token: " << rhs.get_attribute_value();
             }
         }
     };

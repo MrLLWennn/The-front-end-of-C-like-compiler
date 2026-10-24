@@ -1,5 +1,5 @@
 //
-// Created by 86198 on 2024/10/20.
+// 创建者：86198；日期：2024/10/20。
 //
 
 #include "operator_token.h"
@@ -18,7 +18,6 @@ set<char> my_compiler_token::OperatorToken::operators_ = {
         ASSIGNMENT,
         POWER,
         NEGATION,
-        ERROR
 };
 
 

@@ -1,5 +1,5 @@
 //
-// Created by 86198 on 2024/10/20.
+// 创建者：86198；日期：2024/10/20。
 //
 
 #ifndef MY_COMPILER_COMPILER_H
@@ -19,6 +19,11 @@ namespace my_compiler
         MyCompiler() = default;
 
     public:
+
+        ast::Program build_typed_program()
+        {
+            return front_end_.build_typed_program();
+        }
 
         void compiling()
         {

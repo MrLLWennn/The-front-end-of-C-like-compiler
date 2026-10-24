@@ -1,5 +1,5 @@
 //
-// Created by 86198 on 2024/10/30.
+// åˆ›å»ºè€…ï¼š86198ï¼›æ—¥æœŸï¼š2024/10/30ã€‚
 //
 
 #include "SymbolTable.h"
@@ -152,10 +152,10 @@ namespace my_compiler_symbol_table
 
     void SymbolTable::display(fstream &out) const
     {
-        out << "my_compiler -- ·ûºÅ±í" << endl << endl;
-        out << std::setiosflags(ios::left) << std::setw(40) << "·ûºÅÃû"
-            << std::setw(60) << "·ûºÅÊôÐÔ"
-            << std::setw(60) << "·ûºÅµØÖ·"
+        out << "my_compiler -- ç¬¦å·è¡¨" << endl << endl;
+        out << std::setiosflags(ios::left) << std::setw(40) << "ç¬¦å·å"
+            << std::setw(60) << "ç¬¦å·å±žæ€§"
+            << std::setw(60) << "ç¬¦å·åœ°å€"
             << endl;
 
         for(const auto& f : functions_)
@@ -175,25 +175,25 @@ namespace my_compiler_symbol_table
         }
 
 
-        out << "\n\n        È«¾Öº¯Êý-×Ó·ûºÅ±í" << endl << endl;
+        out << "\n\n        å…¨å±€å‡½æ•°-å­ç¬¦å·è¡¨" << endl << endl;
         for(const auto& f : functions_)
         {
-            out << "            È«¾Öº¯ÊýÃû£º" << std::setw(15) << f.name_ << "         " << f.type_  << endl;
+            out << "            å…¨å±€å‡½æ•°åï¼š" << std::setw(15) << f.name_ << "         " << f.type_  << endl;
             out << "            " << std::setiosflags(ios::left)
-                << std::setw(20) << "²ÎÊýÃû"
-                << std::setw(40) << "²ÎÊýÊôÐÔ"
-                << std::setw(20) << "²ÎÊýÀàÐÍ"
-                << std::setw(20) << "²ÎÊýµØÖ·" << endl;
+                << std::setw(20) << "å‚æ•°å"
+                << std::setw(40) << "å‚æ•°å±žæ€§"
+                << std::setw(20) << "å‚æ•°ç±»åž‹"
+                << std::setw(20) << "å‚æ•°åœ°å€" << endl;
             for(const auto& p : f.parameters_)
             {
                 p.display_symbol(out);
             }
 
             out << "            " << std::setiosflags(ios::left)
-                << std::setw(20) << "¾Ö²¿±äÁ¿Ãû"
-                << std::setw(40) << "¾Ö²¿±äÁ¿ÊôÐÔ"
-                << std::setw(20) << "¾Ö²¿±äÁ¿ÀàÐÍ"
-                << std::setw(20) << "¾Ö²¿±äÁ¿µØÖ·" << endl;
+                << std::setw(20) << "å±€éƒ¨å˜é‡å"
+                << std::setw(40) << "å±€éƒ¨å˜é‡å±žæ€§"
+                << std::setw(20) << "å±€éƒ¨å˜é‡ç±»åž‹"
+                << std::setw(20) << "å±€éƒ¨å˜é‡åœ°å€" << endl;
 
             for(const auto& s : f.local_symbols_)
             {
@@ -201,10 +201,10 @@ namespace my_compiler_symbol_table
             }
 
             out << "            " << std::setiosflags(ios::left)
-                << std::setw(20) << "µ÷ÓÃº¯ÊýÃû"
-                << std::setw(40) << "µ÷ÓÃº¯ÊýÊôÐÔ"
-                << std::setw(20) << "µ÷ÓÃº¯ÊýÀàÐÍ"
-                << std::setw(20) << "µ÷ÓÃº¯ÊýµØÖ·" << endl;
+                << std::setw(20) << "è°ƒç”¨å‡½æ•°å"
+                << std::setw(40) << "è°ƒç”¨å‡½æ•°å±žæ€§"
+                << std::setw(20) << "è°ƒç”¨å‡½æ•°ç±»åž‹"
+                << std::setw(20) << "è°ƒç”¨å‡½æ•°åœ°å€" << endl;
 
             for(const auto& f_c : f.function_call_)
             {
@@ -224,31 +224,31 @@ namespace my_compiler_symbol_table
             out << endl;
         }
 
-        out << "\n\n        ½á¹¹Ìå-×Ó·ûºÅ±í" << endl << endl;
+        out << "\n\n        ç»“æž„ä½“-å­ç¬¦å·è¡¨" << endl << endl;
         for(const auto& s : structs_)
         {
-            out << "            ½á¹¹ÌåÃû£º" << s.name_ << endl;
-            out << "                ³ÉÔ±±äÁ¿±í" << endl;
+            out << "            ç»“æž„ä½“åï¼š" << s.name_ << endl;
+            out << "                æˆå‘˜å˜é‡è¡¨" << endl;
             out << "                " << std::setiosflags(ios::left)
-                << std::setw(20) << "³ÉÔ±±äÁ¿Ãû"
-                << std::setw(40) << "³ÉÔ±±äÁ¿ÊôÐÔ"
-                << std::setw(20) << "³ÉÔ±±äÁ¿ÀàÐÍ"
-                << std::setw(20) << "³ÉÔ±±äÁ¿µØÖ·" << endl;
+                << std::setw(20) << "æˆå‘˜å˜é‡å"
+                << std::setw(40) << "æˆå‘˜å˜é‡å±žæ€§"
+                << std::setw(20) << "æˆå‘˜å˜é‡ç±»åž‹"
+                << std::setw(20) << "æˆå‘˜å˜é‡åœ°å€" << endl;
             for(const auto& s_s : s.struct_symbols_)
             {
                 out << "    ";
                 s_s.display_symbol(out);
             }
 
-            out << "                ³ÉÔ±º¯Êý±í" << endl;
+            out << "                æˆå‘˜å‡½æ•°è¡¨" << endl;
             for(const auto& s_f : s.struct_functions_)
             {
-                out << "                    ³ÉÔ±º¯ÊýÃû£º" << std::setw(15) << s_f.name_ << "         " << s_f.type_ << endl;
+                out << "                    æˆå‘˜å‡½æ•°åï¼š" << std::setw(15) << s_f.name_ << "         " << s_f.type_ << endl;
                 out << "                    " << std::setiosflags(ios::left)
-                    << std::setw(20) << "²ÎÊýÃû"
-                    << std::setw(40) << "²ÎÊýÊôÐÔ"
-                    << std::setw(20) << "²ÎÊýÀàÐÍ"
-                    << std::setw(20) << "²ÎÊýµØÖ·" << endl;
+                    << std::setw(20) << "å‚æ•°å"
+                    << std::setw(40) << "å‚æ•°å±žæ€§"
+                    << std::setw(20) << "å‚æ•°ç±»åž‹"
+                    << std::setw(20) << "å‚æ•°åœ°å€" << endl;
                 for(const auto& p : s_f.parameters_)
                 {
                     out << "        ";
@@ -256,10 +256,10 @@ namespace my_compiler_symbol_table
                 }
 
                 out << "                    " << std::setiosflags(ios::left)
-                    << std::setw(20) << "¾Ö²¿±äÁ¿Ãû"
-                    << std::setw(40) << "¾Ö²¿±äÁ¿ÊôÐÔ"
-                    << std::setw(20) << "¾Ö²¿±äÁ¿ÀàÐÍ"
-                    << std::setw(20) << "¾Ö²¿±äÁ¿µØÖ·" << endl;
+                    << std::setw(20) << "å±€éƒ¨å˜é‡å"
+                    << std::setw(40) << "å±€éƒ¨å˜é‡å±žæ€§"
+                    << std::setw(20) << "å±€éƒ¨å˜é‡ç±»åž‹"
+                    << std::setw(20) << "å±€éƒ¨å˜é‡åœ°å€" << endl;
 
                 for(const auto& ss : s_f.local_symbols_)
                 {
@@ -268,10 +268,10 @@ namespace my_compiler_symbol_table
                 }
 
                 out << "                    " << std::setiosflags(ios::left)
-                    << std::setw(20) << "µ÷ÓÃº¯ÊýÃû"
-                    << std::setw(40) << "µ÷ÓÃº¯ÊýÊôÐÔ"
-                    << std::setw(20) << "µ÷ÓÃº¯ÊýÀàÐÍ"
-                    << std::setw(20) << "µ÷ÓÃº¯ÊýµØÖ·" << endl;
+                    << std::setw(20) << "è°ƒç”¨å‡½æ•°å"
+                    << std::setw(40) << "è°ƒç”¨å‡½æ•°å±žæ€§"
+                    << std::setw(20) << "è°ƒç”¨å‡½æ•°ç±»åž‹"
+                    << std::setw(20) << "è°ƒç”¨å‡½æ•°åœ°å€" << endl;
 
                 for(const auto& f_c : s_f.function_call_)
                 {

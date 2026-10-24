@@ -2,7 +2,7 @@
 <program> -> <declaration-list>
 <declaration-list> -> <declaration-list> <declaration> | <declaration>
 <declaration> -> <var-declaration> | <func-declaration> | <struct-declaration>
-<var-declaration> -> <type-specifier> identifier ; | <type-specifier> identifier [ number ] ;
+<var-declaration> -> <type-specifier> identifier ; | <type-specifier> identifier [ number ] ; | <type-specifier> identifier1 = <expression> ;
 <type-specifier> -> <const-type> | <type>
 <const-type> -> const int | const double | const float
 <type> -> int | float | double | void | bool

@@ -1,50 +1,158 @@
 //
-// Created by 86198 on 2024/11/1.
+// åˆ›å»ºè€…ï¼š86198ï¼›æ—¥æœŸï¼š2024/11/1ã€‚
 //
-
 #include "context_free_grammar.h"
 
+#include <stdexcept>
+#include <sstream>
+#include <utility>
 
-// º¯Êı£º²éÕÒ¹«¹²Ç°×º
-string findLongestCommonPrefix(const vector<string>& strings)
+namespace
 {
-    if (strings.empty()) return "";
-
-    string prefix = strings[0];  // ÒÔµÚÒ»¸ö×Ö·û´®Îª»ù´¡½øĞĞ±È½Ï
-
-    for (size_t i = 1; i < strings.size(); ++i)
+    bool append_unique(std::vector<std::string>& target, const std::string& value)
     {
-        while (strings[i].find(prefix) != 0)
-        { // µ±µ±Ç°×Ö·û´®²»ÒÔ prefix ¿ªÍ·Ê±
-            prefix = prefix.substr(0, prefix.size() - 1); // Ëõ¶Ì prefix
-            if (prefix.empty()) return ""; // Èç¹û prefix Îª¿Õ£¬·µ»Ø¿Õ
+        if (std::find(target.begin(), target.end(), value) != target.end())
+        {
+            return false;
         }
+        target.push_back(value);
+        return true;
     }
-    if(prefix[0] == '<' && prefix.size() == 1)
+    using Symbols = std::vector<std::string>;
+
+    Symbols grammar_symbols(const std::string& production)
     {
-        return "";
+        std::istringstream input(production);
+        Symbols result;
+        std::string symbol;
+        while(input >> symbol)
+            result.push_back(symbol);
+        return result;
     }
 
-    return prefix;
-}
+    std::string symbol_sequence(const Symbols& symbols)
+    {
+        if(symbols.empty())
+            return "empty";
+        std::ostringstream out;
+        for(std::size_t i = 0; i < symbols.size(); ++i)
+        {
+            if(i != 0)
+                out << ' ';
+            out << symbols[i];
+        }
+        return out.str();
+    }
+
+    std::size_t common_prefix_size(const std::vector<Symbols>& alternatives)
+    {
+        std::size_t count = alternatives.front().size();
+        for(std::size_t i = 1; i < alternatives.size(); ++i)
+        {
+            count = std::min(count, alternatives[i].size());
+            std::size_t matched = 0;
+            while(matched < count && alternatives.front()[matched] == alternatives[i][matched])
+                ++matched;
+            count = matched;
+        }
+        return count;
+    }
+
+    std::string fresh_factor_name(const std::string& left,
+                                  std::unordered_set<std::string>& used_names)
+    {
+        auto name = left + "'";
+        while(!used_names.insert(name).second)
+            name += "'";
+        return name;
+    }
+
+    // å…ˆæŒ‰å®Œæ•´é¦–ç¬¦å·åˆ†ç»„ï¼Œå†æå–ç»„å†…ç¬¦å·å‰ç¼€ï¼›å¯¹å­è§„åˆ™é€’å½’å¤„ç†ã€‚
+    // identifier ä¸ identifier1 å§‹ç»ˆæ˜¯ä¸¤ä¸ªç¬¦å·ï¼Œä¸èƒ½æ‹†å‡ºå­—ç¬¦å°¾éƒ¨ 1ã€‚
+    void write_factored_rule(const std::string& left, const std::vector<Symbols>& alternatives,
+                             std::unordered_set<std::string>& used_names, std::ostream& out)
+    {
+        std::vector<std::vector<Symbols>> groups;
+        std::unordered_map<std::string, std::size_t> indexes;
+        for(const auto& alternative : alternatives)
+        {
+            const auto key = alternative.empty() ? std::string{} : alternative.front();
+            const auto inserted = indexes.emplace(key, groups.size());
+            if(inserted.second)
+                groups.emplace_back();
+            auto& group = groups[inserted.first->second];
+            if(std::find(group.begin(), group.end(), alternative) == group.end())
+                group.push_back(alternative);
+        }
+
+        struct ChildRule
+        {
+            std::string left;
+            std::vector<Symbols> alternatives;
+        };
+        std::vector<Symbols> right;
+        std::vector<ChildRule> children;
+        for(const auto& group : groups)
+        {
+            if(group.size() == 1)
+            {
+                right.push_back(group.front());
+                continue;
+            }
+            const auto count = common_prefix_size(group);
+            const auto child_name = fresh_factor_name(left, used_names);
+            Symbols prefix(group.front().begin(), group.front().begin() + count);
+            prefix.push_back(child_name);
+            right.push_back(prefix);
+            ChildRule child{child_name, {}};
+            for(const auto& alternative : group)
+                child.alternatives.emplace_back(alternative.begin() + count, alternative.end());
+            children.push_back(std::move(child));
+        }
+
+        out << left << " -> ";
+        for(std::size_t i = 0; i < right.size(); ++i)
+        {
+            if(i != 0)
+                out << " | ";
+            out << symbol_sequence(right[i]);
+        }
+        out << '\n';
+        for(const auto& child : children)
+            write_factored_rule(child.left, child.alternatives, used_names, out);
+    }
+} // namespace
 
 
-
-
-void CFG::ContextFreeGrammar::remove_direct_left_recursion_and_factor_aux
-    (const string &from_file, const string &to_file)
+void CFG::ContextFreeGrammar::remove_direct_left_recursion_and_factor_aux(
+    const string &from_file, const string &to_file)
 {
 
     input_file(file_in_, from_file);
     output_file(file_out_, to_file);
 
-
-    //¶ÁÈëµÄÒ»ĞĞ temp
-    string temp, part1, part2, p2_1, p2_2, s;
-    size_t split, index;
-    while(std::getline(file_in_, temp))
+    // å…ˆç™»è®°åŸæ–‡æ³•çš„å…¨éƒ¨å·¦éƒ¨ï¼Œé˜²æ­¢æ–°å› å­ä¸å·²æœ‰æ´¾ç”Ÿéç»ˆç»“ç¬¦é‡åã€‚
+    std::unordered_set<std::string> used_names;
+    std::string original_line;
+    while(std::getline(file_in_, original_line))
     {
-        if(file_in_.fail())
+        const auto arrow = original_line.find("->");
+        if(arrow != std::string::npos)
+        {
+            const auto left_symbols = grammar_symbols(original_line.substr(0, arrow));
+            if(!left_symbols.empty())
+                used_names.insert(left_symbols.front());
+        }
+    }
+    file_in_.clear();
+    file_in_.seekg(0);
+
+    // è¯»å…¥çš„ä¸€è¡Œ temp
+    string temp, part1, part2, p2_1, p2_2;
+    size_t split, index;
+    while (std::getline(file_in_, temp))
+    {
+        if (file_in_.fail())
         {
             break;
         }
@@ -55,85 +163,36 @@ void CFG::ContextFreeGrammar::remove_direct_left_recursion_and_factor_aux
             part1.assign(temp, 0, split);
             part2.assign(temp, split + 2, temp.length() - split - 1);
             remove_front_back_blank(part1);
-            remove_front_back_blank(part2);            //½«Ã¿Ò»ĞĞÓï·¨·ÖÎª¼ıÍ·Ç°ºóµÄÁ½¸ö²¿·Ö
+            remove_front_back_blank(
+                part2); // å°†æ¯ä¸€è¡Œè¯­æ³•åˆ†ä¸ºç®­å¤´å‰åçš„ä¸¤ä¸ªéƒ¨åˆ†
             index = part2.find('|');
             p2_1.assign(part2, 0, index);
             p2_2.assign(part2, index + 1, part2.length() - index);
             remove_front_back_blank(p2_1);
-            remove_front_back_blank(p2_2);            //½«part2²¿·Ö°´ÕÕ|Ç°ºó·ÖÎªÁ½²¿·Ö
+            remove_front_back_blank(
+                p2_2); // å°†part2éƒ¨åˆ†æŒ‰ç…§|å‰ååˆ†ä¸ºä¸¤éƒ¨åˆ†
             if (p2_1.find(part1) == 0 && p2_1[part1.length()] == ' ')
             {
-                p2_1.assign(p2_1, part1.length() + 1, p2_1.length() - part1.length());
+                p2_1.assign(p2_1, part1.length() + 1,
+                            p2_1.length() - part1.length());
+                const auto recursive_name = fresh_factor_name(part1, used_names);
                 file_out_ << part1 << " -> ";
                 if (p2_2 != "empty")
                     file_out_ << p2_2 << " ";
                 else
                     file_out_ << p2_2 << " | ";
-                file_out_ << part1 << "'" << endl;
-                file_out_ << part1 << "' -> " << p2_1 << " " << part1 << "' | empty" << endl;
-            }            //p2_1³öÏÖpart1ËµÃ÷³öÏÖÁË×óµİ¹é
+                file_out_ << recursive_name << endl;
+                file_out_ << recursive_name << " -> " << p2_1 << " "
+                          << recursive_name << " | empty" << endl;
+            } // p2_1å‡ºç°part1è¯´æ˜å‡ºç°äº†å·¦é€’å½’
             else
             {
-                vector<string> strings_;
-                size_t start= temp.find("->") + 2;
-                //¶ÔÓÒ²¿ °´ÕÕ | ½øĞĞ·Ö¸ô
-                size_t index_ = temp.find('|', start);
-                while (index_ != string::npos)
-                {
-                    s = temp.substr(start, index_ - start); // »ñÈ¡µ±Ç°²úÉúÊ½
-                    remove_front_back_blank(s);
-                    strings_.push_back(s);
-                    start = index_ + 1; // ¸üĞÂ start ±äÁ¿
-                    index_ = temp.find('|', start); // ²éÕÒÏÂÒ»¸ö |
-                }
-
-                // ´¦Àí×îºóÒ»¸ö²úÉúÊ½
-                s = temp.substr(start);
-                remove_front_back_blank(s);
-                strings_.push_back(s);
-
-                //²éÕÒ¹«¹²Ç°×ºÒò×Ó
-                string common = findLongestCommonPrefix(strings_);
-                remove_front_back_blank(common);
-
-                if(common.empty())
-                {
-                    file_out_ << temp << endl;
-                }
-                else
-                {
-                    string part1_ = part1 + "'";
-                    file_out_ << part1 << " -> " << common << " " << part1_ << endl;
-                    file_out_ << part1_ << " -> ";
-                    for (const string& str : strings_)
-                    {
-                        string nonCommonPrefix = str.substr(common.size());
-                        remove_front_back_blank(nonCommonPrefix);
-                        if(str == strings_.front())
-                        {
-                            if(nonCommonPrefix.empty())
-                            {
-                                file_out_ << "empty";
-                            }
-                            else
-                            {
-                                file_out_ << nonCommonPrefix;
-                            }
-                        }
-                        else
-                        {
-                            if(nonCommonPrefix.empty())
-                            {
-                                file_out_ << " | empty";
-                            }
-                            else
-                            {
-                                file_out_ << " | " << nonCommonPrefix;
-                            }
-                        }
-                    }
-                    file_out_ << endl;
-                }
+                std::vector<Symbols> alternatives;
+                std::istringstream input(part2);
+                std::string alternative;
+                while(std::getline(input, alternative, '|'))
+                    alternatives.push_back(grammar_symbols(alternative));
+                write_factored_rule(part1, alternatives, used_names, file_out_);
             }
         }
         else
@@ -146,8 +205,8 @@ void CFG::ContextFreeGrammar::remove_direct_left_recursion_and_factor_aux
     file_out_.close();
 }
 
-
-void CFG::ContextFreeGrammar::split_grammar_aux(const string &from_file, const string &to_file)
+void CFG::ContextFreeGrammar::split_grammar_aux(const string &from_file,
+                                                const string &to_file)
 {
     input_file(file_in_, from_file);
     output_file(file_out_, to_file);
@@ -161,21 +220,22 @@ void CFG::ContextFreeGrammar::split_grammar_aux(const string &from_file, const s
             break;
         }
 
-        size_t start = temp.find("->") + 2; // ÕÒµ½²úÉúÊ½µÄÆğÊ¼Î»ÖÃ
-        output = temp.substr(0, start); // »ñÈ¡×ó²à·ÇÖÕ½á·ûºÍ¼ıÍ·²¿·Ö
+        size_t start = temp.find("->") + 2; // æ‰¾åˆ°äº§ç”Ÿå¼çš„èµ·å§‹ä½ç½®
+        output =
+            temp.substr(0, start); // è·å–å·¦ä¾§éç»ˆç»“ç¬¦å’Œç®­å¤´éƒ¨åˆ†
 
         size_t index = temp.find('|', start);
         while (index != string::npos)
         {
-            s = temp.substr(start, index - start); // »ñÈ¡µ±Ç°²úÉúÊ½
-            file_out_ << count++ << " " << output << s << endl; // Êä³ö²úÉúÊ½
-            start = index + 1; // ¸üĞÂ start ±äÁ¿
-            index = temp.find('|', start); // ²éÕÒÏÂÒ»¸ö |
+            s = temp.substr(start, index - start); // è·å–å½“å‰äº§ç”Ÿå¼
+            file_out_ << count++ << " " << output << s << endl; // è¾“å‡ºäº§ç”Ÿå¼
+            start = index + 1;             // æ›´æ–° start å˜é‡
+            index = temp.find('|', start); // æŸ¥æ‰¾ä¸‹ä¸€ä¸ª |
         }
 
-        // ´¦Àí×îºóÒ»¸ö²úÉúÊ½
+        // å¤„ç†æœ€åä¸€ä¸ªäº§ç”Ÿå¼
         s = temp.substr(start);
-        if (!s.empty()) // È·±£²»Êä³ö¿ÕĞĞ
+        if (!s.empty()) // ç¡®ä¿ä¸è¾“å‡ºç©ºè¡Œ
         {
             file_out_ << count++ << " " << output << s << endl;
         }
@@ -184,34 +244,32 @@ void CFG::ContextFreeGrammar::split_grammar_aux(const string &from_file, const s
     file_out_.close();
 }
 
-
 void CFG::ContextFreeGrammar::generate_productions(const string &from_file)
 {
     input_file(file_in_, from_file);
 
-
-    //¶ÁÈëµÄÒ»ĞĞ temp
+    // è¯»å…¥çš„ä¸€è¡Œ temp
     string temp, left, right, s;
 
-    //»ñÈ¡productions
-    while(std::getline(file_in_, temp))
+    // è·å–productions
+    while (std::getline(file_in_, temp))
     {
-        if(file_in_.fail())
+        if (file_in_.fail())
         {
             break;
         }
-        //È¥µôÃ¿ĞĞ¿ªÍ·µÄÊı×Ö
+        // å»æ‰æ¯è¡Œå¼€å¤´çš„æ•°å­—
         temp.replace(0, temp.find(' '), "");
-        //°´ -> Î»ÖÃ·Ö³ö²úÉúÊ½ ×ó²¿ ºÍ ÓÒ²¿
+        // æŒ‰ -> ä½ç½®åˆ†å‡ºäº§ç”Ÿå¼ å·¦éƒ¨ å’Œ å³éƒ¨
         auto split = temp.find("->");
         left = temp.substr(0, split);
         right = temp.substr(split + 2);
-        //È¥³ı¶àÓàµÄ¿Õ°×
+        // å»é™¤å¤šä½™çš„ç©ºç™½
         remove_front_back_blank(left);
         remove_front_back_blank(right);
 
         auto iter = productions_.find(left);
-        if(iter != productions_.end())
+        if (iter != productions_.end())
         {
             iter->second.emplace_back(right);
         }
@@ -224,125 +282,122 @@ void CFG::ContextFreeGrammar::generate_productions(const string &from_file)
     file_in_.close();
 }
 
-
-void CFG::ContextFreeGrammar::cal_Vn_Vt_aux(const string &from_file, const string &to_file)
+void CFG::ContextFreeGrammar::cal_Vn_Vt_aux(const string &from_file,
+                                            const string &to_file)
 {
     input_file(file_in_, from_file);
     output_file(file_out_, to_file);
 
-
     string temp, left, right;
 
-    while(std::getline(file_in_, temp))
+    while (std::getline(file_in_, temp))
     {
-        if(file_in_.fail())
+        if (file_in_.fail())
         {
             break;
         }
-        //È¥µôÃ¿ĞĞ¿ªÍ·µÄÊı×Ö
+        // å»æ‰æ¯è¡Œå¼€å¤´çš„æ•°å­—
         temp.replace(0, temp.find(' '), "");
         size_t index = temp.find("->");
         left = temp.substr(0, index);
         right = temp.substr(index + 2);
         remove_front_back_blank(left);
         remove_front_back_blank(right);
-        //¸ù¾İÉÏÏÂÎÄÎŞ¹ØÎÄ·¨µÄ¶¨Òå£¬²úÉúÊ½µÄ×ó²¿ Ò»¶¨ÊÇ·ÇÖÕ½á·û
-        if(std::find(non_terminal_set_.begin(), non_terminal_set_.end(), left)== non_terminal_set_.end())//ÊÇ·ñÒÑ¾­´æÔÚ
+        // æ ¹æ®ä¸Šä¸‹æ–‡æ— å…³æ–‡æ³•çš„å®šä¹‰ï¼Œäº§ç”Ÿå¼çš„å·¦éƒ¨ ä¸€å®šæ˜¯éç»ˆç»“ç¬¦
+        if (std::find(non_terminal_set_.begin(), non_terminal_set_.end(),
+                      left) == non_terminal_set_.end()) // æ˜¯å¦å·²ç»å­˜åœ¨
         {
             non_terminal_set_.push_back(left);
         }
-        set<string> strings;
-        //°´ÕÕ ¡® ¡¯ »®·Ö right
-        size_t start = 0;
-        size_t index_ = right.find(' ', start);
-        while(index_ != string::npos)
+        // æ–‡æ³•ä¸­çš„ç¬¦å·å†³å®šé›†åˆæˆå‘˜ï¼›ç±»å‹è¡¨åªè´Ÿè´£è¾“å‡ºæ ‡ç­¾ã€‚
+        // æµæå–è·³è¿‡è¿ç»­ç©ºç™½ï¼Œé¿å…æŠŠç©ºå­—ç¬¦ä¸²å½“ä½œç¬¦å·åè®¿é—® s[0]ã€‚
+        std::istringstream input_symbols(right);
+        set<string> symbols;
+        string symbol;
+        while (input_symbols >> symbol)
         {
-            string t = right.substr(start, index_ - start);
-            remove_front_back_blank(t);
-            strings.insert(t);
-            start = index_ + 1;
-            index_ = right.find(' ', start);
+            symbols.insert(symbol);
         }
-        string last = right.substr(start);
-        remove_front_back_blank(last);
-        strings.insert(last);
-        for(const auto& s : strings)
+        // ä¿æŒæ—§å®ç°æ¯è¡ŒæŒ‰å­—å…¸åºæ”¶é›†ç¬¦å·çš„é¡ºåºï¼Œé¿å…å¼•å…¥æ— å…³é¡ºåºå˜åŒ–ã€‚
+        for (const auto& symbol : symbols)
         {
-            if(std::find(non_terminal_set_.begin(), non_terminal_set_.end(), s) == non_terminal_set_.end())
+            // generate_productions å·²è¯»å®Œæ•´ä»½æ–‡æ³•ï¼›å‡ºç°åœ¨äº§ç”Ÿå¼å·¦éƒ¨çš„ç¬¦å·
+            // å°±æ˜¯éç»ˆç»“ç¬¦ã€‚è¿™æ ·ä¹Ÿèƒ½è¯†åˆ« <A>'ã€<A>'' å’Œåé¢æ‰å®šä¹‰çš„è§„åˆ™ã€‚
+            const bool non_terminal = productions_.find(symbol) != productions_.end();
+            if (non_terminal)
             {
-                if(s[0] == '<' && s[s.length() - 1] == '>')
-                {
-                    non_terminal_set_.push_back(s);
-                }
-                else
-                {
-                    if(std::find(terminal_set_.begin(), terminal_set_.end(), s) == terminal_set_.end() &&
-                       terminal_type_.find(s) != terminal_type_.end())
-                    {
-                        terminal_set_.push_back(s);
-                    }
-                }
+                append_unique(non_terminal_set_, symbol);
+            }
+            else
+            {
+                append_unique(terminal_set_, symbol);
             }
         }
     }
 
-    //¼øÓÚ·ÇÖÕ½á·ûÒÔ¼°ÖÕ½á·û¼¯ºÏµÄÊı¾İ½á¹¹ÊÇ set£¬¹ÊÊä³öÊÇÉıĞòÊä³ö
-    //Êä³ö·ÇÖÕ½á·û¼¯ºÏ
-    file_out_ << "·ÇÖÕ½á·ûºÅ¼¯ºÏ Vn : " << endl;
-    for(const auto& non_t : non_terminal_set_)
+    // æ¯è¡Œç¬¦å·å…ˆç”± set æ’åºå»é‡ï¼Œå†æŒ‰é¦–æ¬¡å‡ºç°é¡ºåºåŠ å…¥ vectorï¼›æ•´ä½“å¹¶éå…¨å±€å‡åºã€‚
+    // è¾“å‡ºéç»ˆç»“ç¬¦é›†åˆ
+    file_out_ << "éç»ˆç»“ç¬¦å·é›†åˆ Vn : " << endl;
+    for (const auto &non_t : non_terminal_set_)
     {
         file_out_ << non_t << endl;
     }
-    //Êä³öÖÕ½á·û¼¯ºÏ
-    file_out_ << "ÖÕ½á·ûºÅ¼¯ºÏ Vt : " << endl;
-    for(const auto& t : terminal_set_)
+    // è¾“å‡ºç»ˆç»“ç¬¦é›†åˆ
+    file_out_ << "ç»ˆç»“ç¬¦å·é›†åˆ Vt : " << endl;
+    for (const auto &t : terminal_set_)
     {
-        file_out_ << std::setiosflags(ios::left) << std::setw(10) << t << " " << std::setw(10) << terminal_type_.find(t)->second << endl;
+        const auto type = terminal_type_.find(t);
+        const string label = type == terminal_type_.end()
+            ? "æ–‡æ³•ç»ˆç»“ç¬¦ï¼ˆæœªç™»è®°ç±»å‹ï¼‰" : type->second;
+        file_out_ << std::setiosflags(ios::left) << std::setw(10) << t << " "
+                  << std::setw(10) << label << endl;
     }
 
     file_in_.close();
     file_out_.close();
 }
 
-
-// ¸¨Öúº¯Êı£¬ÓÃÓÚµİ¹é¼ÆËã FIRST ¼¯
+// è¾…åŠ©å‡½æ•°ï¼Œç”¨äºé€’å½’è®¡ç®— FIRST é›†
 void CFG::ContextFreeGrammar::_cal_first_aux(const string &symbol)
 {
     if (!first_[symbol].empty())
     {
-        return; // ÒÑ¾­¼ÆËã¹ı£¬±ÜÃâÖØ¸´¼ÆËã
+        return; // å·²ç»è®¡ç®—è¿‡ï¼Œé¿å…é‡å¤è®¡ç®—
     }
 
     auto it = productions_.find(symbol);
     if (it == productions_.end())
-        return; // Ã»ÓĞÕÒµ½²úÉúÊ½
+        return; // æ²¡æœ‰æ‰¾åˆ°äº§ç”Ÿå¼
 
-    for (const auto& production : it->second)
+    for (const auto &production : it->second)
     {
         std::vector<std::string> symbols = split_string(production);
-        if (symbols.empty()) continue; // Èç¹û²úÉúÊ½Îª¿Õ£¬Ìø¹ı
+        if (symbols.empty())
+            continue; // å¦‚æœäº§ç”Ÿå¼ä¸ºç©ºï¼Œè·³è¿‡
 
-        bool canDeriveEmpty = true; // ±ê¼ÇÊÇ·ñ¿ÉÒÔÍÆµ¼³ö¿Õ´®
+        bool canDeriveEmpty = true; // æ ‡è®°æ˜¯å¦å¯ä»¥æ¨å¯¼å‡ºç©ºä¸²
 
-        for (const auto& sym : symbols)
+        for (const auto &sym : symbols)
         {
             if (is_non_terminal(sym))
-            { // ÊÇ·ÇÖÕ½á·û
+            { // æ˜¯éç»ˆç»“ç¬¦
                 _cal_first_aux(sym);
-                // ´¦Àíµ±Ç°·ÇÖÕ½á·ûµÄ FIRST ¼¯ºÏ
+                // å¤„ç†å½“å‰éç»ˆç»“ç¬¦çš„ FIRST é›†åˆ
                 bool foundEmpty = false;
-                for (const auto& firstSymbol : first_[sym])
+                for (const auto &firstSymbol : first_[sym])
                 {
                     if (firstSymbol == "empty")
                     {
-                        foundEmpty = true; // ±ê¼Ç¿ÉÒÔÍÆµ¼³ö¿Õ´®
+                        foundEmpty = true; // æ ‡è®°å¯ä»¥æ¨å¯¼å‡ºç©ºä¸²
                     }
-                    else if (std::find(first_[symbol].begin(), first_[symbol].end(), firstSymbol) == first_[symbol].end())
+                    else if (std::find(first_[symbol].begin(),
+                                         first_[symbol].end(),
+                                         firstSymbol) == first_[symbol].end())
                     {
                         first_[symbol].push_back(firstSymbol);
                     }
                 }
-                // Èç¹ûµ±Ç°·ÇÖÕ½á·ûÃ»ÓĞ¿Õ´®£¬ÔòÍ£Ö¹ºóĞø´¦Àí
+                // å¦‚æœå½“å‰éç»ˆç»“ç¬¦æ²¡æœ‰ç©ºä¸²ï¼Œåˆ™åœæ­¢åç»­å¤„ç†
                 if (!foundEmpty)
                 {
                     canDeriveEmpty = false;
@@ -350,53 +405,58 @@ void CFG::ContextFreeGrammar::_cal_first_aux(const string &symbol)
                 }
             }
             else
-            { // ÊÇÖÕ½á·û
-                if (std::find(first_[symbol].begin(), first_[symbol].end(), sym) == first_[symbol].end())
+            { // æ˜¯ç»ˆç»“ç¬¦
+                if (std::find(first_[symbol].begin(), first_[symbol].end(),
+                              sym) == first_[symbol].end())
                 {
                     first_[symbol].push_back(sym);
                 }
-                canDeriveEmpty = false; // ÕÒµ½ÖÕ½á·û£¬²»¿¼ÂÇ¿Õ´®
-                break; // ÕÒµ½Ò»¸öÖÕ½á·û£¬½áÊøÕâ¸ö²úÉúÊ½µÄ´¦Àí
+                canDeriveEmpty = false; // æ‰¾åˆ°ç»ˆç»“ç¬¦ï¼Œä¸è€ƒè™‘ç©ºä¸²
+                break;                  // æ‰¾åˆ°ä¸€ä¸ªç»ˆç»“ç¬¦ï¼Œç»“æŸè¿™ä¸ªäº§ç”Ÿå¼çš„å¤„ç†
             }
         }
 
-        // Èç¹û¿ÉÒÔÍÆµ¼³ö¿Õ´®£¬ÔòÔÚ¼¯ºÏÖĞ¼ÓÈë "empty"
-        if (canDeriveEmpty) {
-            if (std::find(first_[symbol].begin(), first_[symbol].end(), "empty") == first_[symbol].end()) {
+        // å¦‚æœå¯ä»¥æ¨å¯¼å‡ºç©ºä¸²ï¼Œåˆ™åœ¨é›†åˆä¸­åŠ å…¥ "empty"
+        if (canDeriveEmpty)
+        {
+            if (std::find(first_[symbol].begin(), first_[symbol].end(),
+                          "empty") == first_[symbol].end())
+            {
                 first_[symbol].emplace_back("empty");
             }
         }
     }
 }
 
-
-
 void CFG::ContextFreeGrammar::cal_first_aux()
 {
-    //¾ßÌå½âÌâË¼Â·£ºÇó½âÎÄ·¨ÖĞËùÓĞµÄ²úÉúÊ½×ó²¿µÄFIRST¼¯ºÏ£¬Ö»ĞèÒª¿´Ã¿¸ö×ó²¿µÄËùÓĞ²úÉúÊ½ÓÒ²¿µÄÊ××Ö·ûA¡£
-    //1. Èç¹ûAÊÇÖÕ½á·û£¬ÄÇÃ´½«Æä¼ÓÈëµ½×ó²¿¶ÔÓ¦µÄ ¼¯ºÏÖĞ¡£
-    //2. Èç¹ûAÊÇ·ÇÖÕ½á·û£¬ÄÇÃ´¼ÌĞøÇó½â£¬²¢½«¼ÓÈëµ½×ó²¿¶ÔÓ¦µÄ¼¯ºÏÖĞÈ¥¡£
-    //3. Èç¹û£¬ÄÇÃ´Ò²½«¼ÓÈëÆäÖĞ¡£
-    //×¢Òâ£ºÈç¹û²úÉúÊ½µÄÓÒ²¿ÓÉ¡°|¡±Á¬½Ó£¬¶ÔÓÚ"|"×óÓÒÁ½±ßµÄ¾äĞÍÔËÓÃÉÏÊöÏàÍ¬µÄ¹æÔò¡£
+    // å…·ä½“è§£é¢˜æ€è·¯ï¼šæ±‚è§£æ–‡æ³•ä¸­æ‰€æœ‰çš„äº§ç”Ÿå¼å·¦éƒ¨çš„FIRSTé›†åˆï¼Œåªéœ€è¦çœ‹æ¯ä¸ªå·¦éƒ¨çš„æ‰€æœ‰äº§ç”Ÿå¼å³éƒ¨çš„é¦–å­—ç¬¦Aã€‚
+    // 1. å¦‚æœAæ˜¯ç»ˆç»“ç¬¦ï¼Œé‚£ä¹ˆå°†å…¶åŠ å…¥åˆ°å·¦éƒ¨å¯¹åº”çš„
+    // é›†åˆä¸­ã€‚
+    // 2.
+    // å¦‚æœAæ˜¯éç»ˆç»“ç¬¦ï¼Œé‚£ä¹ˆç»§ç»­æ±‚è§£ï¼Œå¹¶å°†åŠ å…¥åˆ°å·¦éƒ¨å¯¹åº”çš„é›†åˆä¸­å»ã€‚
+    // 3. å¦‚æœï¼Œé‚£ä¹ˆä¹Ÿå°†åŠ å…¥å…¶ä¸­ã€‚
+    // æ³¨æ„ï¼šå¦‚æœäº§ç”Ÿå¼çš„å³éƒ¨ç”±â€œ|â€è¿æ¥ï¼Œå¯¹äº"|"å·¦å³ä¸¤è¾¹çš„å¥å‹è¿ç”¨ä¸Šè¿°ç›¸åŒçš„è§„åˆ™ã€‚
 
-    // ¶ÔÓÚÖÕ½á·ûºÅ£¬FIRST ¼¯ºÏÎª×ÔÉí
-    for (const auto& terminal : terminal_set_)
+    // å¯¹äºç»ˆç»“ç¬¦å·ï¼ŒFIRST é›†åˆä¸ºè‡ªèº«
+    for (const auto &terminal : terminal_set_)
     {
         first_[terminal].push_back(terminal);
     }
 
-    // ´¦Àí·ÇÖÕ½á·ûºÅ
-    for (const auto& non_terminal : non_terminal_set_)
+    // å¤„ç†éç»ˆç»“ç¬¦å·
+    for (const auto &non_terminal : non_terminal_set_)
     {
         _cal_first_aux(non_terminal);
     }
 
-    // Êä³ö·ÇÖÕ½á·ûºÅµÄ FIRST ¼¯ºÏ
-    file_out_ << "·ÇÖÕ½á·ûºÅµÄ FIRST ¼¯ºÏ£º" << endl;
-    for (const auto& non_terminal : non_terminal_set_)
+    // è¾“å‡ºéç»ˆç»“ç¬¦å·çš„ FIRST é›†åˆ
+    file_out_ << "éç»ˆç»“ç¬¦å·çš„ FIRST é›†åˆï¼š" << endl;
+    for (const auto &non_terminal : non_terminal_set_)
     {
-        file_out_ << std::setiosflags(ios::left) << std::setw(30) << non_terminal << "µÄ FIRST ¼¯ºÏÎª£º";
-        for (const auto& f : first_[non_terminal])
+        file_out_ << std::setiosflags(ios::left) << std::setw(30)
+                  << non_terminal << "çš„ FIRST é›†åˆä¸ºï¼š";
+        for (const auto &f : first_[non_terminal])
         {
             file_out_ << std::setiosflags(std::ios::left) << std::setw(20) << f;
         }
@@ -404,117 +464,108 @@ void CFG::ContextFreeGrammar::cal_first_aux()
     }
 }
 
+CFG::ContextFreeGrammar::SequenceFirst
+CFG::ContextFreeGrammar::first_of_sequence(
+    const std::vector<std::string>& symbols, std::size_t begin) const
+{
+    if (begin > symbols.size())
+    {
+        throw std::out_of_range("FIRST sequence offset exceeds sequence size");
+    }
+
+    SequenceFirst result;
+    for (std::size_t i = begin; i < symbols.size(); ++i)
+    {
+        const auto first_it = first_.find(symbols[i]);
+        if (first_it == first_.end())
+        {
+            throw std::logic_error("Missing FIRST set for: " + symbols[i]);
+        }
+
+        bool symbol_nullable = false;
+        for (const auto& value : first_it->second)
+        {
+            if (value == "empty")
+            {
+                symbol_nullable = true;
+            }
+            else
+            {
+                append_unique(result.terminals, value);
+            }
+        }
+        if (!symbol_nullable)
+        {
+            result.nullable = false;
+            return result;
+        }
+    }
+    return result;
+}
 
 void CFG::ContextFreeGrammar::cal_follow_aux()
 {
-    // 1. Ê×ÏÈ½«ÌØÊâ·ûºÅ "$" ¼ÓÈë¿ªÊ¼·ûºÅ S µÄ FOLLOW ¼¯ºÏÖĞ
-    follow_["<S>"].emplace_back("$");
-
-    // 2. ÁĞ¾Ù³öËùÓĞÄÜ¹»ÍÆµ¼³ö empty µÄ·ÇÖÕ½á·û
-    std::unordered_set<std::string> empty_non;
-    for (const auto& non : non_terminal_set_)
+    follow_.clear();
+    for (const auto& non_terminal : non_terminal_set_)
     {
-        auto it = productions_.find(non);
-        if (it != productions_.end())
-        {
-            const auto& right = it->second;
-            if (std::find(right.begin(), right.end(), "empty") != right.end())
-            {
-                empty_non.insert(non);
-            }
-        }
+        follow_.try_emplace(non_terminal);
     }
+    // å½“å‰é¡¹ç›®çº¦å®š <S> ä¸ºå¼€å§‹ç¬¦å·ã€‚
+    follow_.at("<S>").push_back("$");
 
-    // 3. ¶ÔÓÚÃ¿¸ö·ÇÖÕ½á·û A
     bool changed;
     do
     {
         changed = false;
-
         for (const auto& A : non_terminal_set_)
         {
-            auto it = productions_.find(A);
-            if (it == productions_.end())
+            const auto production_it = productions_.find(A);
+            if (production_it == productions_.end())
             {
-                std::cerr << "Î´ÕÒµ½·ÇÖÕ½á·û " << A << " µÄ²úÉúÊ½¡£" << std::endl;
-                continue;
+                throw std::logic_error("Missing productions for: " + A);
             }
-
-            // ¼ì²é A µÄËùÓĞ²úÉúÊ½
-            for (const auto& right : it->second)
+            for (const auto& right : production_it->second)
             {
-                std::vector<std::string> strings = split_string(right);
-                for (size_t i = 0; i < strings.size(); ++i)
+                const auto symbols = split_string(right);
+                for (std::size_t i = 0; i < symbols.size(); ++i)
                 {
-                    const std::string& symbol = strings[i];
-                    if (is_non_terminal(symbol)) // ´æÔÚ B
+                    const auto& B = symbols[i];
+                    if (!is_non_terminal(B))
                     {
-                        // Èç¹ûÊÇ A -> ¦ÁB
-                        if (i + 1 == strings.size())
+                        continue;
+                    }
+
+                    const auto suffix = first_of_sequence(symbols, i + 1);
+                    auto& target = follow_.at(B);
+                    for (const auto& terminal : suffix.terminals)
+                    {
+                        if (append_unique(target, terminal))
                         {
-                            // ½« FOLLOW(A) ¼ÓÈëµ½ FOLLOW(B) ÖĞ
-                            for (const auto& followSymbol : follow_[A])
-                            {
-                                // ¼ì²é²¢Ìí¼Ó·ûºÅµ½ FOLLOW(B)
-                                if (std::find(follow_[symbol].begin(), follow_[symbol].end(), followSymbol) == follow_[symbol].end())
-                                {
-                                    follow_[symbol].emplace_back(followSymbol);
-                                    changed = true;
-                                }
-                            }
+                            changed = true;
                         }
-                        else // ¶ÔÓ¦ÓÚ A -> ¦ÁB¦Â
+                    }
+                    if (suffix.nullable)
+                    {
+                        // A ä¸ B ç›¸åŒæ—¶ä¸ä¼šæ–°å¢å…ƒç´ ï¼Œé›†åˆå·²åŒ…å«è‡ªèº«ã€‚
+                        for (const auto& terminal : follow_.at(A))
                         {
-                            const std::string& beta = strings[i + 1];
-
-                            if (is_terminal(beta)) // ¦Â ÊÇÖÕ½á·û
+                            if (append_unique(target, terminal))
                             {
-                                // Ö±½Ó½« ¦Â Ìí¼Óµ½ FOLLOW(B)
-                                if (std::find(follow_[symbol].begin(), follow_[symbol].end(), beta) == follow_[symbol].end())
-                                {
-                                    follow_[symbol].emplace_back(beta);
-                                    changed = true;
-                                }
-                            }
-                            else // ¦Â ÊÇ·ÇÖÕ½á·û
-                            {
-                                // ½« FIRST(¦Â) ÖĞ³ıÁË empty Ö®ÍâµÄ·ûºÅ¼ÓÈëµ½ FOLLOW(B) ÖĞ
-                                for (const auto& firstSymbol : first_[beta])
-                                {
-                                    if (firstSymbol != "empty" && std::find(follow_[symbol].begin(), follow_[symbol].end(), firstSymbol) == follow_[symbol].end())
-                                    {
-                                        follow_[symbol].emplace_back(firstSymbol);
-                                        changed = true;
-                                    }
-                                }
-
-                                // Èç¹û FIRST(¦Â) ÖĞ°üº¬ empty£¬ÔòÒª½« FOLLOW(A) ¼ÓÈëµ½ FOLLOW(B) ÖĞ
-                                if (empty_non.find(beta) != empty_non.end())
-                                {
-                                    for (const auto& followSymbol : follow_[A])
-                                    {
-                                        if (std::find(follow_[symbol].begin(), follow_[symbol].end(), followSymbol) == follow_[symbol].end())
-                                        {
-                                            follow_[symbol].emplace_back(followSymbol);
-                                            changed = true;
-                                        }
-                                    }
-                                }
+                                changed = true;
                             }
                         }
                     }
                 }
             }
         }
+    } while (changed);
 
-    } while (changed); // Èç¹ûÓĞ±ä¸ü¼ÌĞøÑ­»·
-
-    // ½« FOLLOW ¼¯ºÏÊä³öµ½ÎÄ¼şÖĞ
-    file_out_ << "·ÇÖÕ½á·ûºÅµÄ FOLLOW ¼¯ºÏ£º" << endl;
-    for (const auto& non_terminal : non_terminal_set_)
+    file_out_ << "éç»ˆç»“ç¬¦å·çš„ FOLLOW é›†åˆï¼š" << endl;
+    for (const auto &non_terminal : non_terminal_set_)
     {
-        file_out_ << std::setiosflags(std::ios::left) << std::setw(30) << non_terminal << "µÄ FOLLOW ¼¯ºÏÎª£º";
-        for (const auto& f : follow_[non_terminal])
+        file_out_ << std::setiosflags(std::ios::left) << std::setw(30)
+                  << non_terminal << "çš„ FOLLOW é›†åˆä¸ºï¼š";
+        for (const auto &f : follow_[non_terminal])
         {
             file_out_ << std::setiosflags(std::ios::left) << std::setw(20) << f;
         }
@@ -522,34 +573,37 @@ void CFG::ContextFreeGrammar::cal_follow_aux()
     }
 }
 
-
 void CFG::ContextFreeGrammar::generate_predictive_analysis_table_aux()
 {
     /*
-     * ·½·¨£º¶ÔÓÚÎÄ·¨ÖĞÃ¿¸ö²úÉúÊ½ A->¦Á £¬½øĞĞÈçÏÂ´¦Àí£º
-     * 1£©¶ÔÓÚ FIRST(¦Á)ÖĞµÄÃ¿¸öÖÕ½á·ûºÅ a£¬½« A->¦Á ¼ÓÈëµ½ M[A, a] ÖĞ¡£
-     * 2£©Èç¹û empty ÔÚ FIRST(¦Á) ÖĞ£¬ÄÇÃ´¶Ô FOLLOW(A)ÖĞµÄÃ¿¸öÖÕ½á·ûºÅ b£¬½« A->¦Á ¼ÓÈëµ½ M[A, b] ÖĞ¡£
-     * Èç¹û empty ÔÚ FIRST(¦Á) ÖĞ£¬ÇÒ $ÔÚ FOLLOW(A) ÖĞ£¬Ò²½« A->¦Á ¼ÓÈëµ½ M[A,$] ÖĞ¡£
+     * æ–¹æ³•ï¼šå¯¹äºæ–‡æ³•ä¸­æ¯ä¸ªäº§ç”Ÿå¼ A->Î± ï¼Œè¿›è¡Œå¦‚ä¸‹å¤„ç†ï¼š
+     * 1ï¼‰å¯¹äº FIRST(Î±)ä¸­çš„æ¯ä¸ªç»ˆç»“ç¬¦å· aï¼Œå°† A->Î± åŠ å…¥åˆ° M[A, a]
+     * ä¸­ã€‚
+     * 2ï¼‰å¦‚æœ empty åœ¨ FIRST(Î±) ä¸­ï¼Œé‚£ä¹ˆå¯¹ FOLLOW(A)ä¸­çš„æ¯ä¸ªç»ˆç»“ç¬¦å· bï¼Œå°†
+     * A->Î± åŠ å…¥åˆ° M[A, b] ä¸­ã€‚
+     * å¦‚æœ empty åœ¨ FIRST(Î±) ä¸­ï¼Œä¸” $åœ¨ FOLLOW(A) ä¸­ï¼Œä¹Ÿå°† A->Î± åŠ å…¥åˆ°
+     * M[A,$] ä¸­ã€‚
      *
-     * ÔÚÍê³ÉÒÔÉÏ²Ù×÷ÒÔºó£¬Èç¹û M[A, a] ÖĞÃ»ÓĞ²úÉúÊ½£¬ÄÇÃ´½« M[A, a] ÉèÖÃÎª error£¨ÎÒÃÇÍ¨³£ÔÚ±íÖĞÓÃÒ»¸ö¿ÕÌõÄ¿±íÊ¾£©
+     * åœ¨å®Œæˆä»¥ä¸Šæ“ä½œä»¥åï¼Œå¦‚æœ M[A, a] ä¸­æ²¡æœ‰äº§ç”Ÿå¼ï¼Œé‚£ä¹ˆå°† M[A, a] è®¾ç½®ä¸º
+     * errorï¼ˆæˆ‘ä»¬é€šå¸¸åœ¨è¡¨ä¸­ç”¨ä¸€ä¸ªç©ºæ¡ç›®è¡¨ç¤ºï¼‰
      */
 
-    file_out_ << "·ÇÖÕ½á·ûºÅµÄÊıÁ¿£º" << non_terminal_set_.size() << endl;
+    file_out_ << "éç»ˆç»“ç¬¦å·çš„æ•°é‡ï¼š" << non_terminal_set_.size() << endl;
     string str = " + $ ";
-    file_out_ << "ÖÕ½á·ûºÅµÄÊıÁ¿£º" << terminal_set_.size() << str << endl;
+    file_out_ << "ç»ˆç»“ç¬¦å·çš„æ•°é‡ï¼š" << terminal_set_.size() << str << endl;
 
     string temp;
 
     map<string, int> num_prod;
 
-    while(std::getline(file_in_, temp))
+    while (std::getline(file_in_, temp))
     {
-        if(file_in_.fail())
+        if (file_in_.fail())
         {
             break;
         }
         int num = std::atoi(temp.substr(0, temp.find(' ')).c_str());
-        //È¥µôÃ¿ĞĞ¿ªÍ·µÄÊı×Ö
+        // å»æ‰æ¯è¡Œå¼€å¤´çš„æ•°å­—
         temp.replace(0, temp.find(' '), "");
 
         num_prod.insert(std::make_pair(temp, num));
@@ -561,48 +615,31 @@ void CFG::ContextFreeGrammar::generate_predictive_analysis_table_aux()
         remove_front_back_blank(right);
         vector<string> strings = split_string(right);
 
-        for(const auto& s : strings)
+        // è®¡ç®—æ•´ä¸ªå³éƒ¨åºåˆ—çš„ FIRSTï¼›ä¸èƒ½æŠŠæ¯ä¸ªç¬¦å·çš„ FIRST ç›´æ¥å–å¹¶é›†ã€‚
+        const auto sequence = first_of_sequence(strings, 0);
+        for (const auto& terminal : sequence.terminals)
         {
-            for(const auto& a : first_[s])
+            append_unique(predictive_analysis_table_.table_[left][terminal], temp);
+        }
+        if (sequence.nullable)
+        {
+            // åªæœ‰å³éƒ¨æ‰€æœ‰ç¬¦å·éƒ½èƒ½æ¨å‡ºç©ºä¸²æ—¶ï¼Œæ‰ä½¿ç”¨å·¦éƒ¨çš„ FOLLOWã€‚
+            for (const auto& terminal : follow_.at(left))
             {
-                //1£©¶ÔÓÚ FIRST(¦Á)ÖĞµÄÃ¿¸öÖÕ½á·ûºÅ a£¬½« A->¦Á ¼ÓÈëµ½ M[A, a] ÖĞ¡£
-                if(std::find(predictive_analysis_table_.table_[left][a].begin(), predictive_analysis_table_.table_[left][a].end(), temp)
-                    == predictive_analysis_table_.table_[left][a].end())   //²»ÖØ¸´²Å¼ÓÈë
-                {
-                    predictive_analysis_table_.table_[left][a].emplace_back(temp);
-                }
-                if(a == "empty")    // 2£©Èç¹û empty ÔÚ FIRST(¦Á) ÖĞ
-                {
-                    for(const auto& b : follow_[left])
-                    {
-                        //ÄÇÃ´¶Ô FOLLOW(A)ÖĞµÄÃ¿¸öÖÕ½á·ûºÅ b£¬½« A->¦Á ¼ÓÈëµ½ M[A, b] ÖĞ¡£
-                        if(std::find(predictive_analysis_table_.table_[left][b].begin(), predictive_analysis_table_.table_[left][b].end(), temp)
-                           == predictive_analysis_table_.table_[left][b].end())
-                        {
-                            predictive_analysis_table_.table_[left][b].emplace_back(temp);
-                        }
-                        if(b == "$")    //ÇÒ $ÔÚ FOLLOW(A) ÖĞ£¬Ò²½« A->¦Á ¼ÓÈëµ½ M[A,$] ÖĞ¡£
-                        {
-                            if(std::find(predictive_analysis_table_.table_[left]["$"].begin(), predictive_analysis_table_.table_[left]["$"].end(), temp)
-                               == predictive_analysis_table_.table_[left]["$"].end())
-                            {
-                                predictive_analysis_table_.table_[left]["$"].emplace_back(temp);
-                            }
-                        }
-                    }
-                }
+                append_unique(predictive_analysis_table_.table_[left][terminal], temp);
             }
         }
     }
 
-
-    // È¥³ıÍÆ³ö empty µÄ²úÉúÊ½
-    for (const auto& non : non_terminal_set_)
+    // å»é™¤æ¨å‡º empty çš„äº§ç”Ÿå¼
+    for (const auto &non : non_terminal_set_)
     {
-        for (const auto& ter : terminal_set_)
+        for (const auto &ter : terminal_set_)
         {
-            auto& vec = predictive_analysis_table_.table_[non][ter]; // È·±£¶ÔvecµÄÒıÓÃ£¬ÒÔ±ãĞŞ¸Ä
-            for (auto iter = vec.begin(); iter != vec.end(); )
+            auto &vec =
+                predictive_analysis_table_
+                    .table_[non][ter]; // ç¡®ä¿å¯¹vecçš„å¼•ç”¨ï¼Œä»¥ä¾¿ä¿®æ”¹
+            for (auto iter = vec.begin(); iter != vec.end();)
             {
                 size_t index = iter->find("->");
                 if (index != std::string::npos)
@@ -613,49 +650,48 @@ void CFG::ContextFreeGrammar::generate_predictive_analysis_table_aux()
 
                     if (!split.empty() && split[0] == "empty")
                     {
-                        iter = vec.erase(iter); // ÒÆ³ı²úÉúÊ½
+                        iter = vec.erase(iter); // ç§»é™¤äº§ç”Ÿå¼
                     }
                     else
                     {
-                        ++iter; // Ôö¼Óµü´úÆ÷
+                        ++iter; // å¢åŠ è¿­ä»£å™¨
                     }
                 }
                 else
                 {
-                    ++iter; // Èç¹ûÃ»ÓĞÕÒµ½ "->"£¬Ôö¼Óµü´úÆ÷
+                    ++iter; // å¦‚æœæ²¡æœ‰æ‰¾åˆ° "->"ï¼Œå¢åŠ è¿­ä»£å™¨
                 }
             }
         }
     }
 
+    // å¯¹äº grammar.txt æ–‡ä»¶ä¸­å…·æœ‰äºŒä¹‰æ€§çš„éç»ˆç»“ç¬¦å·ç‰¹æ®Šå¤„ç†ï¼Œä»¥æ¶ˆé™¤äºŒä¹‰æ€§
 
-    //¶ÔÓÚ grammar.txt ÎÄ¼şÖĞ¾ßÓĞ¶şÒåĞÔµÄ·ÇÖÕ½á·ûºÅÌØÊâ´¦Àí£¬ÒÔÏû³ı¶şÒåĞÔ
-
-    //¶ÔÓÚ <factor> ÍÆ³öµÄ²úÉúÊ½
-    for(const auto& ter : terminal_set_)
+    // å¯¹äº <factor> æ¨å‡ºçš„äº§ç”Ÿå¼
+    for (const auto &ter : terminal_set_)
     {
-        auto& vec = predictive_analysis_table_.table_["<factor>"][ter];
-        if(vec.size() == 2)
+        auto &vec = predictive_analysis_table_.table_["<factor>"][ter];
+        if (vec.size() == 2)
         {
-            //È¥³ıÄÜÍÆ³öÁ½¸ö ²úÉúÊ½ ÖĞµÄ 101 ºÅ²úÉúÊ½
+            // å»é™¤èƒ½æ¨å‡ºä¸¤ä¸ª äº§ç”Ÿå¼ ä¸­çš„ 101 å·äº§ç”Ÿå¼
             std::swap(vec[0], vec[1]);
             vec.pop_back();
         }
     }
 
-
-    //¶ÔÓÚ <expression> ²úÉúÊ½
-    for(const auto& ter : terminal_set_)
+    // å¯¹äº <expression> äº§ç”Ÿå¼
+    for (const auto &ter : terminal_set_)
     {
-        auto& vec = predictive_analysis_table_.table_["<expression>"][ter];
-        if(vec.size() == 2)
+        auto &vec = predictive_analysis_table_.table_["<expression>"][ter];
+        if (vec.size() == 2)
         {
-            if(ter == "identifier1")
+            if (ter == "identifier1")
             {
-                //±£Áô 68 <expression> -> <var1> ....
+                // ä¿ç•™ 68 <expression> -> <var1> ....
                 vec.pop_back();
             }
-            else //ter == "identifier" || ter == "(" || ter == "number" || ter == "identifier
+            else // ter == "identifier" || ter == "(" || ter == "number" ||
+                   // ter == "identifier
             {
                 std::swap(vec[0], vec[1]);
                 vec.pop_back();
@@ -663,143 +699,127 @@ void CFG::ContextFreeGrammar::generate_predictive_analysis_table_aux()
         }
     }
 
-    //¶ÔÓÚÍÆ³ö ; µÄ²úÉúÊ½
-    for(const auto& non : non_terminal_set_)
+    // å¯¹äºæ¨å‡º ; çš„äº§ç”Ÿå¼
+    for (const auto &non : non_terminal_set_)
     {
-        auto& vec = predictive_analysis_table_.table_[non][";"];
-        if(vec.size() == 2)
+        auto &vec = predictive_analysis_table_.table_[non][";"];
+        if (vec.size() == 2)
         {
-            //±£Áô ÄÜÖ±½ÓÍÆ³ö ; µÄ²úÉúÊ½
+            // ä¿ç•™ èƒ½ç›´æ¥æ¨å‡º ; çš„äº§ç”Ÿå¼
             vec.pop_back();
         }
     }
 
-
-    for(const auto& non : non_terminal_set_)
+    // ä¿ç•™æ—§ Parser å¯¹æ˜¾å¼ empty çš„å›é€€çº¦å®šã€‚
+    // å…ˆå½’å¹¶å¾…ç§»é™¤å…ƒç´ å† eraseï¼Œé¿å…éå†è¿‡ç¨‹ä¸­è¿­ä»£å™¨å¤±æ•ˆã€‚
+    for (const auto& non : non_terminal_set_)
     {
-        for(const auto& s : predictive_analysis_table_.table_[non]["$"])
-        {
-            auto& vec = predictive_analysis_table_.table_[non]["$"]; // È·±£¶ÔvecµÄÒıÓÃ£¬ÒÔ±ãĞŞ¸Ä
-            for (auto iter = vec.begin(); iter != vec.end(); )
+        auto& choices = predictive_analysis_table_.table_[non]["$"];
+        choices.erase(std::remove_if(choices.begin(), choices.end(),
+            [](const string& production)
             {
-                size_t index = iter->find("->");
-                if (index != std::string::npos)
-                {
-                    string right = iter->substr(index + 2);
-                    remove_front_back_blank(right);
-                    vector<string> split = split_string(right);
-
-                    if (!split.empty() && split[0] == "empty")
-                    {
-                        iter = vec.erase(iter); // ÒÆ³ı²úÉúÊ½
-                    }
-                    else
-                    {
-                        ++iter; // Ôö¼Óµü´úÆ÷
-                    }
-                }
-                else
-                {
-                    ++iter; // Èç¹ûÃ»ÓĞÕÒµ½ "->"£¬Ôö¼Óµü´úÆ÷
-                }
-            }
-        }
+                const auto arrow = production.find("->");
+                if (arrow == string::npos) return false;
+                const auto symbols = split_string(production.substr(arrow + 2));
+                return !symbols.empty() && symbols[0] == "empty";
+            }), choices.end());
     }
-
 
     predictive_analysis_table_.Vn_ = non_terminal_set_;
     predictive_analysis_table_.Vt_ = terminal_set_;
     predictive_analysis_table_.productions_ = productions_;
 
+    // æ ¼å¼åŒ–è¾“å‡ºåˆ°æ–‡ä»¶ä¸­
+    file_out_ << std::setiosflags(ios::right) << std::setw(54)
+              << "è¾“å…¥çš„ç»ˆç»“ç¬¦å·" << endl;
+    file_out_ << "éç»ˆç»“ç¬¦å·" << std::setw(21) << " ";
 
-    //¸ñÊ½»¯Êä³öµ½ÎÄ¼şÖĞ
-    file_out_ << std::setiosflags(ios::right) << std::setw(54) << "ÊäÈëµÄÖÕ½á·ûºÅ" <<endl;
-    file_out_ << "·ÇÖÕ½á·ûºÅ" << std::setw(21) << " ";
-
-    for(const auto& ter : terminal_set_)
+    for (const auto &ter : terminal_set_)
     {
         file_out_ << std::setw(20) << ter;
     }
     file_out_ << std::setw(20) << "$" << endl;
-    for(const auto& non : non_terminal_set_)
+    for (const auto &non : non_terminal_set_)
     {
-        file_out_ << std::setiosflags(ios::right) << non << std::setw(30 - static_cast<int>(non.size())) << " ";
-        for(const auto& ter : terminal_set_)
+        file_out_ << std::setiosflags(ios::right) << non
+                  << std::setw(30 - static_cast<int>(non.size())) << " ";
+        for (const auto &ter : terminal_set_)
         {
             auto strings = predictive_analysis_table_.table_[non][ter];
-            if(strings.empty())
+            if (strings.empty())
             {
-                file_out_ << std::setiosflags(ios::right) << std::setw(20) << "error";
+                file_out_ << std::setiosflags(ios::right) << std::setw(20)
+                          << "error";
             }
             else
             {
                 vector<int> nums;
-                for(const auto& s1 : strings)
+                for (const auto &s1 : strings)
                 {
                     auto iter = num_prod.find(s1);
-                    if(iter != num_prod.end())
+                    if (iter != num_prod.end())
                     {
                         nums.emplace_back(iter->second);
                     }
                 }
-                if(nums.size() == 1)
+                if (nums.size() == 1)
                 {
-                    file_out_ << std::setiosflags(ios::right) << std::setw(20) << nums[0];
+                    file_out_ << std::setiosflags(ios::right) << std::setw(20)
+                              << nums[0];
                 }
                 else
                 {
                     string output;
-                    for(auto i = 0;i < nums.size();i++)
+                    for (auto i = 0; i < nums.size(); i++)
                     {
                         output += std::to_string(nums[i]);
-                        if(i < (nums.size() - 1))
+                        if (i < (nums.size() - 1))
                         {
                             output += ",";
                         }
                     }
-                    file_out_ << std::setiosflags(ios::right) << std::setw(20) << output;
+                    file_out_ << std::setiosflags(ios::right) << std::setw(20)
+                              << output;
                 }
             }
         }
-        //Êä³ö non, $ ¶ÔÓ¦µÄ²úÉúÊ½ĞòºÅ
+        // è¾“å‡º non, $ å¯¹åº”çš„äº§ç”Ÿå¼åºå·
         auto strings = predictive_analysis_table_.table_[non]["$"];
-        if(strings.empty())
+        if (strings.empty())
         {
-            file_out_ << std::setiosflags(ios::right) << std::setw(20) << "error" << endl;
+            file_out_ << std::setiosflags(ios::right) << std::setw(20)
+                      << "error" << endl;
         }
         else
         {
             vector<int> nums;
-            for(const auto& s1 : strings)
+            for (const auto &s1 : strings)
             {
                 auto iter = num_prod.find(s1);
-                if(iter != num_prod.end())
+                if (iter != num_prod.end())
                 {
                     nums.emplace_back(iter->second);
                 }
             }
-            if(nums.size() == 1)
+            if (nums.size() == 1)
             {
-                file_out_ << std::setiosflags(ios::right) << std::setw(20) << nums[0] << endl;
+                file_out_ << std::setiosflags(ios::right) << std::setw(20)
+                          << nums[0] << endl;
             }
             else
             {
                 string output;
-                for(auto i = 0;i < nums.size();i++)
+                for (auto i = 0; i < nums.size(); i++)
                 {
                     output += std::to_string(nums[i]);
-                    if(i < (nums.size() - 1))
+                    if (i < (nums.size() - 1))
                     {
                         output += ",";
                     }
                 }
-                file_out_ << std::setiosflags(ios::right) << std::setw(20) << output << endl;
+                file_out_ << std::setiosflags(ios::right) << std::setw(20)
+                          << output << endl;
             }
         }
     }
 }
-
-
-
-
-

@@ -1,5 +1,5 @@
 //
-// Created by 86198 on 2024/10/20.
+// åˆ›å»ºè€…ï¼š86198ï¼›æ—¥æœŸï¼š2024/10/20ã€‚
 //
 
 #ifndef MY_COMPILER_DELIMITER_TOKEN_H
@@ -15,7 +15,7 @@ namespace my_compiler_token
 
 
 
-    //¶¨½ç·û³£Á¿
+    //å®šç•Œç¬¦å¸¸é‡
     const char DOT                      = '.';
     const char LEFT_PARENTHESES         = '(';
     const char RIGHT_PARENTHESES        = ')';
@@ -66,7 +66,7 @@ namespace my_compiler_token
 
 
     private:
-        //¶¨½ç·û¼¯ºÏ
+        //å®šç•Œç¬¦é›†åˆ
         static std::set<char> delimiters_;
 
         friend std::ostream& operator<<(std::ostream& out, const DelimiterToken& rhs)
@@ -114,7 +114,7 @@ namespace my_compiler_token
             }
             else
             {
-                return out << "[Error]" << ERROR << endl;
+                return out << "[Error] unsupported Delimiter token: " << rhs.get_attribute_value();
             }
         }
     };

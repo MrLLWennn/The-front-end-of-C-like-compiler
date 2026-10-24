@@ -1,5 +1,5 @@
 //
-// Created by 86198 on 2024/10/20.
+// åˆ›å»ºè€…ï¼š86198ï¼›æ—¥æœŸï¼š2024/10/20ã€‚
 //
 
 #include "compiler.h"
@@ -7,8 +7,8 @@
 void my_compiler::MyCompiler::compiling_aux()
 {
     cout << endl << endl;
-    cout << "Ô´ÎÄ¼þ" << source_file << "ÕýÔÚ±àÒëÖÐ..." << endl << endl;
+    cout << "æºæ–‡ä»¶" << source_file << "æ­£åœ¨ç¼–è¯‘ä¸­..." << endl << endl;
     divide_line();
-    //Ç°¶Ë¹¤×÷
+    //å‰ç«¯å·¥ä½œ
     front_end_.front_end_compiling();
 }

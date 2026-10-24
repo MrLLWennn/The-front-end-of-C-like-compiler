@@ -1,9 +1,11 @@
 //
-// Created by 86198 on 2024/11/4.
+// åˆ›å»ºè€…ï¼š86198ï¼›æ—¥æœŸï¼š2024/11/4ã€‚
 //
 
 #ifndef MY_COMPILER_FRONT_END_H
 #define MY_COMPILER_FRONT_END_H
+
+#include "my_compiler/ast.hpp"
 
 
 #include"lexer/lexer.h"
@@ -20,12 +22,12 @@ namespace my_compiler
     using namespace my_compiler_tree;
 
 
-    //Éú³ÉµÄÁÙÊ±×Ö·û´®µÄĞòºÅ
+    //ç”Ÿæˆçš„ä¸´æ—¶å­—ç¬¦ä¸²çš„åºå·
     static int seq = 0;
     static int cur_num = 0;
 
 
-    //±àÒëÆ÷µÄÇ°¶Ë
+    //ç¼–è¯‘å™¨çš„å‰ç«¯
     class FrontEnd
     {
         using Node = GrammaticalAnalysisTreeNode;
@@ -45,6 +47,8 @@ namespace my_compiler
         }
 
     public:
+
+        ast::Program build_typed_program();
 
         void front_end_compiling()
         {
@@ -68,13 +72,13 @@ namespace my_compiler
 
         void front_end_compiling_aux();
 
-        //·ûºÅ±íÉú³É
+        //ç¬¦å·è¡¨ç”Ÿæˆ
         void generate_symbol_table_aux();
 
-        //ÓïÒå·ÖÎö
+        //è¯­ä¹‰åˆ†æ
         void semantic_analysis_aux();
 
-        //ÖĞ¼ä´úÂëÉú³É
+        //ä¸­é—´ä»£ç ç”Ÿæˆ
         void generate_intermediate_code_aux();
 
     private:
@@ -106,11 +110,11 @@ namespace my_compiler
             return true;
         }
 
-        //map<string, bool(*)(tree bit *cur)> func map;		//ÍÆµ¼Ê½±àºÅÓëÆä¶ÔÓ¦µÄÓïÒå¶¯×÷º¯Êı
+        //map<string, bool(*)(tree bit *cur)> func map;		//æ¨å¯¼å¼ç¼–å·ä¸å…¶å¯¹åº”çš„è¯­ä¹‰åŠ¨ä½œå‡½æ•°
         //map<int, string> mid code map;
         //map<string, int> func num;
-        //int cur num = 99;		//ÈıµØÖ·´úÂë±àºÅ
-        //int cur temp = 0;		//ÁÙÊ±±äÁ¿¸öÊı
+        //int cur num = 99;		//ä¸‰åœ°å€ä»£ç ç¼–å·
+        //int cur temp = 0;		//ä¸´æ—¶å˜é‡ä¸ªæ•°
 
         bool action4(const shared_ptr<Node>& node)
         {
@@ -257,7 +261,7 @@ namespace my_compiler
             node = node->parent_;
             //
             string procedure = "define internal ";
-            // <func-declaration> -> <type-specifier> -> <type> -> º¯ÊıµÄÀàĞÍ
+            // <func-declaration> -> <type-specifier> -> <type> -> å‡½æ•°çš„ç±»å‹
             procedure.append(node->child_[0]->child_[0]->child_[0]->value_);
 
             intermediate_code_.insert({++cur_num, procedure});
@@ -615,17 +619,17 @@ namespace my_compiler
 
 
     private:
-        //ÎÄ¼ş¶ÔÏó
+        //æ–‡ä»¶å¯¹è±¡
         fstream file_in_;
         fstream file_out_;
-        //´Ê·¨·ÖÎöÆ÷
+        //è¯æ³•åˆ†æå™¨
         Lexer lexer_;
         vector<Token> tokens_;
-        //Óï·¨·ÖÎöÆ÷
+        //è¯­æ³•åˆ†æå™¨
         Parser parser_;
-        //local×÷ÓÃÓò ±äÁ¿·ûºÅ±í
+        //localä½œç”¨åŸŸ å˜é‡ç¬¦å·è¡¨
         SymbolTable symbol_table_;
-        //ÖĞ¼ä±íÊ¾´úÂë
+        //ä¸­é—´è¡¨ç¤ºä»£ç 
         map<int, string> intermediate_code_;
 
     };

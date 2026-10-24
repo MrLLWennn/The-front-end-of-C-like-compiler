@@ -1,5 +1,5 @@
 //
-// Created by 86198 on 2024/12/2.
+// åˆ›å»ºè€…ï¼š86198ï¼›æ—¥æœŸï¼š2024/12/2ã€‚
 //
 
 #ifndef MY_COMPILER_NAME_GENERATOR_H
@@ -7,7 +7,7 @@
 
 #include"../header_files.h"
 
-//´ËÍ·ÎÄ¼şÓÃÓÚÖĞ¼ä´úÂë ¶Ô±äÁ¿ÃûÔÚ±àÒëÆ÷ÄÚ²¿Éú³ÉÎ¨Ò»µÄÃû×Ö
+//æ­¤å¤´æ–‡ä»¶ç”¨äºä¸­é—´ä»£ç  å¯¹å˜é‡ååœ¨ç¼–è¯‘å™¨å†…éƒ¨ç”Ÿæˆå”¯ä¸€çš„åå­—
 
 
 class NameGenerator
@@ -18,7 +18,7 @@ private:
 public:
     NameGenerator() = default;
 
-    //Ñ¡ÔñµÄ°æ±¾
+    //é€‰æ‹©çš„ç‰ˆæœ¬
     static constexpr unsigned version = 0xffffffff;
 
     //

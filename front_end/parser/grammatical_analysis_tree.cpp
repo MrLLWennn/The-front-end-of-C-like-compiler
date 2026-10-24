@@ -1,41 +1,53 @@
 //
-// Created by 86198 on 2024/11/15.
+// åˆ›å»ºè€…ï¼š86198ï¼›æ—¥æœŸï¼š2024/11/15ã€‚
 //
 
 #include "grammatical_analysis_tree.h"
+#include <stdexcept>
 
-
-void my_compiler_tree::GrammaticalAnalysisTree::genDOT(const string &filename) const
+void my_compiler_tree::GrammaticalAnalysisTree::genDOT(
+    const string &filename) const
 {
     fstream out;
-    out.open(filename);
+    out.open(filename, std::ios::out | std::ios::trunc);
+    if (!out)
+    {
+        throw std::runtime_error("Cannot open DOT output: " + filename);
+    }
     out << "digraph G {\n";
     out << "graph[color=\"#242038\"]\n";
     out << "node[color=\"#242038\", shape=square]\n";
     out << "edge[color=\"#242038\"]\n";
-    int rootNum = 0; // ½Úµã¼ÆÊıÆ÷
+    int rootNum = 0; // èŠ‚ç‚¹è®¡æ•°å™¨
     genDOT_aux(root_, rootNum, out);
     out << "}\n";
+    out.close();
+    if (!out)
+    {
+        throw std::runtime_error("Cannot finish DOT output: " + filename);
+    }
 }
 
-
-
 void my_compiler_tree::GrammaticalAnalysisTree::genDOT_aux(
-        const std::shared_ptr<my_compiler_tree::GrammaticalAnalysisTreeNode> &node, int &nodeCount, fstream &out,
-        bool isLeft) const
+    const std::shared_ptr<my_compiler_tree::GrammaticalAnalysisTreeNode> &node,
+    int &nodeCount, fstream &out, bool isLeft) const
 {
-    if (!node) return; // Èç¹û½ÚµãÎª¿Õ£¬·µ»Ø
+    if (!node)
+        return; // å¦‚æœèŠ‚ç‚¹ä¸ºç©ºï¼Œè¿”å›
 
-    // DOT for current node
-    string nodeLabel = "n" + std::to_string(nodeCount) + " [label=< <B>" + std::to_string(node->op_) + "</B>";
-    if (!node->value_.empty()) {
-        if(node->value_.size() > 2 && node->value_[0] == '<' && node->value_[node->value_.size() - 1] == '>')
+    // ä¸ºå½“å‰èŠ‚ç‚¹ç”Ÿæˆ DOT æè¿°
+    string nodeLabel = "n" + std::to_string(nodeCount) + " [label=< <B>" +
+                       std::to_string(node->op_) + "</B>";
+    if (!node->value_.empty())
+    {
+        if (node->value_.size() > 2 && node->value_[0] == '<' &&
+            node->value_[node->value_.size() - 1] == '>')
         {
             size_t index = node->value_.find('>');
             string value = node->value_.substr(1, index - 1);
             nodeLabel += "<BR/>&lt;" + value + "&gt;";
         }
-        else if(node->value_[node->value_.size() - 1] == '\'')
+        else if (node->value_[node->value_.size() - 1] == '\'')
         {
             size_t index = node->value_.find('>');
             string value = node->value_.substr(1, index - 1);
@@ -44,7 +56,7 @@ void my_compiler_tree::GrammaticalAnalysisTree::genDOT_aux(
         else
         {
             string value = node->value_;
-            if(node->value_ == "empty")
+            if (node->value_ == "empty")
             {
                 value = "epsilon";
             }
@@ -54,7 +66,8 @@ void my_compiler_tree::GrammaticalAnalysisTree::genDOT_aux(
     nodeLabel += ">";
     nodeLabel += (isLeft ? R"(, color="#FF595E", fontcolor="#FF595E")"
                          : R"(, color="#274690", fontcolor="#274690")");
-    if (node->is_leaf_) {
+    if (node->is_leaf_)
+    {
         nodeLabel += ", shape=egg";
     }
     nodeLabel += "]\n";
@@ -62,36 +75,37 @@ void my_compiler_tree::GrammaticalAnalysisTree::genDOT_aux(
     out << nodeLabel;
 
     int currentNodeCount = nodeCount;
-    nodeCount++; // ¼ÆÊıÆ÷×ÔÔö
-    for (const auto &child: node->child_) {
-        out << "n" + std::to_string(currentNodeCount) + "->n" + std::to_string(nodeCount) + "\n";
-        genDOT_aux(child, nodeCount, out); // µİ¹éÉú³ÉDOT¸ñÊ½µÄ×Ó½Úµã
+    nodeCount++; // è®¡æ•°å™¨è‡ªå¢
+    for (const auto &child : node->child_)
+    {
+        out << "n" + std::to_string(currentNodeCount) + "->n" +
+                   std::to_string(nodeCount) + "\n";
+        genDOT_aux(child, nodeCount, out); // é€’å½’ç”ŸæˆDOTæ ¼å¼çš„å­èŠ‚ç‚¹
     }
 }
-
 
 std::shared_ptr<my_compiler_tree::GrammaticalAnalysisTreeNode>
 my_compiler_tree::GrammaticalAnalysisTreeNode::get_node(const string &value)
 {
-    if(child_.empty())
+    if (child_.empty())
     {
         exit(0);
     }
-    else if(child_.size() == 1)
+    else if (child_.size() == 1)
     {
         return child_[0];
     }
     else
     {
-        for(const auto& c : child_)
+        for (const auto &c : child_)
         {
-            if(c->value_ == value)
+            if (c->value_ == value)
             {
                 return c;
             }
         }
     }
     return nullptr;
-//    static shared_ptr<GrammaticalAnalysisTreeNode> nullPtr = nullptr;
-//    return nullPtr; // Èç¹ûÃ»ÓĞÕÒµ½£¬·µ»Ø nullptr ÒıÓÃ
+    //    static shared_ptr<GrammaticalAnalysisTreeNode> nullPtr = nullptr;
+    //    return nullPtr; // å¦‚æœæ²¡æœ‰æ‰¾åˆ°ï¼Œè¿”å› nullptr å¼•ç”¨
 }

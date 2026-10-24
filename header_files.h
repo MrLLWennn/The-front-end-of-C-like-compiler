@@ -1,5 +1,5 @@
 //
-// Created by 86198 on 2024/10/19.
+// åˆ›å»ºè€…ï¼š86198ï¼›æ—¥æœŸï¼š2024/10/19ã€‚
 //
 
 #ifndef FUNDAMENTALS_OF_COMPILING_HEADER_FILES_H
@@ -7,21 +7,22 @@
 
 
 
-//´ËÍ·ÎÄ¼ş°üº¬ËùÓĞÓÃµ½µÄ¿â£¬³£Á¿ÉùÃ÷£¬ÎÄ¼şÏà¹Ø²Ù×÷
+//æ­¤å¤´æ–‡ä»¶åŒ…å«æ‰€æœ‰ç”¨åˆ°çš„åº“ï¼Œå¸¸é‡å£°æ˜ï¼Œæ–‡ä»¶ç›¸å…³æ“ä½œ
 
-//Ô¼¶¨£º
+//çº¦å®šï¼š
 /*
- * Îª¼ò»¯Æğ¼û£¬ ´Ë±àÒëÆ÷Ê¡ÂÔ£º
- * 1. ¾²Ì¬×÷ÓÃÓò
- * 2. class ÉùÃ÷
- * 3. Âß¼­ÔËËã·û£¬Î»ÔËËã·û£¬Ìõ¼şÔËËã·û£¬ÓòÔËËã·û
- * 4. º¯ÊıÄÚ¾Ö²¿±äÁ¿±ØĞë·ÅÔÚº¯ÊıÌå¿ªÍ·µÄÎ»ÖÃ£¨ÓÉÓÚÎÄ·¨Éè¼ÆÔ­Òò£¬×÷Îª bug £¬´ı½â¾ö£©
+ * ä¸ºç®€åŒ–èµ·è§ï¼Œ æ­¤ç¼–è¯‘å™¨çœç•¥ï¼š
+ * 1. é™æ€ä½œç”¨åŸŸ
+ * 2. class å£°æ˜
+ * 3. é€»è¾‘è¿ç®—ç¬¦ï¼Œä½è¿ç®—ç¬¦ï¼Œæ¡ä»¶è¿ç®—ç¬¦ï¼ŒåŸŸè¿ç®—ç¬¦
+ * 4. å‡½æ•°å†…å±€éƒ¨å˜é‡å¿…é¡»æ”¾åœ¨å‡½æ•°ä½“å¼€å¤´çš„ä½ç½®ï¼ˆç”±äºæ–‡æ³•è®¾è®¡åŸå› ï¼Œä½œä¸º bug ï¼Œå¾…è§£å†³ï¼‰
  * */
 
 
 #pragma once
 
 
+#include "my_compiler/compilation_paths.hpp"
 #include<iostream>
 #include<string>
 #include<cstring>
@@ -33,7 +34,7 @@
 #include<cstdio>
 #include<fstream>
 #include<memory>
-#include<windows.h>
+
 #include<iomanip>
 #include<tr1/tuple>
 #include<set>
@@ -65,116 +66,116 @@ using std::shared_ptr;
 //------------------------------------------------------------------------------
 
 
-//³£Á¿¶¨Òå
+//å¸¸é‡å®šä¹‰
 
 
-//´Ë±àÒëÆ÷±àÒë¹ı³ÌµÄÊıÁ¿ÉÏÏŞ
+//æ­¤ç¼–è¯‘å™¨ç¼–è¯‘è¿‡ç¨‹çš„æ•°é‡ä¸Šé™
 const int period_num = 10;
-//´Ë±àÒëÆ÷¸ö¹ı³ÌµÄ±àÒë²½ÖèµÄÊıÁ¿ÉÏÏŞ
+//æ­¤ç¼–è¯‘å™¨ä¸ªè¿‡ç¨‹çš„ç¼–è¯‘æ­¥éª¤çš„æ•°é‡ä¸Šé™
 const int step_num = 20;
 
 
-// Ô´³ÌĞò
-static const string source_file             = "../files/00-source.txt";
-// È¥×¢ÊÍºóµÄÎÄ¼ş
-static const string uncomment_file          = "../files/01-uncomment.txt";
-// Ô¤´¦ÀíÍê³ÉµÄÎÄ¼ş
-static const string pretreatment_file       = "../files/02-pretreatment.txt";
-// ´Ê·¨·ÖÎö½á¹û´æ´¢ÎÄ¼ş
-static const string lex_file                = "../files/03-lexer.txt";
-// Ô­Ê¼Óï·¨ÎÄ¼ş
-static const string grammar_file            = "../files/04-grammar.txt";
-// ·ûºÏLL(1)ÎÄ·¨µÄÓï·¨ÎÄ¼ş
-static const string LL1grammar_file         = "../files/05-LL(1)_grammar.txt";
-// ´¦ÀíÍê³ÉµÄÓï·¨ÎÄ¼ş
-static const string processed_grammar_file  = "../files/06-processed_grammar.txt";
-// ÖÕ½á·û£¬·ÇÖÕ½á·û´æ´¢ÎÄ¼ş
-static const string Vn_Vt_file              = "../files/07-Vn_Vt.txt";
-// first, follow¼¯´æ´¢ÎÄ¼ş
-static const string first_follow_file       = "../files/08-first_follow.txt";
-// Ô¤²â·ÖÎö±í
-static const string pred_table_file         = "../files/09-predictive_analysis_table.txt";
-// ·ÖÎöÕ»
-static const string stack_file              = "../files/10-stack_file.txt";
-// Óï·¨·ÖÎöÊ÷
-static const string tree_file               = "../files/11-grammatical_analysis_tree.txt";
-static const string tree_dot_file           = "../files/12-grammatical_analysis_tree.dot";
-// ·ûºÅ±í
-static const string symbol_table_file       = "../files/13-symbol_table.txt";
-// ÓïÒå¶¯×÷·ÖÎö
-static const string semantic_analysis_file  = "../files/14-semantic_analysis.txt";
+// æºç¨‹åº
+inline const string& source_file = my_compiler::legacy_compilation_paths().source_file;
+// å»æ³¨é‡Šåçš„æ–‡ä»¶
+inline const string& uncomment_file = my_compiler::legacy_compilation_paths().uncomment_file;
+// é¢„å¤„ç†å®Œæˆçš„æ–‡ä»¶
+inline const string& pretreatment_file = my_compiler::legacy_compilation_paths().pretreatment_file;
+// è¯æ³•åˆ†æç»“æœå­˜å‚¨æ–‡ä»¶
+inline const string& lex_file = my_compiler::legacy_compilation_paths().lex_file;
+// åŸå§‹è¯­æ³•æ–‡ä»¶
+inline const string& grammar_file = my_compiler::legacy_compilation_paths().grammar_file;
+// ç¬¦åˆLL(1)æ–‡æ³•çš„è¯­æ³•æ–‡ä»¶
+inline const string& LL1grammar_file = my_compiler::legacy_compilation_paths().LL1grammar_file;
+// å¤„ç†å®Œæˆçš„è¯­æ³•æ–‡ä»¶
+inline const string& processed_grammar_file = my_compiler::legacy_compilation_paths().processed_grammar_file;
+// ç»ˆç»“ç¬¦ï¼Œéç»ˆç»“ç¬¦å­˜å‚¨æ–‡ä»¶
+inline const string& Vn_Vt_file = my_compiler::legacy_compilation_paths().Vn_Vt_file;
+// first, followé›†å­˜å‚¨æ–‡ä»¶
+inline const string& first_follow_file = my_compiler::legacy_compilation_paths().first_follow_file;
+// é¢„æµ‹åˆ†æè¡¨
+inline const string& pred_table_file = my_compiler::legacy_compilation_paths().pred_table_file;
+// åˆ†ææ ˆ
+inline const string& stack_file = my_compiler::legacy_compilation_paths().stack_file;
+// è¯­æ³•åˆ†ææ ‘
+inline const string& tree_file = my_compiler::legacy_compilation_paths().tree_file;
+inline const string& tree_dot_file = my_compiler::legacy_compilation_paths().tree_dot_file;
+// ç¬¦å·è¡¨
+inline const string& symbol_table_file = my_compiler::legacy_compilation_paths().symbol_table_file;
+// è¯­ä¹‰åŠ¨ä½œåˆ†æ
+inline const string& semantic_analysis_file = my_compiler::legacy_compilation_paths().semantic_analysis_file;
 
 
 
 
 
-//¹ı³ÌÃû(´ı²¹³ä)
+//è¿‡ç¨‹å(å¾…è¡¥å……)
 static const string period[period_num] = {
-        "",                 //½«0ºÅÎ»ÅÙ³ı£¬·½±ã·ûºÏÏÖÊµÇé¿ö£¨´Ó1¿ªÊ¼£©½øĞĞË÷Òı
-        "Ô¤´¦Àí",           //µÚÒ»¸ö¹ı³Ì£ºÔ¤´¦Àí½×¶Î£¨ÑÏ¸ñÀ´Ëµ£¬ÊôÓÚ´Ê·¨·ÖÎö½×¶ÎËùĞè×öµÄÊÂÇé£¬´Ë±àÒëÆ÷½«Æä·Ö¸î£©
-        "´Ê·¨·ÖÎö",
-        "Óï·¨·ÖÎö",
-        "ÓïÒå·ÖÎö",
-        "ÖĞ¼ä´úÂëÉú³É",
-        "ÓÅ»¯"
+        "",                 //å°†0å·ä½åˆ¨é™¤ï¼Œæ–¹ä¾¿ç¬¦åˆç°å®æƒ…å†µï¼ˆä»1å¼€å§‹ï¼‰è¿›è¡Œç´¢å¼•
+        "é¢„å¤„ç†",           //ç¬¬ä¸€ä¸ªè¿‡ç¨‹ï¼šé¢„å¤„ç†é˜¶æ®µï¼ˆä¸¥æ ¼æ¥è¯´ï¼Œå±äºè¯æ³•åˆ†æé˜¶æ®µæ‰€éœ€åšçš„äº‹æƒ…ï¼Œæ­¤ç¼–è¯‘å™¨å°†å…¶åˆ†å‰²ï¼‰
+        "è¯æ³•åˆ†æ",
+        "è¯­æ³•åˆ†æ",
+        "è¯­ä¹‰åˆ†æ",
+        "ä¸­é—´ä»£ç ç”Ÿæˆ",
+        "ä¼˜åŒ–"
 };
 
 
-//²½ÖèÃû£¨´ı²¹³ä£©
+//æ­¥éª¤åï¼ˆå¾…è¡¥å……ï¼‰
 static const string step[step_num] = {
-        "",                 //½«0ºÅÎ»ÅÙ³ı£¬·½±ã·ûºÏÏÖÊµÇé¿ö£¨´Ó1¿ªÊ¼£©½øĞĞË÷Òı
-        "È¥³ı×¢ÊÍ",
-        "È¥³ı¿Õ°×",
-        "Éú³É´Ê·¨µ¥ÔªĞòÁĞ",
-        "ÎÄ·¨´¦Àí¡ª¡ªÏû³ı×óµİ¹é£¬ÌáÈ¡¹«¹²×óÒò×Ó",
-        "ÎÄ·¨´¦Àí¡ª¡ªÒÔ' | '»®·ÖÎÄ·¨",
-        "ÎÄ·¨´¦Àí¡ª¡ªÇó½â Vn Vt ¼¯ºÏ",
-        "ÎÄ·¨´¦Àí¡ª¡ªÇó FIRST FOLLOW ¼¯ºÏ",
-        "ÎÄ·¨´¦Àí¡ª¡ª¹¹½¨Ô¤²â·ÖÎö±í",
-        "Ô¤²â·ÖÎö£¨Õ»±ä»¯ĞÅÏ¢£©",
-        "Éú³ÉÓï·¨·ÖÎöÊ÷",
-        "¹¹½¨·ûºÅ±í"
+        "",                 //å°†0å·ä½åˆ¨é™¤ï¼Œæ–¹ä¾¿ç¬¦åˆç°å®æƒ…å†µï¼ˆä»1å¼€å§‹ï¼‰è¿›è¡Œç´¢å¼•
+        "å»é™¤æ³¨é‡Š",
+        "å»é™¤ç©ºç™½",
+        "ç”Ÿæˆè¯æ³•å•å…ƒåºåˆ—",
+        "æ–‡æ³•å¤„ç†â€”â€”æ¶ˆé™¤å·¦é€’å½’ï¼Œæå–å…¬å…±å·¦å› å­",
+        "æ–‡æ³•å¤„ç†â€”â€”ä»¥' | 'åˆ’åˆ†æ–‡æ³•",
+        "æ–‡æ³•å¤„ç†â€”â€”æ±‚è§£ Vn Vt é›†åˆ",
+        "æ–‡æ³•å¤„ç†â€”â€”æ±‚ FIRST FOLLOW é›†åˆ",
+        "æ–‡æ³•å¤„ç†â€”â€”æ„å»ºé¢„æµ‹åˆ†æè¡¨",
+        "é¢„æµ‹åˆ†æï¼ˆæ ˆå˜åŒ–ä¿¡æ¯ï¼‰",
+        "ç”Ÿæˆè¯­æ³•åˆ†ææ ‘",
+        "æ„å»ºç¬¦å·è¡¨"
 };
 
 
 //------------------------------------------------------------------------------
 
 
-//»ù±¾½á¹¹Ìå£¬Ã¶¾ÙÀàĞÍ¶¨Òå
+//åŸºæœ¬ç»“æ„ä½“ï¼Œæšä¸¾ç±»å‹å®šä¹‰
 
 
-//´ò¿ªÎÄ¼ş·µ»Ø ÀàĞÍ
+//æ‰“å¼€æ–‡ä»¶è¿”å› ç±»å‹
 enum Return
 {
-    SUCCEED = 1,    //´ò¿ª³É¹¦
-    FAILED = 0      //´ò¿ªÊ§°Ü
+    SUCCEED = 1,    //æ‰“å¼€æˆåŠŸ
+    FAILED = 0      //æ‰“å¼€å¤±è´¥
 };
 
 
 //------------------------------------------------------------------------------
 
 
-//ÎÄ¼şÏà¹Ø²Ù×÷
+//æ–‡ä»¶ç›¸å…³æ“ä½œ
 
 
-//´ò¿ªÖ¸¶¨ÎÄ¼şÊäÈë/Êä³ö
+//æ‰“å¼€æŒ‡å®šæ–‡ä»¶è¾“å…¥/è¾“å‡º
 Return          input_file(fstream& inFile, const string& fileName);
 
 Return          output_file(fstream& outFile, const string& fileName);
 
 
-//¹Ø±ÕÊäÈëÊä³öÎÄ¼ş
+//å…³é—­è¾“å…¥è¾“å‡ºæ–‡ä»¶
 void            close_file(fstream &file1, fstream &file2);
 
 
-//Êä³ö·Ö¸îÏß
+//è¾“å‡ºåˆ†å‰²çº¿
 void            divide_line();
 
 
-//È¥³ı×Ö·û´®Ç°ºó¶àÓàµÄ¿Õ¸ñ
+//å»é™¤å­—ç¬¦ä¸²å‰åå¤šä½™çš„ç©ºæ ¼
 void            remove_front_back_blank(string &str);
 
-//×Ö·û´®·Ö¸îº¯Êı
+//å­—ç¬¦ä¸²åˆ†å‰²å‡½æ•°
 vector<string>  split_string(const string& production);
 
 

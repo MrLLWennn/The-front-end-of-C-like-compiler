@@ -1,5 +1,5 @@
 //
-// Created by 86198 on 2024/10/20.
+// åˆ›å»ºè€…ï¼š86198ï¼›æ—¥æœŸï¼š2024/10/20ã€‚
 //
 
 #ifndef MY_COMPILER_TOKEN_H
@@ -29,7 +29,7 @@ namespace my_compiler_token
     string get_token_name(TokenType type);
 
 
-    //´Ê·¨µ¥Ôª
+    //è¯æ³•å•å…ƒ
     class Token
     {
     public:
@@ -135,11 +135,11 @@ namespace my_compiler_token
         }
 
     private:
-        //ÀàĞÍ
+        //ç±»å‹
         TokenType token_name_;
-        //±¾Éí
+        //æœ¬èº«
         string attribute_value_;
-        //ËùÔÚĞĞ
+        //æ‰€åœ¨è¡Œ
         size_t line_;
 
     private:

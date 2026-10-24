@@ -1,5 +1,5 @@
 //
-// Created by 86198 on 2024/10/21.
+// åˆ›å»ºè€…ï¼š86198ï¼›æ—¥æœŸï¼š2024/10/21ã€‚
 //
 
 #ifndef MY_COMPILER_STATE_TRANSITION_H
@@ -8,21 +8,21 @@
 
 #include <utility>
 
-#include"D:\clion\my_compiler\token\token.h"
+#include "token/token.h"
 
 
-//´ËÍ·ÎÄ¼şÓÃÓÚÃèÊö´Ê·¨Éú³ÉÆ÷µÄÆäÖĞÒ»Ïî¹¦ÄÜ£¬¼´RE->NFA->DFA->minimized DFA
+//æ­¤å¤´æ–‡ä»¶ç”¨äºæè¿°è¯æ³•ç”Ÿæˆå™¨çš„å…¶ä¸­ä¸€é¡¹åŠŸèƒ½ï¼Œå³RE->NFA->DFA->minimized DFA
 
 
 namespace RE_NFA_DFA
 {
 
 
-    //NFAºÍDFA×´Ì¬×ªÒÆÍ¼ÖĞµÄ½áµã
+    //NFAå’ŒDFAçŠ¶æ€è½¬ç§»å›¾ä¸­çš„ç»“ç‚¹
 //    class Node
 //    {
 //    private:
-//        //helper function
+//        // è¾…åŠ©å‡½æ•°
 //        static void print_node(Node* node);
 //
 //        static void print_children(Node* node);
@@ -52,14 +52,14 @@ namespace RE_NFA_DFA
 //    };
 
 
-    //×´Ì¬½áµã
+    //çŠ¶æ€ç»“ç‚¹
     class State
     {
     private:
         string name_;
-        //¿ªÊ¼×´Ì¬
+        //å¼€å§‹çŠ¶æ€
         bool starting_;
-        //½ÓÊÕ×´Ì¬
+        //æ¥æ”¶çŠ¶æ€
         bool accepting_;
         std::multimap<char, State*> transitions_;
 
@@ -125,46 +125,46 @@ namespace RE_NFA_DFA
     };
 
 
-    //·ÇÈ·¶¨ÓĞÏŞ×Ô¶¯»ú
+    //éç¡®å®šæœ‰é™è‡ªåŠ¨æœº
     /*
-     * Ò»¸ö·ÇÈ·¶¨µÄÓĞÇî×Ô¶¯»úÊÇÓÉÒÔÏÂ¼°²¿·Ö¹¹³ÉµÄ
-     *      1£©Ò»¸öÓĞÇîµÄ×´Ì¬¼¯ºÏ
-     *      2£©Ò»¸öÊäÈë·ûºÏ¼¯ºÏ£¬¼´ÊäÈë×ÖÄ¸±í£¬¼ÙÉè¿Õ´®²»ÊÇÆäÖĞµÄÔªËØ
-     *      3£©Ò»¸ö×ª»»º¯Êı¡£¶ÔÃ¿Ò»¸ö×´Ì¬¡¢×ÖÄ¸±íÒÔ¼°¿Õ´®¶¼¸ø³öÁË¶ÔÓ¦µÄºó¼Ì×´Ì¬¼¯ºÏ
-     *      4£©¿ªÊ¼×´Ì¬
-     *      5£©½ÓÊÕ×´Ì¬¼¯ºÏ
+     * ä¸€ä¸ªéç¡®å®šçš„æœ‰ç©·è‡ªåŠ¨æœºæ˜¯ç”±ä»¥ä¸‹åŠéƒ¨åˆ†æ„æˆçš„
+     *      1ï¼‰ä¸€ä¸ªæœ‰ç©·çš„çŠ¶æ€é›†åˆ
+     *      2ï¼‰ä¸€ä¸ªè¾“å…¥ç¬¦åˆé›†åˆï¼Œå³è¾“å…¥å­—æ¯è¡¨ï¼Œå‡è®¾ç©ºä¸²ä¸æ˜¯å…¶ä¸­çš„å…ƒç´ 
+     *      3ï¼‰ä¸€ä¸ªè½¬æ¢å‡½æ•°ã€‚å¯¹æ¯ä¸€ä¸ªçŠ¶æ€ã€å­—æ¯è¡¨ä»¥åŠç©ºä¸²éƒ½ç»™å‡ºäº†å¯¹åº”çš„åç»§çŠ¶æ€é›†åˆ
+     *      4ï¼‰å¼€å§‹çŠ¶æ€
+     *      5ï¼‰æ¥æ”¶çŠ¶æ€é›†åˆ
      * */
     class NFA
     {
 
     private:
-        //ÓĞÇîµÄ×´Ì¬¼¯ºÏ
+        //æœ‰ç©·çš„çŠ¶æ€é›†åˆ
         vector<State*> all_states_;
-        //ÊäÈë·ûºÅ¼¯
+        //è¾“å…¥ç¬¦å·é›†
         set<char> alphabet_;
-        //¿ªÊ¼×´Ì¬
+        //å¼€å§‹çŠ¶æ€
         State* starting_state_;
-        //½ÓÊÜ×´Ì¬¼¯ºÏ
+        //æ¥å—çŠ¶æ€é›†åˆ
         vector<State*>accepting_states_;
-        //¿Õ×Ö·û
+        //ç©ºå­—ç¬¦
         char epsilon_;
-        //¿Õ±Õ°ü×ª»»º¯Êı
-        //¹¦ÄÜ£º¼ÆËã×´Ì¬sµÄ ¿Õ±Õ°ü£¬¼°Í¨¹ı ¿Õ ×ª»»µ½´ïµÄËùÓĞ×´Ì¬¼¯ºÏ
-        //²ÎÊı£º²ÎÊıÒ»£º´ı¼ÆËãµÄ×´Ì¬s£¬ÒÑ¾­ÅĞ¶ÏµÄ×´Ì¬¼¯ºÏ£¬·ÀÖ¹ÖØ¸´·ÃÎÊ
+        //ç©ºé—­åŒ…è½¬æ¢å‡½æ•°
+        //åŠŸèƒ½ï¼šè®¡ç®—çŠ¶æ€sçš„ ç©ºé—­åŒ…ï¼ŒåŠé€šè¿‡ ç©º è½¬æ¢åˆ°è¾¾çš„æ‰€æœ‰çŠ¶æ€é›†åˆ
+        //å‚æ•°ï¼šå‚æ•°ä¸€ï¼šå¾…è®¡ç®—çš„çŠ¶æ€sï¼Œå·²ç»åˆ¤æ–­çš„çŠ¶æ€é›†åˆï¼Œé˜²æ­¢é‡å¤è®¿é—®
         set<State*> epsilon_closure_aux(State* s, set<State*> already_evaluated) const
         {
-            //´æ·Å¿Õ×ª»»µ½´ïµÄËùÓĞ×´Ì¬¼¯ºÏ
+            //å­˜æ”¾ç©ºè½¬æ¢åˆ°è¾¾çš„æ‰€æœ‰çŠ¶æ€é›†åˆ
             set<State*> return_states;
             return_states.insert(s);
             already_evaluated.insert(s);
-            //»ñÈ¡ s µÄËùÓĞ ¦Å ×ª»»
+            //è·å– s çš„æ‰€æœ‰ Îµ è½¬æ¢
             auto evaluate = s->get_transition(epsilon_);
             for(auto iter = evaluate.first; iter != evaluate.second;++iter)
             {
-                //Ìø¹ıÒÑ¾­±£´æÁËµÄ×´Ì¬
+                //è·³è¿‡å·²ç»ä¿å­˜äº†çš„çŠ¶æ€
                 if(return_states.find(iter->second) != return_states.end() || already_evaluated.find(iter->second) != already_evaluated.end()) continue;
                 set<State*> e_closure = epsilon_closure_aux(iter->second, already_evaluated);
-                //²åÈëµ½±Õ°üÖĞ
+                //æ’å…¥åˆ°é—­åŒ…ä¸­
                 for(auto state:e_closure)
                 {
                     return_states.insert(state);
@@ -175,21 +175,21 @@ namespace RE_NFA_DFA
 
     public:
 
-        //´òÓ¡ NFA µÄ×´Ì¬ĞÅÏ¢£¬°üÀ¨×´Ì¬ÊıÁ¿¡¢×ª»»ÊıÁ¿ºÍÃ¿¸ö×´Ì¬µÄ¶ÈÊı
+        //æ‰“å° NFA çš„çŠ¶æ€ä¿¡æ¯ï¼ŒåŒ…æ‹¬çŠ¶æ€æ•°é‡ã€è½¬æ¢æ•°é‡å’Œæ¯ä¸ªçŠ¶æ€çš„åº¦æ•°
         void print_states() const
         {
-            //Êä³ö×´Ì¬Êı
+            //è¾“å‡ºçŠ¶æ€æ•°
             cout << "number of states is " << all_states_.size() << endl;
-            //¸ú×ÙÃ¿¸ö×Ö·ûµÄ×ª»»ÊıÁ¿ÒÔ¼°×´Ì¬µÄ¶ÈÊı
+            //è·Ÿè¸ªæ¯ä¸ªå­—ç¬¦çš„è½¬æ¢æ•°é‡ä»¥åŠçŠ¶æ€çš„åº¦æ•°
             map<char, int> transitions;
             map<int, int> degrees;
 
-            //³õÊ¼»¯
+            //åˆå§‹åŒ–
             for(const char& c : alphabet_) transitions.insert(std::make_pair(c, 0));
             transitions.insert(std::make_pair(epsilon_, 0));
 
 
-            //±éÀúËùÓĞ×´Ì¬£¬¼ÆËãÃ¿¸ö×Ö·ûµÄ×ª»»ÊıÁ¿ºÍÃ¿¸ö×´Ì¬µÄ¶ÈÊıÂí£¬²¢´æ·ÅÔÚÏàÓ¦µÄmapÖĞ
+            //éå†æ‰€æœ‰çŠ¶æ€ï¼Œè®¡ç®—æ¯ä¸ªå­—ç¬¦çš„è½¬æ¢æ•°é‡å’Œæ¯ä¸ªçŠ¶æ€çš„åº¦æ•°é©¬ï¼Œå¹¶å­˜æ”¾åœ¨ç›¸åº”çš„mapä¸­
             for(const auto& s : all_states_)
             {
                 for(const char& c : alphabet_)
@@ -347,7 +347,7 @@ namespace RE_NFA_DFA
     };
 
 
-    //ÕıÔò±í´ïÊ½
+    //æ­£åˆ™è¡¨è¾¾å¼
     class RE
     {
     public:
@@ -370,34 +370,34 @@ namespace RE_NFA_DFA
         char operation_;
         char symbol_;
         set<char> alphabet_;
-        //¿ËÁÖ±Õ°ü
+        //å…‹æ—é—­åŒ…
         bool kleene_star_;
-        //¦Å
+        //Îµ
         char epsilon_{};
 
     private:
 
-        //·ÖÖÎ·¨£ºµİ¹éµØ½«ÕıÔò±í´ïÊ½·Ö½âÎª¸üĞ¡µÄ×Ó±í´ïÊ½£¬²¢·Ö½âÎª×ó×ÓÊ÷ºÍÓÒ×ÓÊ÷(Ô­Àí£ºÕıÔÒ±í´ïÊ½µÄµİ¹é¶¨Òå)
+        //åˆ†æ²»æ³•ï¼šé€’å½’åœ°å°†æ­£åˆ™è¡¨è¾¾å¼åˆ†è§£ä¸ºæ›´å°çš„å­è¡¨è¾¾å¼ï¼Œå¹¶åˆ†è§£ä¸ºå·¦å­æ ‘å’Œå³å­æ ‘(åŸç†ï¼šæ­£ç ¸è¡¨è¾¾å¼çš„é€’å½’å®šä¹‰)
         void recursive_split(string regex)
         {
             add_left_and_right();
             left_->epsilon_ = epsilon_;
             right_->epsilon_ = epsilon_;
 
-            //È¥µô×îÍâ²ãµÄÀ¨ºÅ
+            //å»æ‰æœ€å¤–å±‚çš„æ‹¬å·
             if(std::count(regex.begin(), regex.end(), '(') == 1 && regex[0] == '(' && regex.back() == ')')
             {
                 regex = regex.substr(1, regex.size() - 2);
             }
 
-            //´¦Àíµ¥×Ö·û
+            //å¤„ç†å•å­—ç¬¦
             if(regex.empty()) return;
             if(regex.size() == 1)
             {
                 symbol_ = regex[0];
                 return;
             }
-            else if(regex[0] == '(') //·Çµ¥×Ö·û£¬µİ¹é·Ö½â
+            else if(regex[0] == '(') //éå•å­—ç¬¦ï¼Œé€’å½’åˆ†è§£
             {
                 unsigned int brackets_count = 1;
                 for(unsigned int ind = 1;ind < regex.size(); ind++)
@@ -409,22 +409,22 @@ namespace RE_NFA_DFA
                     if(brackets_count == 0)
                     {
                         left_->recursive_split(regex.substr(1, ind - 1));
-                        if(ind + 1 == regex.size()) //±éÀúÍêÀ¨ºÅÄÚÈİºó£¬ÒÑ¾­Ã»ÓĞ¸ü¶àµÄ×Ö·û£¬´¦ÀíREÖĞÖ»ÓĞÒ»¸öÀ¨ºÅ×éµÄÇé¿ö
+                        if(ind + 1 == regex.size()) //éå†å®Œæ‹¬å·å†…å®¹åï¼Œå·²ç»æ²¡æœ‰æ›´å¤šçš„å­—ç¬¦ï¼Œå¤„ç†REä¸­åªæœ‰ä¸€ä¸ªæ‹¬å·ç»„çš„æƒ…å†µ
                         {
-                            //Ã»ÓĞ¸ü¶àµÄ²Ù×÷·ûºÍ×Ó±í´ïÊ½
-                            operation_= '.';//Ä¬ÈÏ²Ù×÷ÊÇÁ¬½Ó
+                            //æ²¡æœ‰æ›´å¤šçš„æ“ä½œç¬¦å’Œå­è¡¨è¾¾å¼
+                            operation_= '.';//é»˜è®¤æ“ä½œæ˜¯è¿æ¥
                             right_ = nullptr;
                             return;
                         }
-                        else if(regex[ind + 1] == '*')  // ±Õ°ü
+                        else if(regex[ind + 1] == '*')  // é—­åŒ…
                         {
                             left_->kleene_star_ = true;
-                            if(regex[ind + 2] == '+')   // »ò£¨Ñ¡Ôñ£©
+                            if(regex[ind + 2] == '+')   // æˆ–ï¼ˆé€‰æ‹©ï¼‰
                             {
                                 operation_ = '+';
                                 right_->recursive_split(regex.substr(ind + 3));
                             }
-                            else    // Á¬½Ó
+                            else    // è¿æ¥
                             {
                                 operation_ = '.';
                                 right_->recursive_split(regex.substr(ind + 2));
@@ -444,11 +444,11 @@ namespace RE_NFA_DFA
                     }
                 }
             }
-            else    //´¦ÀíÕâÁ½¸ö×Ö·ûµÄÇé¿ö
+            else    //å¤„ç†è¿™ä¸¤ä¸ªå­—ç¬¦çš„æƒ…å†µ
             {
                 if(regex.size() == 2)
                 {
-                    //Èç:ab, a*
+                    //å¦‚:ab, a*
                     if(regex[1] == '*')
                     {
                         symbol_ = regex[0];
@@ -462,7 +462,7 @@ namespace RE_NFA_DFA
                         operation_ = '.';
                     }
                 }
-                else if(regex[1] == '+')    //µÚÒ»¸ö×Ö·ûÊÇ symbol
+                else if(regex[1] == '+')    //ç¬¬ä¸€ä¸ªå­—ç¬¦æ˜¯ symbol
                 {
                     left_->symbol_ = regex[0];
                     right_->recursive_split(regex.substr(2));
@@ -523,7 +523,7 @@ namespace RE_NFA_DFA
             NFA nfa;
             nfa.set_alphabet(alphabet_);
             nfa.set_epsilon(epsilon_);
-            if(is_char())   //Èç¹ûÊÇµ¥×Ö·û£¬Ö±½Ó·µ»ØÒ»¸ö¶ÔÓ¦ÓÚµ¥×Ö·ûµÄNFA
+            if(is_char())   //å¦‚æœæ˜¯å•å­—ç¬¦ï¼Œç›´æ¥è¿”å›ä¸€ä¸ªå¯¹åº”äºå•å­—ç¬¦çš„NFA
             {
                 nfa = nfa.symbol_NFA(symbol_);
             }
@@ -619,13 +619,13 @@ namespace RE_NFA_DFA
     };
 
 
-    //Table
+    // çŠ¶æ€è½¬ç§»è¡¨
     class Table
     {
     public:
         Table(const vector<State*>& all_states, set<string> alphabet)
         {
-            //¼ÇÂ¼×´Ì¬¼¯ºÏÖĞµÄËùÓĞ×´Ì¬µÄ name_
+            //è®°å½•çŠ¶æ€é›†åˆä¸­çš„æ‰€æœ‰çŠ¶æ€çš„ name_
             for(State* s : all_states) states_names_.insert(s->get_name());
 
             for(int i = 1;i < states_names_.size();i++)
@@ -644,26 +644,26 @@ namespace RE_NFA_DFA
         Table() = default;
 
     private:
-        //´æ´¢FAµÄ×ÖÄ¸±í
+        //å­˜å‚¨FAçš„å­—æ¯è¡¨
         set<string> alphabet_;
-        //±íÊ¾×´Ì¬Ö®¼äµÄÁ¬½Ó¹ØÏµ£¨×´Ì¬×ªÒÆ±í£©±íÊ¾´Ó×´Ì¬iÔÚÊäÈëjÉÏÊÇ·ñÓĞ×ªÒÆ
+        //è¡¨ç¤ºçŠ¶æ€ä¹‹é—´çš„è¿æ¥å…³ç³»ï¼ˆçŠ¶æ€è½¬ç§»è¡¨ï¼‰è¡¨ç¤ºä»çŠ¶æ€iåœ¨è¾“å…¥jä¸Šæ˜¯å¦æœ‰è½¬ç§»
         vector<vector<bool>> cells_;
-        //´æ´¢ËùÓĞ×´Ì¬Ãû³ÆµÄ¼¯ºÏ
+        //å­˜å‚¨æ‰€æœ‰çŠ¶æ€åç§°çš„é›†åˆ
         set<string> states_names_;
-        //×´Ì¬¼¯ºÏ
+        //çŠ¶æ€é›†åˆ
         vector<State*> states_;
 
     public:
         void set_bool(const string& A, const string& B, bool b)
         {
-            //¶¨Î» A ºÍ B ÔÚ states_names_ ÖĞµÄÎ»ÖÃ
+            //å®šä½ A å’Œ B åœ¨ states_names_ ä¸­çš„ä½ç½®
             auto iter = std::find(states_names_.begin(), states_names_.end(), A);
             auto pos_A = std::distance(states_names_.begin(), iter);
             iter = std::find(states_names_.begin(), states_names_.end(), B);
             auto pos_B = std::distance(states_names_.begin(), iter);
             if(pos_B < pos_A)
                 std::swap(pos_A, pos_B);
-            cells_[pos_B - 1][pos_A] = b; //´Ópos_B×´Ì¬µ½×´Ì¬pos_AÊÇ£¨·ñ£©´æÔÚ×ªÒÆÈ¡¾öÓÚ b
+            cells_[pos_B - 1][pos_A] = b; //ä»pos_BçŠ¶æ€åˆ°çŠ¶æ€pos_Aæ˜¯ï¼ˆå¦ï¼‰å­˜åœ¨è½¬ç§»å–å†³äº b
         }
 
         void print() const
@@ -676,9 +676,9 @@ namespace RE_NFA_DFA
                 for (int k = 0; k < cells_[i].size(); k++)
                 {
                     cout << "  ";
-                    if(cells_[i][k])  //Èç¹û´Óiµ½k´æÔÚ×ªÒÆ£¬Ôò
+                    if(cells_[i][k])  //å¦‚æœä»iåˆ°kå­˜åœ¨è½¬ç§»ï¼Œåˆ™
                         cout << "X";
-                    else    //²»´æÔÚ£¬Ôò
+                    else    //ä¸å­˜åœ¨ï¼Œåˆ™
                         cout << "-";
                 }
                 i++;
@@ -686,10 +686,10 @@ namespace RE_NFA_DFA
             }
         }
 
-        //»ñÈ¡ Á½¸ö×´Ì¬Ö®¼äµÄµÈ¼ÛĞÔ£¨bool£©£¬Óëset_bool ÏàËÆ
+        //è·å– ä¸¤ä¸ªçŠ¶æ€ä¹‹é—´çš„ç­‰ä»·æ€§ï¼ˆboolï¼‰ï¼Œä¸set_bool ç›¸ä¼¼
         [[nodiscard]] bool get_bool(const string& A, const string& B) const
         {
-            //Èç¹ûÏàµÈ¡£Ö±½Ó·µ»Ø
+            //å¦‚æœç›¸ç­‰ã€‚ç›´æ¥è¿”å›
             if(A == B) return true;
             auto iter_A = std::find(states_names_.begin(), states_names_.end(), A);
             auto pos_A = std::distance(states_names_.begin(), iter_A);
@@ -709,7 +709,7 @@ namespace RE_NFA_DFA
                 {
                     if(sa->is_accepting() && !sb->is_accepting())
                     {
-                        set_bool(sa->get_name(), sb->get_name(), true); //ÉèÖÃ×ªÒÆ
+                        set_bool(sa->get_name(), sb->get_name(), true); //è®¾ç½®è½¬ç§»
                     }
                 }
             }
@@ -725,7 +725,7 @@ namespace RE_NFA_DFA
                             continue;
                         if(get_bool(sa->get_name(), sb->get_name()))
                         {
-                            for(auto sym : alphabet_)   //Èç¹û´æÔÚ×ªÒÆ£¬Ñ°ÕÒÕâÑùµÄ×ªÒÆ×éºÏ
+                            for(auto sym : alphabet_)   //å¦‚æœå­˜åœ¨è½¬ç§»ï¼Œå¯»æ‰¾è¿™æ ·çš„è½¬ç§»ç»„åˆ
                             {
                                 for(auto sc : states_)
                                 {
@@ -751,15 +751,15 @@ namespace RE_NFA_DFA
             }
         }
 
-        //»ñÈ¡ºÏ²¢ºóµÄ×´Ì¬¼¯ºÏ¡£Í¨¹ı²éÕÒµÈ¼Û×´Ì¬£¬´´½¨ĞÂµÄºÏ²¢×´Ì¬£¬²¢ÉèÖÃÕâĞ©×´Ì¬µÄ×ªÒÆ¹ØÏµ
+        //è·å–åˆå¹¶åçš„çŠ¶æ€é›†åˆã€‚é€šè¿‡æŸ¥æ‰¾ç­‰ä»·çŠ¶æ€ï¼Œåˆ›å»ºæ–°çš„åˆå¹¶çŠ¶æ€ï¼Œå¹¶è®¾ç½®è¿™äº›çŠ¶æ€çš„è½¬ç§»å…³ç³»
         [[nodiscard]] vector<State*> get_merged_states() const
         {
             vector<State*> return_states;
-            for(State* s : states_) //Ìø¹ı¶à×Ö·û names£¬ »ñÈ¡ equivalent_states
+            for(State* s : states_) //è·³è¿‡å¤šå­—ç¬¦ namesï¼Œ è·å– equivalent_states
             {
-                //»ñÈ¡×´Ì¬¼¯ºÏÖĞ¸÷×´Ì¬µÄµÈ¼Û×´Ì¬
+                //è·å–çŠ¶æ€é›†åˆä¸­å„çŠ¶æ€çš„ç­‰ä»·çŠ¶æ€
                 vector<State*> equivalent_states = get_equivalent_states(s);
-                //state_name£¬³õÊ¼»¯Îª {
+                //state_nameï¼Œåˆå§‹åŒ–ä¸º {
                 string state_name = "{";
                 set<string> names;
                 names.insert(s->get_name());
@@ -767,14 +767,14 @@ namespace RE_NFA_DFA
                 {
                     names.insert(eq->get_name());
                 }
-                //¼ÓÈëËùÓĞµÄname
+                //åŠ å…¥æ‰€æœ‰çš„name
                 for(const auto& name : names)
                 {
                     state_name.append(name);
                     if(name != *names.rbegin())
-                        state_name.append(", "); // ", "×÷Îª·Ö¸î·û
+                        state_name.append(", "); // ", "ä½œä¸ºåˆ†å‰²ç¬¦
                 }
-                state_name.append("}");//½áÎ²
+                state_name.append("}");//ç»“å°¾
                 bool is_starting = false;
                 bool is_accepting = false;
                 for(auto state : equivalent_states)
@@ -787,7 +787,7 @@ namespace RE_NFA_DFA
                 auto to_add = new State(state_name, is_starting, is_accepting);
                 return_states.push_back(to_add);
             }
-            //ÒÆ³ıÖØ¸´µÄ×´Ì¬£¬³õÊ¼»¯Ò»¸ö temp
+            //ç§»é™¤é‡å¤çš„çŠ¶æ€ï¼Œåˆå§‹åŒ–ä¸€ä¸ª temp
             vector<State*> temp;
             for(State* s : return_states)
             {
@@ -798,21 +798,21 @@ namespace RE_NFA_DFA
                         duplication++;
                 }
                 if(temp.empty() || duplication == 0)
-                    temp.push_back(s);  //½«Ã»ÓĞÖØ¸´µÄ×´Ì¬Ìí¼Óµ½ temp ÖĞ
+                    temp.push_back(s);  //å°†æ²¡æœ‰é‡å¤çš„çŠ¶æ€æ·»åŠ åˆ° temp ä¸­
             }
-            //¸üĞÂ return_states
+            //æ›´æ–° return_states
             return_states = temp;
-            for(State* s : return_states)   //ÉèÖÃ×´Ì¬¼äµÄ×ªÒÆ
+            for(State* s : return_states)   //è®¾ç½®çŠ¶æ€é—´çš„è½¬ç§»
             {
                 for(auto sym : alphabet_)
                 {
                     string name_of_referenced_state =
                             s->get_name().substr(1, s->get_name().find(',') - 1);
-                    if(name_of_referenced_state.back() == '}')  //Èç¹ûµÚÒ»¸ö×´Ì¬µÄ×îºóÒ»¸ö×Ö·ûÊÇ'}',ÔòÈ¥µô'}'
+                    if(name_of_referenced_state.back() == '}')  //å¦‚æœç¬¬ä¸€ä¸ªçŠ¶æ€çš„æœ€åä¸€ä¸ªå­—ç¬¦æ˜¯'}',åˆ™å»æ‰'}'
                         name_of_referenced_state =
                                 name_of_referenced_state.substr(0, name_of_referenced_state.size() - 1);
                     State* from_reference;
-                    for(auto ref : states_)     //ÔÚstate_ ÖĞ²éÕÒµ½µÚÒ»¸ö×´Ì¬µÄµÈ¼Û×´Ì¬
+                    for(auto ref : states_)     //åœ¨state_ ä¸­æŸ¥æ‰¾åˆ°ç¬¬ä¸€ä¸ªçŠ¶æ€çš„ç­‰ä»·çŠ¶æ€
                     {
                         if(ref->get_name() == name_of_referenced_state)
                         {
@@ -822,7 +822,7 @@ namespace RE_NFA_DFA
                     }
                     State* to_reference = from_reference->get_transition(sym[0]).first->second;
                     State* to_state;
-                    for(auto possible_destination : return_states)  //²éÕÒ°üº¬ to_reference nameµÄ×´Ì¬²¢¸³Öµ¸øto_state
+                    for(auto possible_destination : return_states)  //æŸ¥æ‰¾åŒ…å« to_reference nameçš„çŠ¶æ€å¹¶èµ‹å€¼ç»™to_state
                     {
                         if(possible_destination->get_name().find(to_reference->get_name()) !=
                         possible_destination->get_name().npos)
@@ -839,7 +839,7 @@ namespace RE_NFA_DFA
             vector<State*> return_states;
             for(const auto& ss : states_)
             {
-                if(!get_bool(s->get_name(), ss->get_name()))    //²»´æÔÚ×ªÒÆ
+                if(!get_bool(s->get_name(), ss->get_name()))    //ä¸å­˜åœ¨è½¬ç§»
                     return_states.push_back(ss);
             }
             return return_states;
@@ -847,7 +847,7 @@ namespace RE_NFA_DFA
     };
 
 
-    //DFA£¨ÊôÓÚNFAµÄÌØÊâÖÖÀà£©
+    //DFAï¼ˆå±äºNFAçš„ç‰¹æ®Šç§ç±»ï¼‰
     class DFA
     {
     public:
@@ -858,15 +858,15 @@ namespace RE_NFA_DFA
         }
 
     private:
-        //×ÖÄ¸±í
+        //å­—æ¯è¡¨
         set<string> alphabet_;
-        //½ÓÊÕ×´Ì¬¼¯ºÏ
+        //æ¥æ”¶çŠ¶æ€é›†åˆ
         vector<State*> accepting_states_;
-        //ÆğÊ¼×´Ì¬
+        //èµ·å§‹çŠ¶æ€
         State* starting_state_;
-        //ËùÓĞ×´Ì¬µÄ¼¯ºÏ
+        //æ‰€æœ‰çŠ¶æ€çš„é›†åˆ
         vector<State*> all_states_;
-        //·ûºÅ±í
+        //ç¬¦å·è¡¨
         Table table_;
     public:
         bool operator==(const DFA& rhs_dfa) const

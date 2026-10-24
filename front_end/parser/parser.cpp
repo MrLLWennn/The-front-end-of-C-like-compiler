@@ -1,18 +1,21 @@
 //
-// Created by 86198 on 2024/10/20.
+// åˆ›å»ºè€…ï¼š86198ï¼›æ—¥æœŸï¼š2024/10/20ã€‚
 //
 
 #include "parser.h"
+#include <algorithm>
 
 
 void my_compiler::Parser::generate_grammatical_analysis_tree_aux()
 {
-    //²úÉúÊ½ÍÆµ¼Ô¤´¦Àí
-    // Èç¹û²úÉúÊ½ÖĞÁ¬ĞøÁ½¸öÍÆµ¼µÄ×ó²¿ ÏàÍ¬£¬¼´ÍÆµ¼ÏàÍ¬µÄ·ÇÖÕ½á·ûºÅ
-    // ÇÒµÚ¶ş¸ö²úÉúÊ½µÄÓÒ²¿ ÊÇ empty £¬¼´²úÉúÊ½Ó¦¸ÃÍÆµ¼Îª ·ÇÖÕ½á·ûºÅ -> empty
-    // ĞèÒªÉ¾³ıµÚÒ»¸ö²úÉúÊ½
-    // Îª±ÜÃâ infer_·ÃÎÊÔ½½ç£¬ÇÒ×îºóÒ»¸öÍÆµ¼ÎªÖ±½ÓÍÆµ¼  $ -> empty, Ö±½ÓÌø¹ı×îºóÒ»¸öµÄÅĞ¶Ï
-    for(size_t i = 0;i < tree_.infer_.size() - 1;)
+    //äº§ç”Ÿå¼æ¨å¯¼é¢„å¤„ç†
+    // å¦‚æœäº§ç”Ÿå¼ä¸­è¿ç»­ä¸¤ä¸ªæ¨å¯¼çš„å·¦éƒ¨ ç›¸åŒï¼Œå³æ¨å¯¼ç›¸åŒçš„éç»ˆç»“ç¬¦å·
+    // ä¸”ç¬¬äºŒä¸ªäº§ç”Ÿå¼çš„å³éƒ¨ æ˜¯ empty ï¼Œå³äº§ç”Ÿå¼åº”è¯¥æ¨å¯¼ä¸º éç»ˆç»“ç¬¦å· -> empty
+    // éœ€è¦åˆ é™¤ç¬¬ä¸€ä¸ªäº§ç”Ÿå¼
+    // ä¸ºé¿å… infer_è®¿é—®è¶Šç•Œï¼Œä¸”æœ€åä¸€ä¸ªæ¨å¯¼ä¸ºç›´æ¥æ¨å¯¼  $ -> empty, ç›´æ¥è·³è¿‡æœ€åä¸€ä¸ªçš„åˆ¤æ–­
+    if (tree_.infer_.empty())
+        throw std::logic_error("cannot build a tree without productions");
+    for(size_t i = 0;i + 1 < tree_.infer_.size();)
     {
         string cur = tree_.infer_[i];
         size_t index1 = cur.find("->");
@@ -23,12 +26,13 @@ void my_compiler::Parser::generate_grammatical_analysis_tree_aux()
         string next_right = tree_.infer_[i + 1].substr(index2 + 2);
         remove_front_back_blank(next_left);
         remove_front_back_blank(next_right);
-        if(cur_left == next_left && next_right == "empty")  //Èç¹ûÂú×ã
+        if(cur_left == next_left && next_right == "empty")  //å¦‚æœæ»¡è¶³
         {
-            //½«µ±Ç°²úÉúÊ½É¾³ı£¬±£Áô ÍÆµ¼³öÎª empty µÄ
+            //å°†å½“å‰äº§ç”Ÿå¼åˆ é™¤ï¼Œä¿ç•™ æ¨å¯¼å‡ºä¸º empty çš„
             tree_.infer_.erase(std::remove_if(tree_.infer_.begin(), tree_.infer_.end(),
-                                              [cur](const string& value) {
-                                                  return value == cur; // É¾³ıµ±Ç°²úÉúÊ½
+                                              [cur](const string& value)
+                                              {
+                                                  return value == cur; // åˆ é™¤å½“å‰äº§ç”Ÿå¼
                                               }), tree_.infer_.end());
             i += 2;
             if(i >= tree_.infer_.size())
@@ -49,13 +53,13 @@ void my_compiler::Parser::generate_grammatical_analysis_tree_aux()
     remove_front_back_blank(left);
     remove_front_back_blank(right);
     int op = 1;
-    //¶ÔÓÚµÚÒ»¸ö²úÉúÊ½ <S> -> <program> ÌØÊâ´¦Àí
+    //å¯¹äºç¬¬ä¸€ä¸ªäº§ç”Ÿå¼ <S> -> <program> ç‰¹æ®Šå¤„ç†
     tree_.root_ = std::make_shared<Node>(op++, left, false);
     auto right_node = std::make_shared<Node>(op++, right, false);
     tree_.root_->child_.emplace_back(right_node);
     right_node->parent_ = tree_.root_;
     auto cur = tree_.root_->get_node(right);
-    file_out_ << cur << "£¬Æä¸¸½ÚµãÎª£º" << cur->parent_ << endl;
+    file_out_ << cur << "ï¼Œå…¶çˆ¶èŠ‚ç‚¹ä¸ºï¼š" << cur->parent_ << endl;
     vector<shared_ptr<Node>> nodes;
 
     for(size_t i = 1;i < tree_.infer_.size();i++)
@@ -69,7 +73,7 @@ void my_compiler::Parser::generate_grammatical_analysis_tree_aux()
             if(is_terminal(split[0]))
             {
                 auto node = std::make_shared<Node>(op++, split[0], true);
-                file_out_ << node << "£¬Æä¸¸½ÚµãÎª£º" ;
+                file_out_ << node << "ï¼Œå…¶çˆ¶èŠ‚ç‚¹ä¸ºï¼š" ;
                 cur->child_.push_back(node);
                 node->parent_ = cur;
                 file_out_ << node->parent_ << endl;
@@ -77,7 +81,7 @@ void my_compiler::Parser::generate_grammatical_analysis_tree_aux()
             else if(is_non_terminal(split[0]))
             {
                 auto node = std::make_shared<Node>(op++, split[0], false);
-                file_out_ << node << "£¬Æä¸¸½ÚµãÎª£º";
+                file_out_ << node << "ï¼Œå…¶çˆ¶èŠ‚ç‚¹ä¸ºï¼š";
                 cur->child_.push_back(node);
                 node->parent_ = cur;
                 file_out_ << node->parent_ <<endl;
@@ -91,7 +95,7 @@ void my_compiler::Parser::generate_grammatical_analysis_tree_aux()
                 if(is_terminal(s))
                 {
                     auto node = std::make_shared<Node>(op++, s, true);
-                    file_out_ << node << "£¬Æä¸¸½ÚµãÎª£º";
+                    file_out_ << node << "ï¼Œå…¶çˆ¶èŠ‚ç‚¹ä¸ºï¼š";
                     cur->child_.push_back(node);
                     node->parent_ = cur;
                     file_out_ << node->parent_ << endl;
@@ -99,7 +103,7 @@ void my_compiler::Parser::generate_grammatical_analysis_tree_aux()
                 else if(is_non_terminal(s))
                 {
                     auto node = std::make_shared<Node>(op++, s, false);
-                    file_out_ << node << "£¬Æä¸¸½ÚµãÎª£º";
+                    file_out_ << node << "ï¼Œå…¶çˆ¶èŠ‚ç‚¹ä¸ºï¼š";
                     cur->child_.push_back(node);
                     node->parent_ = cur;
                     file_out_ << node->parent_ << endl;
@@ -114,8 +118,8 @@ void my_compiler::Parser::generate_grammatical_analysis_tree_aux()
             string next_left = tree_.infer_[i + 1].substr(0, index2);
             remove_front_back_blank(next_left);
 
-            //Èç¹ûÊÇ Á¬ĞøÍÆµ¼³ö empty
-            //Èç £º <var>' -> empty
+            //å¦‚æœæ˜¯ è¿ç»­æ¨å¯¼å‡º empty
+            //å¦‚ ï¼š <var>' -> empty
             //<term>' -> empty
             //<additive-expression>' -> empty
             //<simple-expression>' -> empty
@@ -125,7 +129,7 @@ void my_compiler::Parser::generate_grammatical_analysis_tree_aux()
             //<simple-expression>' -> empty
             //<arg-list>' -> empty
             //<term>' -> empty
-            //Ôò ĞèÒª´ÓºóÏÈÇ°±éÀú£¬É¾³ı nodes ÖĞ×îºó¼ÓÈëµÄÇÒ value_ == left µÄ node;
+            //åˆ™ éœ€è¦ä»åå…ˆå‰éå†ï¼Œåˆ é™¤ nodes ä¸­æœ€ååŠ å…¥çš„ä¸” value_ == left çš„ node;
             for(int j = nodes.size() - 1;j >= 0;j--)
             {
                 if(nodes[j]->value_ == next_left)
@@ -149,7 +153,7 @@ void my_compiler::Parser::error_aux()
 void my_compiler::Parser::predictive_analysis_aux()
 {
 
-    //±£´æÓï·¨Ô¤²â·ÖÎöÍÆµ¼µÄ¸÷¸ö²úÉúÊ½, ÓÃÓÚ¹¹½¨Óï·¨·ÖÎöÊ÷
+    //ä¿å­˜è¯­æ³•é¢„æµ‹åˆ†ææ¨å¯¼çš„å„ä¸ªäº§ç”Ÿå¼, ç”¨äºæ„å»ºè¯­æ³•åˆ†ææ ‘
     vector<string> productions_;
 
     vector<string> input;
@@ -159,19 +163,19 @@ void my_compiler::Parser::predictive_analysis_aux()
         {
             input.emplace_back("number");
         }
-        else if(tokens_[i].is_identifier() && tokens_[i + 1].get_attribute_value() == "(")  //º¯Êı±êÊ¶·û
+        else if(tokens_[i].is_identifier() && i + 1 < tokens_.size() && tokens_[i + 1].get_attribute_value() == "(")  //å‡½æ•°æ ‡è¯†ç¬¦
         {
             input.emplace_back("identifier-function");
         }
-        else if(tokens_[i].is_identifier() && tokens_[i - 1].get_attribute_value() == "struct")
+        else if(tokens_[i].is_identifier() && i > 0 && tokens_[i - 1].get_attribute_value() == "struct")
         {
             input.emplace_back("identifier-struct");
         }
-        else if(tokens_[i].is_identifier() && (tokens_[i + 1].get_attribute_value() == "="
+        else if(tokens_[i].is_identifier() && i + 1 < tokens_.size() && (tokens_[i + 1].get_attribute_value() == "="
                                             || tokens_[i + 1].get_attribute_value() == "+="
                                             || tokens_[i + 1].get_attribute_value() == "-="
                                             || tokens_[i + 1].get_attribute_value() == "/="
-                                            || tokens_[i + 1].get_attribute_value() == "*=")) //±äÁ¿1 ±êÊ¶·û
+                                            || tokens_[i + 1].get_attribute_value() == "*=")) //å˜é‡1 æ ‡è¯†ç¬¦
         {
             input.emplace_back("identifier1");
         }
@@ -179,7 +183,7 @@ void my_compiler::Parser::predictive_analysis_aux()
         {
             input.emplace_back("identifier");
         }
-        else    //¶ÔÓÚ¹Ø¼ü×ÖºÍ¶¨½ç·û
+        else    //å¯¹äºå…³é”®å­—å’Œå®šç•Œç¬¦
         {
             input.emplace_back(tokens_[i].get_attribute_value());
         }
@@ -206,81 +210,82 @@ void my_compiler::Parser::predictive_analysis_aux()
 
 
 
-    struct temp_struct
+    const auto peek = [&input](std::size_t index) -> string
     {
-        vector<Stack<string>> stacks_;
-        vector<int> curs_;
+        return index < input.size() ? input[index] : "$";
     };
-
-
-    temp_struct history;
-
-    string top = stack_.top();
-    auto cur = 0;
-    file_out_ << stack_;
-    string symbol = input[cur];
-    file_out_ << "     ---     "  << "µ±Ç°ÊäÈë·ûºÅÎª£º" << symbol << endl;
-    history.stacks_.emplace_back(stack_);
-    history.curs_.emplace_back(cur);
-    while(top != "$" && cur <= input.size())
+    const auto fail = [this](const string& code, const string& message,
+                             std::size_t index) -> void
     {
-
-        if(cur == input.size())
+        const auto line = index < tokens_.size() ? tokens_[index].get_line() : 0;
+        throw CompilationError(code, pretreatment_file, line, 0, message);
+    };
+    // å› å­åŒ–å¯ä»¥æŠŠç»ˆç»“ç¬¦æœŸå¾…å˜æˆéç»ˆç»“ç¬¦é€‰æ‹©ï¼Œè¯Šæ–­ä¸èƒ½ä¾èµ–æ´¾ç”Ÿåå­—ã€‚
+    // åªæœ‰éç©ºè¡¨é¡¹å½’å¹¶åæŒ‡å‘åŒä¸€ç§ç”¨æˆ·å¯è¯» Tokenï¼Œæ‰æŠ¥å‘Šæ˜ç¡®çš„ Token ç¼ºå¤±ã€‚
+    const auto expected_token = [](const auto& row) -> string
+    {
+        vector<string> labels;
+        for(const auto& entry : row)
         {
-            if(stack_.size() >= 2)
-            {
-                bool empty = false;
-                while(stack_.top() != "$")
-                {
-                    for(const auto& p : predictive_analysis_table_.productions_[stack_.top()])
-                    {
-                        if(p == "empty")    //ÄÜÖ±½ÓÍÆ³öempty
-                        {
-                            //Ö±½Óµ¯Õ»
-                            empty = true;
-                            stack_.pop();
-                            file_out_ << stack_;
-                            file_out_ << "     ---     "  << "µ±Ç°ÊäÈë·ûºÅÎª£º$" << endl;
-                            break;
-                        }
-                    }
-                    if(!empty)
-                    {
-                        cout << "´íÎó" << endl;
-                        exit(1);
-                    }
-                }
-            }
-            break;
+            if(entry.second.empty())
+                continue;
+            const auto& token = entry.first;
+            if(token == "identifier" || token == "identifier1" ||
+               token == "identifier-function" || token == "identifier-struct")
+                labels.emplace_back("identifier");
+            else
+                labels.push_back(token);
         }
+        std::sort(labels.begin(), labels.end());
+        labels.erase(std::unique(labels.begin(), labels.end()), labels.end());
+        return labels.size() == 1 ? labels.front() : string{};
+    };
+    if (input.empty())
+        fail("E_PARSE_EMPTY", "expected a declaration; input is empty", 0);
 
-        top = stack_.top();
-        symbol = input[cur];
-        auto next = cur + 1;
-        auto next_next = next + 1;
+    std::size_t cur = 0;
+    while (stack_.top() != "$")
+    {
+        string top = stack_.top();
+        const string symbol = peek(cur);
+        if (cur == input.size())
+        {
+            // ä»…å½“æ ˆä¸­å‰©ä½™ç¬¦å·éƒ½å¯ç©ºæ—¶ï¼Œæ‰å…è®¸è¾“å…¥ç»“æŸã€‚
+            // æ²¿ç”¨æ—§å®ç°çš„ç›´æ¥ empty è§„åˆ™ï¼Œä¸ä¸´æ—¶ç¼–é€ äº§ç”Ÿå¼ã€‚
+            const auto& alternatives = predictive_analysis_table_.productions_[top];
+            if (std::find(alternatives.begin(), alternatives.end(), "empty") == alternatives.end())
+                fail("E_PARSE_EOF", "unexpected end of input while expecting " + top, cur);
+            stack_.pop();
+            productions_.emplace_back(top + " -> empty");
+            continue;
+        }
+        const auto next = cur + 1;
+        const auto next_next = next + 1;
 
         if(top == symbol)
         {
             stack_.pop();
             ++cur;
         }
-        else if(top == "<declaration>" && input[next_next] == "identifier-function" && input[cur] == "const")
+        else if(top == "<declaration>" && peek(next_next) == "identifier-function" && input[cur] == "const")
         {
             stack_.pop();
             stack_.emplace("<func-declaration>");
             string prod = top.append(" -> <func-declaration>");
             productions_.emplace_back(prod);
         }
-        else if(top == "<declaration>" && input[next] == "identifier-function") //Çø·ÖÒ»°ã±êÊ¶·ûºÍ º¯Êı±êÊ¶·û
+        else if(top == "<declaration>" && peek(next) == "identifier-function") //åŒºåˆ†ä¸€èˆ¬æ ‡è¯†ç¬¦å’Œ å‡½æ•°æ ‡è¯†ç¬¦
         {
             auto vec = predictive_analysis_table_.productions_[top];
             auto iter = std::find(vec.begin(), vec.end(), "<func-declaration>");
             stack_.pop();
+            if (iter == vec.end())
+                fail("E_PARSE_RULE", "missing function declaration rule", cur);
             stack_.emplace(*iter);
             string prod = top.append(" -> ").append(*iter);
             productions_.emplace_back(prod);
         }
-        else if(top == "<param>" && input[next_next] == "[" && input[next_next + 1] == "]")
+        else if(top == "<param>" && peek(next_next) == "[" && peek(next_next + 1) == "]")
         {
             if(symbol != "const")
             {
@@ -304,24 +309,24 @@ void my_compiler::Parser::predictive_analysis_aux()
                 productions_.emplace_back(prod);
             }
         }
-        else if(top == "<params>" && symbol == "void" && input[next] == ")")
+        else if(top == "<params>" && symbol == "void" && peek(next) == ")")
         {
-            //´ËÊ± Ó¦¸Ã½« <params> ½âÎöÎª 25 <params> -> void
+            //æ­¤æ—¶ åº”è¯¥å°† <params> è§£æä¸º 25 <params> -> void
             stack_.pop();
             stack_.emplace("void");
             string prod = top.append(" -> ").append(symbol);
             productions_.emplace_back(prod);
         }
-        else if(top == "<params>" && input[next] == ")")
+        else if(top == "<params>" && peek(next) == ")")
         {
-            //´ËÊ± Ó¦¸Ã½« <params> ½âÎöÎª 25 <params> -> empty
+            //æ­¤æ—¶ åº”è¯¥å°† <params> è§£æä¸º 25 <params> -> empty
             stack_.pop();
             string prod = top.append(" -> empty");
             productions_.emplace_back(prod);
         }
         else if(top == "<type-specifier>" && symbol == "const")
         {
-            //Ìæ»»Îª <type-specifier> -> <const-type>
+            //æ›¿æ¢ä¸º <type-specifier> -> <const-type>
             stack_.pop();
             stack_.emplace("<const-type>");
             string prod = top.append(" -> <const-type>");
@@ -352,13 +357,13 @@ void my_compiler::Parser::predictive_analysis_aux()
         }
         else if(top == "<expression>" && (symbol == "true" || symbol == "false"))
         {
-            //Ìæ»»Îª <expression> -> <boolean>
+            //æ›¿æ¢ä¸º <expression> -> <boolean>
             stack_.pop();
             stack_.emplace("<boolean>");
             string prod = top.append(" -> ").append(symbol);
             productions_.emplace_back(prod);
         }
-        else if(top == "<statement-list>'" && input[next] != "}")
+        else if(top == "<statement-list>'" && symbol != "}")
         {
             //51 <statement-list>' -> <statement> <statement-list>'
             stack_.pop();
@@ -375,7 +380,7 @@ void my_compiler::Parser::predictive_analysis_aux()
             string prod = top.append(" -> <expression>");
             productions_.emplace_back(prod);
         }
-        else if(top == "<expression>" && (input[next] == "++" || input[next] == "--"))
+        else if(top == "<expression>" && (peek(next) == "++" || peek(next) == "--"))
         {
             //<expression> -> <in-de-expression>
             stack_.pop();
@@ -408,136 +413,24 @@ void my_compiler::Parser::predictive_analysis_aux()
         }
         else if(is_terminal(top))
         {
-            cout << "²úÉúÊ½³ö´í" << endl;
-            cout << "·¢Éú´íÎó£¬¿ªÊ¼»Ö¸´..." << std::endl;
-
-            //¶ÔÓÚ±¾´Î´íÎó£¬½øĞĞ»ØËİ
-            stack_ = history.stacks_[history.stacks_.size() - 2];
-            cur = history.curs_[history.curs_.size() - 2];
-            history.stacks_.pop_back();
-            history.curs_.pop_back();
-
-
-            //¶ÔÓÚ»ØËİºóµÄÕ»¶¥£¨Ò»¶¨Îª·ÇÖÕ½á·ûºÅ£©
-            string temp_top = stack_.top();
-            //Èç¹ûÆä¶ÔÓ¦µÄ²úÉúÊ½ÍÆµ¼³ö²»Í¬£¨>= 2£©µÄÇé¿ö
-            if(predictive_analysis_table_.productions_[temp_top].size() >= 2)
-            {
-                auto iter = std::find(predictive_analysis_table_.productions_[temp_top].begin(),
-                                      predictive_analysis_table_.productions_[temp_top].end(),
-                                      "empty");
-                //ÄÜÍÆ³ö empty
-                if(iter != predictive_analysis_table_.productions_[temp_top].end())
-                {
-                    //Ö±½Óµ¯Õ»£¬Ïàµ±ÓÚ ÍÆ³ö empty
-                    stack_.pop();
-                    string prod = temp_top.append(" -> empty");
-                    productions_.emplace_back(prod);
-                }
-            }
-            else
-            {
-
-                // ¶¨ÒåÍ¬²½·ûºÅ¼¯ºÏ
-                std::set<std::string> sync_tokens = {";", ","}; // ¿ÉÒÔ¸ù¾İĞèÒªÌí¼ÓÆäËû·ûºÅ
-
-                // ¶ªÆúÊäÈë·ûºÅÖ±µ½ÕÒµ½Í¬²½·û
-                while (cur < input.size() && sync_tokens.find(input[cur]) == sync_tokens.end())
-                {
-                    std::cout << "¶ªÆú·ûºÅ: " << input[cur] << std::endl;
-                    ++cur; // ¶ªÆúµ±Ç°·ûºÅ£¬ÒÆ¶¯µ½ÏÂÒ»¸ö·ûºÅ
-                }
-
-                // ÕÒµ½Í¬²½·ûºó£¬¼ÌĞø·ÖÎö
-                if (cur < input.size())
-                {
-                    std::cout << "ÕÒµ½Í¬²½·û: " << input[cur] << std::endl;
-                    // ¶ªÆúÍ¬²½·û£¬¿ÉÒÔÑ¡Ôñ±£ÁôÒÔ¼ÌĞø·ÖÎö
-                    ++cur;
-                }
-
-                // ÖØĞÂ¼ì²éÕ»¶¥ÔªËØÓëµ±Ç°ÊäÈë·ûºÅ
-                if (!stack_.empty())
-                {
-                    top = stack_.top();
-                    std::cout << "»Ö¸´ºó£ºµ±Ç°Õ»¶¥ÔªËØ£º" << top << ", µ±Ç°ÊäÈë·ûºÅÎª£º" << input[cur] << std::endl;
-                }
-                else
-                {
-                    std::cout << "Õ»Îª¿Õ£¬ÖÕÖ¹·ÖÎö" << std::endl;
-                }
-            }
+            fail("E_PARSE_TOKEN", "expected '" + top + "', got '" + symbol + "'", cur);
         }
         else if(predictive_analysis_table_.table_[top][symbol].empty())
         {
-            cout << "µ±Ç°Ô¤²â·ÖÎö±íÎª¿Õ" << endl;
-            auto vec = predictive_analysis_table_.productions_[top];
-            auto iter = std::find(vec.begin(), vec.end(), "empty");
-            if(iter != vec.end())
+            const auto& alternatives = predictive_analysis_table_.productions_[top];
+            if (std::find(alternatives.begin(), alternatives.end(), "empty") != alternatives.end())
             {
+                // ä¿ç•™æ—§å®ç°çš„å¯ç©ºå›é€€ï¼›æœ¬è½®è¯Šæ–­æ”¹é€ ä¸å®£ç§°
+                // å·²æ¶ˆé™¤æ–‡æ³•ä¸­çš„å…¨éƒ¨é¢„æµ‹å†²çªã€‚
                 stack_.pop();
-                string prod = top.append(" -> empty");
-                productions_.emplace_back(prod);
+                productions_.emplace_back(top + " -> empty");
             }
             else
             {
-                //¶ÔÓÚ±¾´Î´íÎó£¬½øĞĞ»ØËİ
-                stack_ = history.stacks_[history.stacks_.size() - 2];
-                cur = history.curs_[history.curs_.size() - 2];
-                history.stacks_.pop_back();
-                history.curs_.pop_back();
-
-
-                //¶ÔÓÚ»ØËİºóµÄÕ»¶¥£¨Ò»¶¨Îª·ÇÖÕ½á·ûºÅ£©
-                string temp_top = stack_.top();
-                //Èç¹ûÆä¶ÔÓ¦µÄ²úÉúÊ½ÍÆµ¼³ö²»Í¬£¨>= 2£©µÄÇé¿ö
-                if(predictive_analysis_table_.productions_[temp_top].size() >= 2)
-                {
-                    auto iter1 = std::find(predictive_analysis_table_.productions_[temp_top].begin(),
-                                          predictive_analysis_table_.productions_[temp_top].end(),
-                                          "empty");
-                    //ÄÜÍÆ³ö empty
-                    if(iter1 != predictive_analysis_table_.productions_[temp_top].end())
-                    {
-                        //Ö±½Óµ¯Õ»£¬Ïàµ±ÓÚ ÍÆ³ö empty
-                        stack_.pop();
-                        string prod = temp_top.append(" -> empty");
-                        productions_.emplace_back(prod);
-                    }
-                }
-                else
-                {
-                    cout << "·¢Éú´íÎó£¬¿ªÊ¼»Ö¸´..." << std::endl;
-
-                    // ¶¨ÒåÍ¬²½·ûºÅ¼¯ºÏ
-                    std::set<std::string> sync_tokens = {";", ","}; // ¿ÉÒÔ¸ù¾İĞèÒªÌí¼ÓÆäËû·ûºÅ
-
-                    // ¶ªÆúÊäÈë·ûºÅÖ±µ½ÕÒµ½Í¬²½·û
-                    while (cur < input.size() && sync_tokens.find(input[cur]) == sync_tokens.end())
-                    {
-                        std::cout << "¶ªÆú·ûºÅ: " << input[cur] << std::endl;
-                        ++cur; // ¶ªÆúµ±Ç°·ûºÅ£¬ÒÆ¶¯µ½ÏÂÒ»¸ö·ûºÅ
-                    }
-
-                    // ÕÒµ½Í¬²½·ûºó£¬¼ÌĞø·ÖÎö
-                    if (cur < input.size())
-                    {
-                        std::cout << "ÕÒµ½Í¬²½·û: " << input[cur] << std::endl;
-                        // ¶ªÆúÍ¬²½·û£¬¿ÉÒÔÑ¡Ôñ±£ÁôÒÔ¼ÌĞø·ÖÎö
-                        ++cur;
-                    }
-
-                    // ÖØĞÂ¼ì²éÕ»¶¥ÔªËØÓëµ±Ç°ÊäÈë·ûºÅ
-                    if (!stack_.empty())
-                    {
-                        top = stack_.top();
-                        std::cout << "»Ö¸´ºó£ºµ±Ç°Õ»¶¥ÔªËØ£º" << top << ", µ±Ç°ÊäÈë·ûºÅÎª£º" << input[cur] << std::endl;
-                    }
-                    else
-                    {
-                        std::cout << "Õ»Îª¿Õ£¬ÖÕÖ¹·ÖÎö" << std::endl;
-                    }
-                }
+                const auto expected = expected_token(predictive_analysis_table_.table_.at(top));
+                if(!expected.empty())
+                    fail("E_PARSE_TOKEN", "expected '" + expected + "', got '" + symbol + "'", cur);
+                fail("E_PARSE_TABLE", "no production for " + top + " with '" + symbol + "'", cur);
             }
         }
         else
@@ -561,18 +454,13 @@ void my_compiler::Parser::predictive_analysis_aux()
             }
         }
 
-        if(cur == input.size() && stack_.size_ >= 2)    //ÊäÈë·ûºÅ·ÖÎö½áÊø£¬µ«ÊÇÕ»²»Îª¿Õ£¨³ıÁË $ Ö®Íâ£©
-        {
-            string prod = stack_.top().append(" -> empty");
-            productions_.emplace_back(prod);
-        }
-
         file_out_ << stack_;
-        file_out_ << "     ---     "  << "µ±Ç°ÊäÈë·ûºÅÎª£º" << symbol << endl;
-        history.stacks_.emplace_back(stack_);
-        history.curs_.emplace_back(cur);
+        file_out_ << "     ---     "  << "å½“å‰è¾“å…¥ç¬¦å·ä¸ºï¼š" << symbol << endl;
     }
-    file_out_ << "Ô¤²â·ÖÎö½áÊø" << endl;
+    file_out_ << "é¢„æµ‹åˆ†æç»“æŸ" << endl;
+
+    if (cur != input.size())
+        fail("E_PARSE_TRAILING", "unexpected trailing token '" + peek(cur) + "'", cur);
 
     for(auto& p : productions_)
     {
@@ -596,6 +484,3 @@ bool my_compiler::Parser::is_terminal(const string &value)
     auto iter = std::find(predictive_analysis_table_.Vt_.begin(), predictive_analysis_table_.Vt_.end(), value);
     return iter != predictive_analysis_table_.Vt_.end();
 }
-
-
-

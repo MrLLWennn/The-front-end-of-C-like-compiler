@@ -1,22 +1,23 @@
 //
-// Created by 86198 on 2024/10/20.
+// åˆ›å»ºè€…ï¼š86198ï¼›æ—¥æœŸï¼š2024/10/20ã€‚
 //
 
 
 #include"header_files.h"
+#include <stdexcept>
 
 
 
-//´ò¿ªÖ¸¶¨ÎÄ¼þÊäÈë/Êä³ö
+//æ‰“å¼€æŒ‡å®šæ–‡ä»¶è¾“å…¥/è¾“å‡º
 Return input_file(fstream& inFile, const string& fileName)
 {
-    inFile.open(fileName);
+    inFile.open(fileName, ios::in);
     if(!inFile)
     {
-        cout << "ÎÄ¼þ" << fileName << "´ò¿ªÊ§°Ü" << endl;
-        return FAILED;
+        cout << "æ–‡ä»¶" << fileName << "æ‰“å¼€å¤±è´¥" << endl;
+        throw std::runtime_error("Cannot open input file: " + fileName);
     }
-    cout << "ÎÄ¼þ" << fileName << "´ò¿ª³É¹¦" << endl;
+    cout << "æ–‡ä»¶" << fileName << "æ‰“å¼€æˆåŠŸ" << endl;
     return SUCCEED;
 }
 
@@ -26,24 +27,24 @@ Return output_file(fstream& outFile, const string& fileName)
     outFile.open(fileName, ios::out);
     if(!outFile)
     {
-        cout << "ÎÄ¼þ" << fileName << "´ò¿ªÊ§°Ü" << endl;
-        return FAILED;
+        cout << "æ–‡ä»¶" << fileName << "æ‰“å¼€å¤±è´¥" << endl;
+        throw std::runtime_error("Cannot open output file: " + fileName);
     }
-    cout << "ÎÄ¼þ" << fileName << "´ò¿ª³É¹¦" << endl;
+    cout << "æ–‡ä»¶" << fileName << "æ‰“å¼€æˆåŠŸ" << endl;
     return SUCCEED;
 }
 
 
-//¹Ø±ÕÊäÈëÊä³öÎÄ¼þ
+//å…³é—­è¾“å…¥è¾“å‡ºæ–‡ä»¶
 void close_file(fstream &file1, fstream &file2)
 {
-    cout << "¶Á/Ð´ÎÄ¼þ¹Ø±Õ" << endl;
+    cout << "è¯»/å†™æ–‡ä»¶å…³é—­" << endl;
     file1.close();
     file2.close();
 }
 
 
-//·Ö¸îÏß
+//åˆ†å‰²çº¿
 void divide_line()
 {
     cout << "------------------------------------------------------------------------------" << endl;
@@ -51,17 +52,17 @@ void divide_line()
 
 
 
-//È¥³ý×Ö·û´®Ç°ºó¶àÓàµÄ¿Õ¸ñ
+//åŽ»é™¤å­—ç¬¦ä¸²å‰åŽå¤šä½™çš„ç©ºæ ¼
 void remove_front_back_blank(string &str)
 {
     if (str[0] == ' ')
-        str.assign(str, 1, str.length() - 1);		//Ê××Ö·ûÎª¿Õ¸ñ
+        str.assign(str, 1, str.length() - 1);		//é¦–å­—ç¬¦ä¸ºç©ºæ ¼
     if (str[str.length() - 1] == ' ')
-        str.assign(str, 0, str.length() - 1);		//Ä©×Ö·ûÎª¿Õ¸ñ
+        str.assign(str, 0, str.length() - 1);		//æœ«å­—ç¬¦ä¸ºç©ºæ ¼
 }
 
 
-// ×Ö·û´®·Ö¸îµÄ¸¨Öúº¯Êý
+// å­—ç¬¦ä¸²åˆ†å‰²çš„è¾…åŠ©å‡½æ•°
 vector<string> split_string(const string& production)
 {
     vector<string> result;

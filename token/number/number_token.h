@@ -1,5 +1,5 @@
 //
-// Created by 86198 on 2024/10/20.
+// 创建者：86198；日期：2024/10/20。
 //
 
 #ifndef MY_COMPILER_NUMBER_TOKEN_H

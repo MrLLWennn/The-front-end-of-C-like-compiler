@@ -1,5 +1,5 @@
 //
-// Created by 86198 on 2024/10/30.
+// åˆ›å»ºè€…ï¼š86198ï¼›æ—¥æœŸï¼š2024/10/30ã€‚
 //
 
 #ifndef MY_COMPILER_ERRORTABLE_H
@@ -17,71 +17,71 @@ namespace my_compiler_error_handler
     class ErrorTable
     {
     private:
-        //´íÎóĞÅÏ¢±í
+        //é”™è¯¯ä¿¡æ¯è¡¨
         map<ErrorDefines, string> error_info_;
-        //´íÎó³öÏÖµÄĞĞÊı
+        //é”™è¯¯å‡ºç°çš„è¡Œæ•°
         size_t line_;
-        //´íÎóÊıÁ¿
+        //é”™è¯¯æ•°é‡
         size_t total_numbers_;
 
     public:
 
         ErrorTable() : line_(0), total_numbers_(0)
         {
-            //¼ÓÈë expected µÄ´íÎó
+            //åŠ å…¥ expected çš„é”™è¯¯
             error_info_.insert(std::make_pair<ErrorDefines, string>(EXPECTED, "expected "));
-            //¼ÓÈë missing µÄ´íÎó
+            //åŠ å…¥ missing çš„é”™è¯¯
             error_info_.insert(std::make_pair<ErrorDefines, string>(MISSING, "missing "));
-            //¼ÓÈë redundant µÄ´íÎó
+            //åŠ å…¥ redundant çš„é”™è¯¯
             error_info_.insert(std::make_pair<ErrorDefines, string>(REDUNDANT, "redundant "));
-            //¼ÓÈë redeclared µÄ´íÎó
+            //åŠ å…¥ redeclared çš„é”™è¯¯
             error_info_.insert(std::make_pair<ErrorDefines, string>(REDECLARED_IDENTIFIER, "redeclared identifier "));
             error_info_.insert(std::make_pair<ErrorDefines, string>(REDECLARED_PROCESS, "redeclared process "));
-            //¼ÓÈë undeclared µÄ
+            //åŠ å…¥ undeclared çš„
             error_info_.insert(std::make_pair<ErrorDefines, string>(UNDECLARED_IDENTIFIER, "undeclared identifier "));
             error_info_.insert(std::make_pair<ErrorDefines, string>(UNDECLARED_PROCESS, "undeclared process "));
-            //¼ÓÈë undefined ´íÎó
+            //åŠ å…¥ undefined é”™è¯¯
             error_info_.insert(std::make_pair<ErrorDefines, string>(UNDEFINED_PROCESS, "undefined process "));
             error_info_.insert(std::make_pair<ErrorDefines, string>(UNDEFINED_PROCESS, "undefined process "));
-            //¼ÓÈë illegal ´íÎó
+            //åŠ å…¥ illegal é”™è¯¯
             error_info_.insert(std::make_pair<ErrorDefines, string>(ILLEGAL_DEFINE, "illegal define "));
             error_info_.insert(std::make_pair<ErrorDefines, string>(ILLEGAL_WORD, "illegal word "));
             error_info_.insert(std::make_pair<ErrorDefines, string>(ILLEGAL_RVALUE_ASSIGN, "illegal rvalue assign"));
-            //¼ÓÈë incompatible ´íÎó
+            //åŠ å…¥ incompatible é”™è¯¯
             error_info_.insert(std::make_pair<ErrorDefines, string>(INCOMPATIBLE_VAR_LIST, "incompatible variable list: "));
-            //¼ÓÈë no matching function ´íÎó
+            //åŠ å…¥ no matching function é”™è¯¯
             error_info_.insert(std::make_pair<ErrorDefines, string>(NO_MATCHING_FUNCTION, "no matching function call to "));
-            //¼ÓÈë Ä¬ÈÏ ´íÎó
+            //åŠ å…¥ é»˜è®¤ é”™è¯¯
             error_info_.insert(std::make_pair<ErrorDefines, string>(EXPECTED_UNQUALIFIED_ID, "expected unqualified-id "));
         }
 
         explicit ErrorTable(const size_t& line)
                 : line_(line), total_numbers_(0)
         {
-            //¼ÓÈë expected µÄ´íÎó
+            //åŠ å…¥ expected çš„é”™è¯¯
             error_info_.insert(std::make_pair<ErrorDefines, string>(EXPECTED, "expected "));
-            //¼ÓÈë missing µÄ´íÎó
+            //åŠ å…¥ missing çš„é”™è¯¯
             error_info_.insert(std::make_pair<ErrorDefines, string>(MISSING, "missing "));
-            //¼ÓÈë redundant µÄ´íÎó
+            //åŠ å…¥ redundant çš„é”™è¯¯
             error_info_.insert(std::make_pair<ErrorDefines, string>(REDUNDANT, "redundant "));
-            //¼ÓÈë redeclared µÄ´íÎó
+            //åŠ å…¥ redeclared çš„é”™è¯¯
             error_info_.insert(std::make_pair<ErrorDefines, string>(REDECLARED_IDENTIFIER, "redeclared identifier "));
             error_info_.insert(std::make_pair<ErrorDefines, string>(REDECLARED_PROCESS, "redeclared process "));
-            //¼ÓÈë undeclared µÄ
+            //åŠ å…¥ undeclared çš„
             error_info_.insert(std::make_pair<ErrorDefines, string>(UNDECLARED_IDENTIFIER, "undeclared identifier "));
             error_info_.insert(std::make_pair<ErrorDefines, string>(UNDECLARED_PROCESS, "undeclared process "));
-            //¼ÓÈë undefined ´íÎó
+            //åŠ å…¥ undefined é”™è¯¯
             error_info_.insert(std::make_pair<ErrorDefines, string>(UNDEFINED_PROCESS, "undefined process "));
             error_info_.insert(std::make_pair<ErrorDefines, string>(UNDEFINED_PROCESS, "undefined process "));
-            //¼ÓÈë illegal ´íÎó
+            //åŠ å…¥ illegal é”™è¯¯
             error_info_.insert(std::make_pair<ErrorDefines, string>(ILLEGAL_DEFINE, "illegal define "));
             error_info_.insert(std::make_pair<ErrorDefines, string>(ILLEGAL_WORD, "illegal word "));
             error_info_.insert(std::make_pair<ErrorDefines, string>(ILLEGAL_RVALUE_ASSIGN, "illegal rvalue assign"));
-            //¼ÓÈë incompatible ´íÎó
+            //åŠ å…¥ incompatible é”™è¯¯
             error_info_.insert(std::make_pair<ErrorDefines, string>(INCOMPATIBLE_VAR_LIST, "incompatible variable list: "));
-            //¼ÓÈë no matching function ´íÎó
+            //åŠ å…¥ no matching function é”™è¯¯
             error_info_.insert(std::make_pair<ErrorDefines, string>(NO_MATCHING_FUNCTION, "no matching function call to "));
-            //¼ÓÈë Ä¬ÈÏ ´íÎó
+            //åŠ å…¥ é»˜è®¤ é”™è¯¯
             error_info_.insert(std::make_pair<ErrorDefines, string>(EXPECTED_UNQUALIFIED_ID, "expected unqualified-id "));
         }
 

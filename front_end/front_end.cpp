@@ -1,8 +1,17 @@
 //
-// Created by 86198 on 2024/11/4.
+// åˆ›å»ºè€…ï¼š86198ï¼›æ—¥æœŸï¼š2024/11/4ã€‚
 //
 
 #include "front_end.h"
+#include "my_compiler/ast_builder.hpp"
+
+my_compiler::ast::Program my_compiler::FrontEnd::build_typed_program()
+{
+    tokens_ = lexer_.lexical_analysis();
+    parser_.grammatical_analysis(tokens_, false);
+    return ast::build(tokens_, pretreatment_file);
+}
+
 
 
 
@@ -10,7 +19,7 @@ void my_compiler::FrontEnd::_front_end_compiling_aux()
 {
 
     tokens_ = lexer_.lexical_analysis();
-    //½«ÉÏÊö´Ê·¨·ÖÎöÆ÷µÃµ½µÄvector<Token> ÓÃÀ´ parser Ê¹ÓÃ
+    //å°†ä¸Šè¿°è¯æ³•åˆ†æå™¨å¾—åˆ°çš„vector<Token> ç”¨æ¥ parser ä½¿ç”¨
 
     parser_.grammatical_analysis(tokens_);
 }
@@ -20,18 +29,18 @@ void my_compiler::FrontEnd::front_end_compiling_aux()
 {
     _front_end_compiling_aux();
 
-    //Éú³É·ûºÅ±í
-    cout << "************------------ ¹ı³Ì£º" << period[4] << "----²½Öè£º" << step[11] << "------------************" << endl;
-    cout << "¶ÁÈëÎÄ¼ş" << lex_file << endl;
-    cout << "ÎÄ¼şĞ´Èë" << symbol_table_file << endl;
+    //ç”Ÿæˆç¬¦å·è¡¨
+    cout << "************------------ è¿‡ç¨‹ï¼š" << period[4] << "----æ­¥éª¤ï¼š" << step[11] << "------------************" << endl;
+    cout << "è¯»å…¥æ–‡ä»¶" << lex_file << endl;
+    cout << "æ–‡ä»¶å†™å…¥" << symbol_table_file << endl;
     generate_symbol_table();
     divide_line();
 
 
-    //½øĞĞÓïÒå·ÖÎö
-    cout << "************------------ ¹ı³Ì£º" << period[4] << "----²½Öè£º" << step[12] << "------------************" << endl;
-    cout << "¶ÁÈëÎÄ¼ş" << processed_grammar_file << endl;
-    cout << "ÎÄ¼şĞ´Èë" << semantic_analysis_file << endl;
+    //è¿›è¡Œè¯­ä¹‰åˆ†æ
+    cout << "************------------ è¿‡ç¨‹ï¼š" << period[4] << "----æ­¥éª¤ï¼š" << step[12] << "------------************" << endl;
+    cout << "è¯»å…¥æ–‡ä»¶" << processed_grammar_file << endl;
+    cout << "æ–‡ä»¶å†™å…¥" << semantic_analysis_file << endl;
     divide_line();
 }
 
@@ -60,12 +69,12 @@ void my_compiler::FrontEnd::generate_symbol_table_aux()
         tokens[i].type_ = get_token_name(tokens_[i].get_token_name_());
     }
     vector<string> file_lines;
-    //¶ÁÈ¡ÎÄ¼şºóÁ½ĞĞÖ®Ç°µÄ
+    //è¯»å–æ–‡ä»¶åä¸¤è¡Œä¹‹å‰çš„
     while(std::getline(file_in_, temp))
     {
         if(file_in_.fail())
         {
-            cout << "¶ÁÈëÊ§°Ü" << endl;
+            cout << "è¯»å…¥å¤±è´¥" << endl;
             break;
         }
         file_lines.emplace_back(temp);
@@ -75,20 +84,20 @@ void my_compiler::FrontEnd::generate_symbol_table_aux()
 
 
 
-    // ¸ü¸ÄtokensÖĞµÄ Identifier
+    // æ›´æ”¹tokensä¸­çš„ Identifier
     for (size_t i = 0; i < tokens.size(); i++)
     {
         if (tokens[i].type_ == "Identifier")
         {
-            // ¼ì²é i + 1 ÊÇ·ñÔ½½ç
+            // æ£€æŸ¥ i + 1 æ˜¯å¦è¶Šç•Œ
             if (i + 1 < tokens.size() && tokens[i + 1].value_ == "(")
             {
-                // ±êÊ¶·ûÊÇº¯Êı
+                // æ ‡è¯†ç¬¦æ˜¯å‡½æ•°
                 tokens[i].type_ = "identifier-function";
             }
             else if (i > 0 && tokens[i - 1].value_ == "struct")
             {
-                // ±êÊ¶·ûÊÇ½á¹¹Ìå
+                // æ ‡è¯†ç¬¦æ˜¯ç»“æ„ä½“
                 tokens[i].type_ = "identifier-struct";
             }
             else if (i + 1 < tokens.size() &&
@@ -97,34 +106,34 @@ void my_compiler::FrontEnd::generate_symbol_table_aux()
                       tokens[i + 1].value_ == "-=" ||
                       tokens[i + 1].value_ == "/=" ||
                       tokens[i + 1].value_ == "*=")) {
-                // ±êÊ¶·ûÊÇ±äÁ¿¸³Öµ
+                // æ ‡è¯†ç¬¦æ˜¯å˜é‡èµ‹å€¼
                 tokens[i].type_ = "identifier1";
             }
             else
             {
-                // ÆäËû±êÊ¶·û
+                // å…¶ä»–æ ‡è¯†ç¬¦
                 std::transform(tokens[i].type_.begin(), tokens[i].type_.end(), tokens[i].type_.begin(), ::tolower);
             }
         }
         else
         {
-            // Ö±½Ó´¦Àí²»Îª Identifier µÄ token
+            // ç›´æ¥å¤„ç†ä¸ä¸º Identifier çš„ token
             std::transform(tokens[i].type_.begin(), tokens[i].type_.end(), tokens[i].type_.begin(), ::tolower);
         }
     }
 
 
-    //±íÕ÷ÔÚ´ËÖ®Ç°³öÏÖ¹ı ×ó´óÀ¨ºÅ { ÔòÎª0£¬ ·ñÔò > 0
+    //è¡¨å¾åœ¨æ­¤ä¹‹å‰å‡ºç°è¿‡ å·¦å¤§æ‹¬å· { åˆ™ä¸º0ï¼Œ å¦åˆ™ > 0
     int left_brace = 0;
 
     for(size_t i = 0;i < tokens.size();)
     {
         if(tokens[i].type_ == "identifier-function")
         {
-            //²»´æÔÚ¶àÓàµÄ×ó´óÀ¨ºÅ
+            //ä¸å­˜åœ¨å¤šä½™çš„å·¦å¤§æ‹¬å·
             if(left_brace == 0)
             {
-                //·µ»ØÖµ²»Îª const µÄº¯Êı
+                //è¿”å›å€¼ä¸ä¸º const çš„å‡½æ•°
                 if(i == 1 || (i >= 2 && tokens[i].value_ != "const"))
                 {
                     string type = tokens[i - 1].value_;
@@ -132,7 +141,7 @@ void my_compiler::FrontEnd::generate_symbol_table_aux()
                     FunctionSymbol func(Category::FUNC, name, type);
                     func.set_address(&func);
                     func.set_property("global function");
-                    //½«²ÎÊı¼ÓÈë parameters_ÖĞ
+                    //å°†å‚æ•°åŠ å…¥ parameters_ä¸­
                     i += 2;
                     for(size_t j = i;j < tokens.size();j++)
                     {
@@ -185,14 +194,14 @@ void my_compiler::FrontEnd::generate_symbol_table_aux()
                         }
                     }
 
-                    //½ÓÏÂÀ´´¦Àí¸Ãº¯ÊıÌå
+                    //æ¥ä¸‹æ¥å¤„ç†è¯¥å‡½æ•°ä½“
                     symbol_table_.emplace_function(func);
                     int inner_brace = 1;
                     if(inner_brace != 0)
                     {
                         for(size_t k = i + 1;k < tokens.size();)
                         {
-                            //¼´Îªº¯Êı¾Ö²¿±äÁ¿ÉùÃ÷
+                            //å³ä¸ºå‡½æ•°å±€éƒ¨å˜é‡å£°æ˜
                             if((tokens[k - 1].value_ == "int"   ||
                                 tokens[k - 1].value_ == "void"  ||
                                 tokens[k - 1].value_ == "float" ||
@@ -200,7 +209,7 @@ void my_compiler::FrontEnd::generate_symbol_table_aux()
                                 tokens[k - 1].value_ == "bool") &&
                                (tokens[k].type_ == "identifier" || tokens[k].type_ == "identifier1"))
                             {
-                                //´¦Àí for Ñ­»·ÖĞµÄ±äÁ¿ÉùÃ÷
+                                //å¤„ç† for å¾ªç¯ä¸­çš„å˜é‡å£°æ˜
                                 if(k >= 3 && tokens[k - 3].value_ == "for")
                                 {
                                     string type1 = tokens[k - 1].value_;
@@ -255,44 +264,44 @@ void my_compiler::FrontEnd::generate_symbol_table_aux()
                                 }
 
                             }
-                            else if(tokens[k].type_ == "identifier" || tokens[k].type_ == "identifier1")    //±äÁ¿Ê¹ÓÃ
+                            else if(tokens[k].type_ == "identifier" || tokens[k].type_ == "identifier1")    //å˜é‡ä½¿ç”¨
                             {
                                 if(symbol_table_.global_symbol_exists(tokens[k].value_))
                                 {
-                                    cout << "Ê¹ÓÃµÄ±äÁ¿ÎªÈ«¾Ö±äÁ¿" << endl;
+                                    cout << "ä½¿ç”¨çš„å˜é‡ä¸ºå…¨å±€å˜é‡" << endl;
                                 }
                                 else if(symbol_table_.local_symbol_exists(func.get_function_name(), tokens[k].value_))
                                 {
-                                    cout << "º¯ÊıÄÚ¾Ö²¿±äÁ¿" << endl;
+                                    cout << "å‡½æ•°å†…å±€éƒ¨å˜é‡" << endl;
                                 }
                                 else if(symbol_table_.function_parameter_exists(func.get_function_name(), tokens[k].value_))
                                 {
-                                    cout << "º¯Êı²ÎÊı" << endl;
+                                    cout << "å‡½æ•°å‚æ•°" << endl;
                                 }
                                 else if(symbol_table_.for_symbol_exists(func.get_function_name(), tokens[k].value_))
                                 {
-                                    cout << "for Ñ­»·µü´ú±äÁ¿" << endl;
+                                    cout << "for å¾ªç¯è¿­ä»£å˜é‡" << endl;
                                 }
                                 k++;
                             }
-                            else if(tokens[k].type_ == "identifier-function")   //º¯ÊıÌåÄÚ³öÏÖº¯Êı£¬´ËÊ±µÄº¯Êı¼´Îªº¯Êıµ÷ÓÃ
+                            else if(tokens[k].type_ == "identifier-function")   //å‡½æ•°ä½“å†…å‡ºç°å‡½æ•°ï¼Œæ­¤æ—¶çš„å‡½æ•°å³ä¸ºå‡½æ•°è°ƒç”¨
                             {
                                 symbol_table_.get_function(name).emplace_function_call(tokens[k].value_);
-                                //ĞèÒª¹Û²ì ·ûºÅ±íÖĞÊÇ·ñ´æÔÚ¸Ãº¯ÊıµÄ·ûºÅÏî
-                                if(symbol_table_.function_exists(tokens[k].value_)) //Èç¹û´æÔÚ
+                                //éœ€è¦è§‚å¯Ÿ ç¬¦å·è¡¨ä¸­æ˜¯å¦å­˜åœ¨è¯¥å‡½æ•°çš„ç¬¦å·é¡¹
+                                if(symbol_table_.function_exists(tokens[k].value_)) //å¦‚æœå­˜åœ¨
                                 {
 
                                     if(tokens[k + 1].value_ != "(")
                                     {
-                                        //error handler
-                                        cout << "ìÌ" << endl;
+                                        // é”™è¯¯å¤„ç†
+                                        cout << "ç„¯" << endl;
                                         exit(1);
                                     }
-                                    else if(tokens[k].value_ == "output")   //ÌØÊâÄÚÖÃº¯Êı£¬¹æ¶¨´«Èë²ÎÊıÎª1
+                                    else if(tokens[k].value_ == "output")   //ç‰¹æ®Šå†…ç½®å‡½æ•°ï¼Œè§„å®šä¼ å…¥å‚æ•°ä¸º1
                                     {
                                         for(size_t j = k + 2;j < tokens.size();)
                                         {
-                                            //Èç¹û output º¯Êı ´«Èë²ÎÊıÎªÁíÒ»¸öº¯ÊıµÄ½á¹û
+                                            //å¦‚æœ output å‡½æ•° ä¼ å…¥å‚æ•°ä¸ºå¦ä¸€ä¸ªå‡½æ•°çš„ç»“æœ
                                             if(tokens[j].type_ == "identifier-function")
                                             {
                                                 if(symbol_table_.function_exists(tokens[j].value_))
@@ -308,20 +317,20 @@ void my_compiler::FrontEnd::generate_symbol_table_aux()
                                                             break;
                                                         }
 
-                                                        //Èç¹ûÊÇ²ÎÊı
+                                                        //å¦‚æœæ˜¯å‚æ•°
                                                         if(tokens[m].type_ == "identifier" || tokens[m].type_ == "identifier1")
                                                         {
                                                             if(symbol_table_.global_symbol_exists(tokens[m].value_))
                                                             {
-                                                                cout << "µ÷ÓÃÊ±²ÎÊıÎªÈ«¾Ö±äÁ¿" << endl;
+                                                                cout << "è°ƒç”¨æ—¶å‚æ•°ä¸ºå…¨å±€å˜é‡" << endl;
                                                             }
                                                             else if(symbol_table_.local_symbol_exists(func.get_function_name(), tokens[j].value_))
                                                             {
-                                                                cout << "µ÷ÓÃÊ±²ÎÊıÎª¾Ö²¿±äÁ¿" << endl;
+                                                                cout << "è°ƒç”¨æ—¶å‚æ•°ä¸ºå±€éƒ¨å˜é‡" << endl;
                                                             }
                                                             else if(symbol_table_.function_parameter_exists(func.get_function_name(), tokens[j].value_))
                                                             {
-                                                                cout << "µ÷ÓÃÊ±²ÎÊıÎª¶¨ÒåÊ±µÄ²ÎÊı" << endl;
+                                                                cout << "è°ƒç”¨æ—¶å‚æ•°ä¸ºå®šä¹‰æ—¶çš„å‚æ•°" << endl;
                                                             }
                                                             else
                                                             {
@@ -336,13 +345,13 @@ void my_compiler::FrontEnd::generate_symbol_table_aux()
                                                     }
                                                     if(count == (cur_func.parameters_size() - 1) || (count == 0 && cur_func.parameters_size() == 0))
                                                     {
-                                                        cout << "²ÎÊıÕıÈ·" << endl;
+                                                        cout << "å‚æ•°æ­£ç¡®" << endl;
                                                     }
                                                     k = j;
                                                 }
                                                 break;
                                             }
-                                            else if(tokens[j].type_ == "identifier" || tokens[j].type_ == "identifier1")    //Èç¹û output º¯ÊıµÄ´«Èë²ÎÊıÎª ÆÕÍ¨±äÁ¿
+                                            else if(tokens[j].type_ == "identifier" || tokens[j].type_ == "identifier1")    //å¦‚æœ output å‡½æ•°çš„ä¼ å…¥å‚æ•°ä¸º æ™®é€šå˜é‡
                                             {
                                                 size_t count = 0;
                                                 for(size_t m = j + 1;m < tokens.size();)
@@ -353,24 +362,24 @@ void my_compiler::FrontEnd::generate_symbol_table_aux()
                                                         break;
                                                     }
 
-                                                    //Èç¹ûÊÇ²ÎÊı
+                                                    //å¦‚æœæ˜¯å‚æ•°
                                                     if(tokens[m].type_ == "identifier" || tokens[m].type_ == "identifier1")
                                                     {
                                                         if(symbol_table_.global_symbol_exists(tokens[m].value_))
                                                         {
-                                                            cout << "µ÷ÓÃÊ±²ÎÊıÎªÈ«¾Ö±äÁ¿" << endl;
+                                                            cout << "è°ƒç”¨æ—¶å‚æ•°ä¸ºå…¨å±€å˜é‡" << endl;
                                                         }
                                                         else if(symbol_table_.local_symbol_exists(func.get_function_name(), tokens[j].value_))
                                                         {
-                                                            cout << "µ÷ÓÃÊ±²ÎÊıÎª¾Ö²¿±äÁ¿" << endl;
+                                                            cout << "è°ƒç”¨æ—¶å‚æ•°ä¸ºå±€éƒ¨å˜é‡" << endl;
                                                         }
                                                         else if(symbol_table_.function_parameter_exists(func.get_function_name(), tokens[j].value_))
                                                         {
-                                                            cout << "µ÷ÓÃÊ±²ÎÊıÎª¶¨ÒåÊ±µÄ²ÎÊı" << endl;
+                                                            cout << "è°ƒç”¨æ—¶å‚æ•°ä¸ºå®šä¹‰æ—¶çš„å‚æ•°" << endl;
                                                         }
                                                         else if(symbol_table_.for_symbol_exists(func.get_function_name(), tokens[j].value_))
                                                         {
-                                                            cout << "µ÷ÓÃ²ÎÊıÎªforÑ­»·µü´ú±äÁ¿" << endl;
+                                                            cout << "è°ƒç”¨å‚æ•°ä¸ºforå¾ªç¯è¿­ä»£å˜é‡" << endl;
                                                         }
                                                         else
                                                         {
@@ -385,7 +394,7 @@ void my_compiler::FrontEnd::generate_symbol_table_aux()
                                                 }
                                                 if(count == (func.parameters_size() - 1) || (count == 0 && func.parameters_size() == 0))
                                                 {
-                                                    cout << "²ÎÊıÕıÈ·" << endl;
+                                                    cout << "å‚æ•°æ­£ç¡®" << endl;
                                                 }
                                                 k = j;
                                                 break;
@@ -398,7 +407,7 @@ void my_compiler::FrontEnd::generate_symbol_table_aux()
                                         FunctionSymbol& cur_func = symbol_table_.get_function(tokens[k].value_);
                                         k+=2;
                                         size_t count = 0;
-                                        //²é¿´²ÎÊıÁĞ±íÊÇ·ñÕıÈ·
+                                        //æŸ¥çœ‹å‚æ•°åˆ—è¡¨æ˜¯å¦æ­£ç¡®
                                         for(size_t j = k; j < tokens.size();j++)
                                         {
                                             if(tokens[j].value_ == ")")
@@ -406,20 +415,20 @@ void my_compiler::FrontEnd::generate_symbol_table_aux()
                                                 k = j + 1;
                                                 break;
                                             }
-                                            //Èç¹ûÊÇ²ÎÊı
+                                            //å¦‚æœæ˜¯å‚æ•°
                                             if(tokens[j].type_ == "identifier" || tokens[j].type_ == "identifier1")
                                             {
                                                 if(symbol_table_.global_symbol_exists(tokens[j].value_))
                                                 {
-                                                    cout << "µ÷ÓÃÊ±²ÎÊıÎªÈ«¾Ö±äÁ¿" << endl;
+                                                    cout << "è°ƒç”¨æ—¶å‚æ•°ä¸ºå…¨å±€å˜é‡" << endl;
                                                 }
                                                 else if(symbol_table_.local_symbol_exists(func.get_function_name(), tokens[j].value_))
                                                 {
-                                                    cout << "µ÷ÓÃÊ±²ÎÊıÎª¾Ö²¿±äÁ¿" << endl;
+                                                    cout << "è°ƒç”¨æ—¶å‚æ•°ä¸ºå±€éƒ¨å˜é‡" << endl;
                                                 }
                                                 else if(symbol_table_.function_parameter_exists(func.get_function_name(), tokens[j].value_))
                                                 {
-                                                    cout << "µ÷ÓÃÊ±²ÎÊıÎª¶¨ÒåÊ±µÄ²ÎÊı" << endl;
+                                                    cout << "è°ƒç”¨æ—¶å‚æ•°ä¸ºå®šä¹‰æ—¶çš„å‚æ•°" << endl;
                                                 }
                                                 else
                                                 {
@@ -434,7 +443,7 @@ void my_compiler::FrontEnd::generate_symbol_table_aux()
                                         }
                                         if(count == (cur_func.parameters_size() - 1) || (count == 0 && cur_func.parameters_size() == 0))
                                         {
-                                            cout << "²ÎÊıÕıÈ·" << endl;
+                                            cout << "å‚æ•°æ­£ç¡®" << endl;
                                         }
                                         else
                                         {
@@ -469,15 +478,15 @@ void my_compiler::FrontEnd::generate_symbol_table_aux()
                 else if(i - 2 >= 0 && tokens[i - 2].value_ == "const")
                 {
 
-                    //¼´Îªº¯ÊıÇ©Ãû
-                    //»ñÈ¡¸Ãº¯ÊıµÄtype-specifierÒÔ¼°ĞÎ²Î
-                    //º¯Êı·µ»ØÀàĞÍÎª³£Öµ
+                    //å³ä¸ºå‡½æ•°ç­¾å
+                    //è·å–è¯¥å‡½æ•°çš„type-specifierä»¥åŠå½¢å‚
+                    //å‡½æ•°è¿”å›ç±»å‹ä¸ºå¸¸å€¼
                     string type = tokens[i - 2].value_.append(" ").append(tokens[i - 1].value_);
                     string name = tokens[i].value_;
                     FunctionSymbol func(Category::CONST_FUNC, name, type);
                     func.set_address(&func);
                     func.set_property("global function");
-                    //½«²ÎÊı¼ÓÈë parameters_ÖĞ
+                    //å°†å‚æ•°åŠ å…¥ parameters_ä¸­
                     i += 2;
                     for(size_t j = i;j < tokens.size();j++)
                     {
@@ -529,14 +538,14 @@ void my_compiler::FrontEnd::generate_symbol_table_aux()
                             }
                         }
                     }
-                    //½ÓÏÂÀ´´¦Àí¸Ãº¯ÊıÌå
+                    //æ¥ä¸‹æ¥å¤„ç†è¯¥å‡½æ•°ä½“
                     symbol_table_.emplace_function(func);
                     int inner_brace = 1;
                     if(inner_brace != 0)
                     {
                         for(size_t k = i + 1;k < tokens.size();)
                         {
-                            //¼´Îªº¯Êı¾Ö²¿±äÁ¿ÉùÃ÷
+                            //å³ä¸ºå‡½æ•°å±€éƒ¨å˜é‡å£°æ˜
                             if((tokens[k - 1].value_ == "int"   ||
                                 tokens[k - 1].value_ == "void"  ||
                                 tokens[k - 1].value_ == "float" ||
@@ -584,34 +593,34 @@ void my_compiler::FrontEnd::generate_symbol_table_aux()
                                 }
                                 k++;
                             }
-                            else if(tokens[k].type_ == "identifier" || tokens[k].type_ == "identifier1")    //±äÁ¿Ê¹ÓÃ
+                            else if(tokens[k].type_ == "identifier" || tokens[k].type_ == "identifier1")    //å˜é‡ä½¿ç”¨
                             {
                                 if(symbol_table_.global_symbol_exists(tokens[k].value_))
                                 {
-                                    cout << "Ê¹ÓÃµÄ±äÁ¿ÎªÈ«¾Ö±äÁ¿" << endl;
+                                    cout << "ä½¿ç”¨çš„å˜é‡ä¸ºå…¨å±€å˜é‡" << endl;
                                 }
                                 else if(symbol_table_.local_symbol_exists(func.get_function_name(), tokens[k].value_))
                                 {
-                                    cout << "º¯ÊıÄÚ¾Ö²¿±äÁ¿" << endl;
+                                    cout << "å‡½æ•°å†…å±€éƒ¨å˜é‡" << endl;
                                 }
                                 else if(symbol_table_.function_parameter_exists(func.get_function_name(), tokens[k].value_))
                                 {
-                                    cout << "º¯Êı²ÎÊı" << endl;
+                                    cout << "å‡½æ•°å‚æ•°" << endl;
                                 }
                                 k++;
                             }
-                            else if(tokens[k].type_ == "identifier-function")   //º¯ÊıÌåÄÚ³öÏÖº¯Êı£¬´ËÊ±µÄº¯Êı¼´Îªº¯Êıµ÷ÓÃ
+                            else if(tokens[k].type_ == "identifier-function")   //å‡½æ•°ä½“å†…å‡ºç°å‡½æ•°ï¼Œæ­¤æ—¶çš„å‡½æ•°å³ä¸ºå‡½æ•°è°ƒç”¨
                             {
                                 cout << name << endl;
                                 symbol_table_.get_function(name).emplace_function_call(tokens[k].value_);
-                                //ĞèÒª¹Û²ì ·ûºÅ±íÖĞÊÇ·ñ´æÔÚ¸Ãº¯ÊıµÄ·ûºÅÏî
-                                if(symbol_table_.function_exists(tokens[k].value_)) //Èç¹û´æÔÚ
+                                //éœ€è¦è§‚å¯Ÿ ç¬¦å·è¡¨ä¸­æ˜¯å¦å­˜åœ¨è¯¥å‡½æ•°çš„ç¬¦å·é¡¹
+                                if(symbol_table_.function_exists(tokens[k].value_)) //å¦‚æœå­˜åœ¨
                                 {
 
                                     if(tokens[k + 1].value_ != "(")
                                     {
-                                        //error handler
-                                        cout << "ìÌ" << endl;
+                                        // é”™è¯¯å¤„ç†
+                                        cout << "ç„¯" << endl;
                                         exit(1);
                                     }
                                     else if(tokens[k].value_ == "output")
@@ -634,20 +643,20 @@ void my_compiler::FrontEnd::generate_symbol_table_aux()
                                                             break;
                                                         }
 
-                                                        //Èç¹ûÊÇ²ÎÊı
+                                                        //å¦‚æœæ˜¯å‚æ•°
                                                         if(tokens[m].type_ == "identifier" || tokens[m].type_ == "identifier1")
                                                         {
                                                             if(symbol_table_.global_symbol_exists(tokens[m].value_))
                                                             {
-                                                                cout << "µ÷ÓÃÊ±²ÎÊıÎªÈ«¾Ö±äÁ¿" << endl;
+                                                                cout << "è°ƒç”¨æ—¶å‚æ•°ä¸ºå…¨å±€å˜é‡" << endl;
                                                             }
                                                             else if(symbol_table_.local_symbol_exists(func.get_function_name(), tokens[j].value_))
                                                             {
-                                                                cout << "µ÷ÓÃÊ±²ÎÊıÎª¾Ö²¿±äÁ¿" << endl;
+                                                                cout << "è°ƒç”¨æ—¶å‚æ•°ä¸ºå±€éƒ¨å˜é‡" << endl;
                                                             }
                                                             else if(symbol_table_.function_parameter_exists(func.get_function_name(), tokens[j].value_))
                                                             {
-                                                                cout << "µ÷ÓÃÊ±²ÎÊıÎª¶¨ÒåÊ±µÄ²ÎÊı" << endl;
+                                                                cout << "è°ƒç”¨æ—¶å‚æ•°ä¸ºå®šä¹‰æ—¶çš„å‚æ•°" << endl;
                                                             }
                                                         }
                                                         else if(tokens[m].value_ == ",")
@@ -657,7 +666,7 @@ void my_compiler::FrontEnd::generate_symbol_table_aux()
                                                     }
                                                     if(count == (cur_func.parameters_size() - 1) || (count == 0 && cur_func.parameters_size() == 0))
                                                     {
-                                                        cout << "²ÎÊıÕıÈ·" << endl;
+                                                        cout << "å‚æ•°æ­£ç¡®" << endl;
                                                     }
                                                     else
                                                     {
@@ -674,7 +683,7 @@ void my_compiler::FrontEnd::generate_symbol_table_aux()
                                                 {
                                                     if(tokens[j].value_ == ",")
                                                     {
-                                                        cout << "²ÎÊı¹ı¶à" << endl;
+                                                        cout << "å‚æ•°è¿‡å¤š" << endl;
                                                         exit(1);
                                                     }
                                                 }
@@ -693,7 +702,7 @@ void my_compiler::FrontEnd::generate_symbol_table_aux()
                                         FunctionSymbol& cur_func = symbol_table_.get_function(tokens[k].value_);
                                         k+=2;
                                         size_t count = 0;
-                                        //²é¿´²ÎÊıÁĞ±íÊÇ·ñÕıÈ·
+                                        //æŸ¥çœ‹å‚æ•°åˆ—è¡¨æ˜¯å¦æ­£ç¡®
                                         for(size_t j = k; j < tokens.size();j++)
                                         {
                                             if(tokens[j].value_ == ")")
@@ -701,20 +710,20 @@ void my_compiler::FrontEnd::generate_symbol_table_aux()
                                                 k = j + 1;
                                                 break;
                                             }
-                                            //Èç¹ûÊÇ²ÎÊı
+                                            //å¦‚æœæ˜¯å‚æ•°
                                             if(tokens[j].type_ == "identifier" || tokens[j].type_ == "identifier1")
                                             {
                                                 if(symbol_table_.global_symbol_exists(tokens[j].value_))
                                                 {
-                                                    cout << "µ÷ÓÃÊ±²ÎÊıÎªÈ«¾Ö±äÁ¿" << endl;
+                                                    cout << "è°ƒç”¨æ—¶å‚æ•°ä¸ºå…¨å±€å˜é‡" << endl;
                                                 }
                                                 else if(symbol_table_.local_symbol_exists(func.get_function_name(), tokens[j].value_))
                                                 {
-                                                    cout << "µ÷ÓÃÊ±²ÎÊıÎª¾Ö²¿±äÁ¿" << endl;
+                                                    cout << "è°ƒç”¨æ—¶å‚æ•°ä¸ºå±€éƒ¨å˜é‡" << endl;
                                                 }
                                                 else if(symbol_table_.function_parameter_exists(func.get_function_name(), tokens[j].value_))
                                                 {
-                                                    cout << "µ÷ÓÃÊ±²ÎÊıÎª¶¨ÒåÊ±µÄ²ÎÊı" << endl;
+                                                    cout << "è°ƒç”¨æ—¶å‚æ•°ä¸ºå®šä¹‰æ—¶çš„å‚æ•°" << endl;
                                                 }
                                                 else
                                                 {
@@ -729,7 +738,7 @@ void my_compiler::FrontEnd::generate_symbol_table_aux()
                                         }
                                         if(count == (cur_func.parameters_size() - 1) || (count == 0 && cur_func.parameters_size() == 0))
                                         {
-                                            cout << "²ÎÊıÕıÈ·" << endl;
+                                            cout << "å‚æ•°æ­£ç¡®" << endl;
                                         }
                                         else
                                         {
@@ -764,11 +773,11 @@ void my_compiler::FrontEnd::generate_symbol_table_aux()
         }
         else if(tokens[i].type_ == "identifier")
         {
-            //Ö®Ç°Ã»ÓĞ³öÏÖ×óÀ¨ºÅ
+            //ä¹‹å‰æ²¡æœ‰å‡ºç°å·¦æ‹¬å·
             if(left_brace == 0)
             {
-                //ËµÃ÷ÎªÈ«¾Ö±äÁ¿
-                //ÀàĞÍÎª³£±äÁ¿
+                //è¯´æ˜ä¸ºå…¨å±€å˜é‡
+                //ç±»å‹ä¸ºå¸¸å˜é‡
                 if(i - 2 >= 0 && tokens[i - 2].value_ == "const")
                 {
                     string type = tokens[i - 2].value_.append(" ").append(tokens[i - 1].value_);
@@ -822,12 +831,12 @@ void my_compiler::FrontEnd::generate_symbol_table_aux()
                 int inner_brace = 1;
                 i += 2;
 
-                //´¦Àí struct Ìå
+                //å¤„ç† struct ä½“
                 if(tokens[i].value_ == "{")
                 {
                     for(size_t k = i + 1;k < tokens.size();)
                     {
-                        //¼´ÎªstructÄÚ±äÁ¿ÉùÃ÷
+                        //å³ä¸ºstructå†…å˜é‡å£°æ˜
                         if((tokens[k - 1].value_ == "int"   ||
                             tokens[k - 1].value_ == "void"  ||
                             tokens[k - 1].value_ == "float" ||
@@ -875,32 +884,32 @@ void my_compiler::FrontEnd::generate_symbol_table_aux()
                             }
                             k++;
                         }
-                        else if(tokens[k].type_ == "identifier" || tokens[k].type_ == "identifier1")    //±äÁ¿Ê¹ÓÃ
+                        else if(tokens[k].type_ == "identifier" || tokens[k].type_ == "identifier1")    //å˜é‡ä½¿ç”¨
                         {
                             if(symbol_table_.global_symbol_exists(tokens[k].value_))
                             {
-                                cout << "Ê¹ÓÃµÄ±äÁ¿ÎªÈ«¾Ö±äÁ¿" << endl;
+                                cout << "ä½¿ç”¨çš„å˜é‡ä¸ºå…¨å±€å˜é‡" << endl;
                             }
                             else if(symbol_table_.struct_symbol_exists(st.get_struct_name(), tokens[k].value_))
                             {
-                                cout << "º¯ÊıÄÚ¾Ö²¿±äÁ¿" << endl;
+                                cout << "å‡½æ•°å†…å±€éƒ¨å˜é‡" << endl;
                             }
                             else if(symbol_table_.struct_symbol_exists(st.get_struct_name(), tokens[k].value_))
                             {
-                                cout << "º¯Êı²ÎÊı" << endl;
+                                cout << "å‡½æ•°å‚æ•°" << endl;
                             }
                             k++;
                         }
                         else if(tokens[k].type_ == "identifier-function")
                         {
-                            //ĞèÒª¹Û²ì ·ûºÅ±íÖĞ struct ÄÚÊÇ·ñ´æÔÚ¸Ãº¯ÊıµÄ·ûºÅÏî
-                            if(symbol_table_.struct_function_exists(struct_name, tokens[k].value_)) //Èç¹û´æÔÚ
+                            //éœ€è¦è§‚å¯Ÿ ç¬¦å·è¡¨ä¸­ struct å†…æ˜¯å¦å­˜åœ¨è¯¥å‡½æ•°çš„ç¬¦å·é¡¹
+                            if(symbol_table_.struct_function_exists(struct_name, tokens[k].value_)) //å¦‚æœå­˜åœ¨
                             {
 
                                 if(tokens[k + 1].value_ != "(")
                                 {
-                                    //error handler
-                                    cout << "ìÌ" << endl;
+                                    // é”™è¯¯å¤„ç†
+                                    cout << "ç„¯" << endl;
                                     exit(1);
                                 }
                                 else if(tokens[k].value_ == "output")
@@ -923,20 +932,20 @@ void my_compiler::FrontEnd::generate_symbol_table_aux()
                                                         break;
                                                     }
 
-                                                    //Èç¹ûÊÇ²ÎÊı
+                                                    //å¦‚æœæ˜¯å‚æ•°
                                                     if(tokens[m].type_ == "identifier" || tokens[m].type_ == "identifier1")
                                                     {
                                                         if(symbol_table_.global_symbol_exists(tokens[m].value_))
                                                         {
-                                                            cout << "µ÷ÓÃÊ±²ÎÊıÎªÈ«¾Ö±äÁ¿" << endl;
+                                                            cout << "è°ƒç”¨æ—¶å‚æ•°ä¸ºå…¨å±€å˜é‡" << endl;
                                                         }
                                                         else if(symbol_table_.struct_symbol_exists(st.get_struct_name(), tokens[j].value_))
                                                         {
-                                                            cout << "µ÷ÓÃÊ±²ÎÊıÎª¾Ö²¿±äÁ¿" << endl;
+                                                            cout << "è°ƒç”¨æ—¶å‚æ•°ä¸ºå±€éƒ¨å˜é‡" << endl;
                                                         }
                                                         else if(symbol_table_.struct_symbol_exists(st.get_struct_name(), tokens[j].value_))
                                                         {
-                                                            cout << "µ÷ÓÃÊ±²ÎÊıÎª¶¨ÒåÊ±µÄ²ÎÊı" << endl;
+                                                            cout << "è°ƒç”¨æ—¶å‚æ•°ä¸ºå®šä¹‰æ—¶çš„å‚æ•°" << endl;
                                                         }
                                                         else
                                                         {
@@ -951,7 +960,7 @@ void my_compiler::FrontEnd::generate_symbol_table_aux()
                                                 }
                                                 if(count == (cur_func.parameters_size() - 1) || (count == 0 && cur_func.parameters_size() == 0))
                                                 {
-                                                    cout << "²ÎÊıÕıÈ·" << endl;
+                                                    cout << "å‚æ•°æ­£ç¡®" << endl;
                                                 }
                                                 else
                                                 {
@@ -968,7 +977,7 @@ void my_compiler::FrontEnd::generate_symbol_table_aux()
                                             {
                                                 if(tokens[j].value_ == ",")
                                                 {
-                                                    cout << "²ÎÊı¹ı¶à" << endl;
+                                                    cout << "å‚æ•°è¿‡å¤š" << endl;
                                                     exit(1);
                                                 }
                                             }
@@ -986,7 +995,7 @@ void my_compiler::FrontEnd::generate_symbol_table_aux()
                                     FunctionSymbol& cur_func = symbol_table_.get_function(tokens[k].value_);
                                     k+=2;
                                     size_t count = 0;
-                                    //²é¿´²ÎÊıÁĞ±íÊÇ·ñÕıÈ·
+                                    //æŸ¥çœ‹å‚æ•°åˆ—è¡¨æ˜¯å¦æ­£ç¡®
                                     for(size_t j = k; j < tokens.size();j++)
                                     {
                                         if(tokens[j].value_ == ")")
@@ -994,20 +1003,20 @@ void my_compiler::FrontEnd::generate_symbol_table_aux()
                                             k = j + 1;
                                             break;
                                         }
-                                        //Èç¹ûÊÇ²ÎÊı
+                                        //å¦‚æœæ˜¯å‚æ•°
                                         if(tokens[j].type_ == "identifier" || tokens[j].type_ == "identifier1")
                                         {
                                             if(symbol_table_.global_symbol_exists(tokens[j].value_))
                                             {
-                                                cout << "µ÷ÓÃÊ±²ÎÊıÎªÈ«¾Ö±äÁ¿" << endl;
+                                                cout << "è°ƒç”¨æ—¶å‚æ•°ä¸ºå…¨å±€å˜é‡" << endl;
                                             }
                                             else if(symbol_table_.struct_symbol_exists(st.get_struct_name(), tokens[j].value_))
                                             {
-                                                cout << "µ÷ÓÃÊ±²ÎÊıÎª¾Ö²¿±äÁ¿" << endl;
+                                                cout << "è°ƒç”¨æ—¶å‚æ•°ä¸ºå±€éƒ¨å˜é‡" << endl;
                                             }
                                             else if(symbol_table_.struct_symbol_exists(st.get_struct_name(), tokens[j].value_))
                                             {
-                                                cout << "µ÷ÓÃÊ±²ÎÊıÎª¶¨ÒåÊ±µÄ²ÎÊı" << endl;
+                                                cout << "è°ƒç”¨æ—¶å‚æ•°ä¸ºå®šä¹‰æ—¶çš„å‚æ•°" << endl;
                                             }
                                             else
                                             {
@@ -1022,7 +1031,7 @@ void my_compiler::FrontEnd::generate_symbol_table_aux()
                                     }
                                     if(count == (cur_func.parameters_size() - 1) || (count == 0 && cur_func.parameters_size() == 0))
                                     {
-                                        cout << "²ÎÊıÕıÈ·" << endl;
+                                        cout << "å‚æ•°æ­£ç¡®" << endl;
                                     }
                                     else
                                     {
@@ -1031,11 +1040,11 @@ void my_compiler::FrontEnd::generate_symbol_table_aux()
                                     }
                                 }
                             }
-                            else //Èç¹û²»´æÔÚ
+                            else //å¦‚æœä¸å­˜åœ¨
                             {
-                                //¼´Îªº¯ÊıÇ©Ãû
-                                //»ñÈ¡¸Ãº¯ÊıµÄtype-specifierÒÔ¼°ĞÎ²Î
-                                //º¯Êı·µ»ØÀàĞÍÎª³£Öµ
+                                //å³ä¸ºå‡½æ•°ç­¾å
+                                //è·å–è¯¥å‡½æ•°çš„type-specifierä»¥åŠå½¢å‚
+                                //å‡½æ•°è¿”å›ç±»å‹ä¸ºå¸¸å€¼
                                 cout << 1 << endl;
                                 if(k - 2 >= 0 && tokens[k - 2].value_ == "const")
                                 {
@@ -1048,7 +1057,7 @@ void my_compiler::FrontEnd::generate_symbol_table_aux()
                                     symbol_table_.get_struct(struct_name).emplace_struct_function(func);
 
 
-                                    //½«²ÎÊı¼ÓÈë parameters_ÖĞ
+                                    //å°†å‚æ•°åŠ å…¥ parameters_ä¸­
                                     k += 2;
                                     for(size_t j = k;j < tokens.size();j++)
                                     {
@@ -1101,13 +1110,13 @@ void my_compiler::FrontEnd::generate_symbol_table_aux()
                                         }
                                     }
 
-                                    //½ÓÏÂÀ´´¦Àí¸Ãº¯ÊıÌå
+                                    //æ¥ä¸‹æ¥å¤„ç†è¯¥å‡½æ•°ä½“
                                     int inner_inner_brace = 1;
                                     if(tokens[k].value_ == "{")
                                     {
                                         for(size_t n = k + 1;n < tokens.size();)
                                         {
-                                            //¼´Îªº¯Êı¾Ö²¿±äÁ¿ÉùÃ÷
+                                            //å³ä¸ºå‡½æ•°å±€éƒ¨å˜é‡å£°æ˜
                                             if((tokens[n - 1].value_ == "int"   ||
                                                 tokens[n - 1].value_ == "void"  ||
                                                 tokens[n - 1].value_ == "float" ||
@@ -1155,33 +1164,33 @@ void my_compiler::FrontEnd::generate_symbol_table_aux()
                                                 }
                                                 n++;
                                             }
-                                            else if(tokens[n].type_ == "identifier" || tokens[n].type_ == "identifier1")    //±äÁ¿Ê¹ÓÃ
+                                            else if(tokens[n].type_ == "identifier" || tokens[n].type_ == "identifier1")    //å˜é‡ä½¿ç”¨
                                             {
                                                 if(symbol_table_.global_symbol_exists(tokens[n].value_))
                                                 {
-                                                    cout << "Ê¹ÓÃµÄ±äÁ¿ÎªÈ«¾Ö±äÁ¿" << endl;
+                                                    cout << "ä½¿ç”¨çš„å˜é‡ä¸ºå…¨å±€å˜é‡" << endl;
                                                 }
                                                 else if(symbol_table_.get_struct(struct_name).get_struct_function(func.get_function_name()).local_symbol_exists(tokens[n].value_))
                                                 {
-                                                    cout << "º¯ÊıÄÚ¾Ö²¿±äÁ¿" << endl;
+                                                    cout << "å‡½æ•°å†…å±€éƒ¨å˜é‡" << endl;
                                                 }
                                                 else if(symbol_table_.get_struct(struct_name).get_struct_function(func.get_function_name()).parameter_exists(tokens[n].value_))
                                                 {
-                                                    cout << "º¯Êı²ÎÊı" << endl;
+                                                    cout << "å‡½æ•°å‚æ•°" << endl;
                                                 }
                                                 n++;
                                             }
-                                            else if(tokens[n].type_ == "identifier-function")   //struct ÄÚº¯Êı³öÏÖº¯Êı£¬´ËÊ±µÄº¯Êı¼´Îªº¯Êıµ÷ÓÃ
+                                            else if(tokens[n].type_ == "identifier-function")   //struct å†…å‡½æ•°å‡ºç°å‡½æ•°ï¼Œæ­¤æ—¶çš„å‡½æ•°å³ä¸ºå‡½æ•°è°ƒç”¨
                                             {
                                                 cout << name << endl;
                                                 symbol_table_.get_struct(struct_name).get_struct_function(name).emplace_function_call(tokens[n].value_);
-                                                //ĞèÒª¹Û²ì ·ûºÅ±íÖĞÊÇ·ñ´æÔÚ¸Ãº¯ÊıµÄ·ûºÅÏî
-                                                if(symbol_table_.function_exists(tokens[n].value_) || symbol_table_.get_struct(struct_name).function_exists(tokens[n].value_)) //Èç¹û´æÔÚ
+                                                //éœ€è¦è§‚å¯Ÿ ç¬¦å·è¡¨ä¸­æ˜¯å¦å­˜åœ¨è¯¥å‡½æ•°çš„ç¬¦å·é¡¹
+                                                if(symbol_table_.function_exists(tokens[n].value_) || symbol_table_.get_struct(struct_name).function_exists(tokens[n].value_)) //å¦‚æœå­˜åœ¨
                                                 {
                                                     if(tokens[n + 1].value_ != "(")
                                                     {
-                                                        //error handler
-                                                        cout << "ìÌ" << endl;
+                                                        // é”™è¯¯å¤„ç†
+                                                        cout << "ç„¯" << endl;
                                                         exit(1);
                                                     }
                                                     else if(tokens[n].value_ == "output")
@@ -1203,20 +1212,20 @@ void my_compiler::FrontEnd::generate_symbol_table_aux()
                                                                             break;
                                                                         }
 
-                                                                        //Èç¹ûÊÇ²ÎÊı
+                                                                        //å¦‚æœæ˜¯å‚æ•°
                                                                         if(tokens[m].type_ == "identifier" || tokens[m].type_ == "identifier1")
                                                                         {
                                                                             if(symbol_table_.global_symbol_exists(tokens[m].value_))
                                                                             {
-                                                                                cout << "µ÷ÓÃÊ±²ÎÊıÎªÈ«¾Ö±äÁ¿" << endl;
+                                                                                cout << "è°ƒç”¨æ—¶å‚æ•°ä¸ºå…¨å±€å˜é‡" << endl;
                                                                             }
                                                                             else if(st.get_struct_function(func.get_function_name()).local_symbol_exists(tokens[k].value_))
                                                                             {
-                                                                                cout << "º¯ÊıÄÚ¾Ö²¿±äÁ¿" << endl;
+                                                                                cout << "å‡½æ•°å†…å±€éƒ¨å˜é‡" << endl;
                                                                             }
                                                                             else if(st.get_struct_function(func.get_function_name()).parameter_exists(tokens[k].value_))
                                                                             {
-                                                                                cout << "º¯Êı²ÎÊı" << endl;
+                                                                                cout << "å‡½æ•°å‚æ•°" << endl;
                                                                             }
                                                                             else
                                                                             {
@@ -1231,7 +1240,7 @@ void my_compiler::FrontEnd::generate_symbol_table_aux()
                                                                     }
                                                                     if(count == (cur_func.parameters_size() - 1) || (count == 0 && cur_func.parameters_size() == 0))
                                                                     {
-                                                                        cout << "²ÎÊıÕıÈ·" << endl;
+                                                                        cout << "å‚æ•°æ­£ç¡®" << endl;
                                                                     }
                                                                     else
                                                                     {
@@ -1248,7 +1257,7 @@ void my_compiler::FrontEnd::generate_symbol_table_aux()
                                                                 {
                                                                     if(tokens[j].value_ == ",")
                                                                     {
-                                                                        cout << "²ÎÊı¹ı¶à" << endl;
+                                                                        cout << "å‚æ•°è¿‡å¤š" << endl;
                                                                         exit(1);
                                                                     }
                                                                 }
@@ -1269,7 +1278,7 @@ void my_compiler::FrontEnd::generate_symbol_table_aux()
                                                             FunctionSymbol& cur_func = symbol_table_.get_function(tokens[n].value_);
                                                             n+=2;
                                                             size_t count = 0;
-                                                            //²é¿´²ÎÊıÁĞ±íÊÇ·ñÕıÈ·
+                                                            //æŸ¥çœ‹å‚æ•°åˆ—è¡¨æ˜¯å¦æ­£ç¡®
                                                             for(size_t j = n; j < tokens.size();j++)
                                                             {
                                                                 if(tokens[j].value_ == ")")
@@ -1277,20 +1286,20 @@ void my_compiler::FrontEnd::generate_symbol_table_aux()
                                                                     n = j + 1;
                                                                     break;
                                                                 }
-                                                                //Èç¹ûÊÇ²ÎÊı
+                                                                //å¦‚æœæ˜¯å‚æ•°
                                                                 if(tokens[j].type_ == "identifier" || tokens[j].type_ == "identifier1")
                                                                 {
                                                                     if(symbol_table_.global_symbol_exists(tokens[j].value_))
                                                                     {
-                                                                        cout << "µ÷ÓÃÊ±²ÎÊıÎªÈ«¾Ö±äÁ¿" << endl;
+                                                                        cout << "è°ƒç”¨æ—¶å‚æ•°ä¸ºå…¨å±€å˜é‡" << endl;
                                                                     }
                                                                     else if(cur_func.local_symbol_exists(tokens[j].value_))
                                                                     {
-                                                                        cout << "µ÷ÓÃÊ±²ÎÊıÎª¾Ö²¿±äÁ¿" << endl;
+                                                                        cout << "è°ƒç”¨æ—¶å‚æ•°ä¸ºå±€éƒ¨å˜é‡" << endl;
                                                                     }
                                                                     else if(cur_func.parameter_exists(tokens[j].value_))
                                                                     {
-                                                                        cout << "µ÷ÓÃÊ±²ÎÊıÎª¶¨ÒåÊ±µÄ²ÎÊı" << endl;
+                                                                        cout << "è°ƒç”¨æ—¶å‚æ•°ä¸ºå®šä¹‰æ—¶çš„å‚æ•°" << endl;
                                                                     }
                                                                     else
                                                                     {
@@ -1305,7 +1314,7 @@ void my_compiler::FrontEnd::generate_symbol_table_aux()
                                                             }
                                                             if(count == (cur_func.parameters_size() - 1) || (count == 0 && cur_func.parameters_size() == 0))
                                                             {
-                                                                cout << "²ÎÊıÕıÈ·" << endl;
+                                                                cout << "å‚æ•°æ­£ç¡®" << endl;
                                                             }
                                                             else
                                                             {
@@ -1318,7 +1327,7 @@ void my_compiler::FrontEnd::generate_symbol_table_aux()
                                                             FunctionSymbol& cur_func = symbol_table_.get_struct(struct_name).get_struct_function(tokens[n].value_);
                                                             n+=2;
                                                             size_t count = 0;
-                                                            //²é¿´²ÎÊıÁĞ±íÊÇ·ñÕıÈ·
+                                                            //æŸ¥çœ‹å‚æ•°åˆ—è¡¨æ˜¯å¦æ­£ç¡®
                                                             for(size_t j = n; j < tokens.size();j++)
                                                             {
                                                                 if(tokens[j].value_ == ")")
@@ -1326,20 +1335,20 @@ void my_compiler::FrontEnd::generate_symbol_table_aux()
                                                                     n = j + 1;
                                                                     break;
                                                                 }
-                                                                //Èç¹ûÊÇ²ÎÊı
+                                                                //å¦‚æœæ˜¯å‚æ•°
                                                                 if(tokens[j].type_ == "identifier" || tokens[j].type_ == "identifier1")
                                                                 {
                                                                     if(symbol_table_.global_symbol_exists(tokens[j].value_))
                                                                     {
-                                                                        cout << "µ÷ÓÃÊ±²ÎÊıÎªÈ«¾Ö±äÁ¿" << endl;
+                                                                        cout << "è°ƒç”¨æ—¶å‚æ•°ä¸ºå…¨å±€å˜é‡" << endl;
                                                                     }
                                                                     else if(cur_func.local_symbol_exists(tokens[j].value_))
                                                                     {
-                                                                        cout << "µ÷ÓÃÊ±²ÎÊıÎª¾Ö²¿±äÁ¿" << endl;
+                                                                        cout << "è°ƒç”¨æ—¶å‚æ•°ä¸ºå±€éƒ¨å˜é‡" << endl;
                                                                     }
                                                                     else if(cur_func.parameter_exists(tokens[j].value_))
                                                                     {
-                                                                        cout << "µ÷ÓÃÊ±²ÎÊıÎª¶¨ÒåÊ±µÄ²ÎÊı" << endl;
+                                                                        cout << "è°ƒç”¨æ—¶å‚æ•°ä¸ºå®šä¹‰æ—¶çš„å‚æ•°" << endl;
                                                                     }
                                                                     else
                                                                     {
@@ -1354,7 +1363,7 @@ void my_compiler::FrontEnd::generate_symbol_table_aux()
                                                             }
                                                             if(count == (cur_func.parameters_size() - 1) || (count == 0 && cur_func.parameters_size() == 0))
                                                             {
-                                                                cout << "²ÎÊıÕıÈ·" << endl;
+                                                                cout << "å‚æ•°æ­£ç¡®" << endl;
                                                             }
                                                             else
                                                             {
@@ -1396,7 +1405,7 @@ void my_compiler::FrontEnd::generate_symbol_table_aux()
 
                                     symbol_table_.get_struct(struct_name).emplace_struct_function(func);
 
-                                    //½«²ÎÊı¼ÓÈë parameters_ÖĞ
+                                    //å°†å‚æ•°åŠ å…¥ parameters_ä¸­
                                     k += 2;
                                     for(size_t j = k;j < tokens.size();j++)
                                     {
@@ -1449,13 +1458,13 @@ void my_compiler::FrontEnd::generate_symbol_table_aux()
                                         }
                                     }
 
-                                    //½ÓÏÂÀ´´¦Àí¸Ãº¯ÊıÌå
+                                    //æ¥ä¸‹æ¥å¤„ç†è¯¥å‡½æ•°ä½“
                                     int inner_inner_brace = 1;
                                     if(tokens[k].value_ == "{")
                                     {
                                         for(size_t n = k + 1;n < tokens.size();)
                                         {
-                                            //¼´Îªº¯Êı¾Ö²¿±äÁ¿ÉùÃ÷
+                                            //å³ä¸ºå‡½æ•°å±€éƒ¨å˜é‡å£°æ˜
                                             if((tokens[n - 1].value_ == "int"   ||
                                                 tokens[n - 1].value_ == "void"  ||
                                                 tokens[n - 1].value_ == "float" ||
@@ -1503,33 +1512,33 @@ void my_compiler::FrontEnd::generate_symbol_table_aux()
                                                 }
                                                 n++;
                                             }
-                                            else if(tokens[n].type_ == "identifier" || tokens[n].type_ == "identifier1")    //±äÁ¿Ê¹ÓÃ
+                                            else if(tokens[n].type_ == "identifier" || tokens[n].type_ == "identifier1")    //å˜é‡ä½¿ç”¨
                                             {
                                                 if(symbol_table_.global_symbol_exists(tokens[n].value_))
                                                 {
-                                                    cout << "Ê¹ÓÃµÄ±äÁ¿ÎªÈ«¾Ö±äÁ¿" << endl;
+                                                    cout << "ä½¿ç”¨çš„å˜é‡ä¸ºå…¨å±€å˜é‡" << endl;
                                                 }
                                                 else if(symbol_table_.get_struct(struct_name).get_struct_function(func.get_function_name()).local_symbol_exists(tokens[n].value_))
                                                 {
-                                                    cout << "º¯ÊıÄÚ¾Ö²¿±äÁ¿" << endl;
+                                                    cout << "å‡½æ•°å†…å±€éƒ¨å˜é‡" << endl;
                                                 }
                                                 else if(symbol_table_.get_struct(struct_name).get_struct_function(func.get_function_name()).parameter_exists(tokens[n].value_))
                                                 {
-                                                    cout << "º¯Êı²ÎÊı" << endl;
+                                                    cout << "å‡½æ•°å‚æ•°" << endl;
                                                 }
                                                 n++;
                                             }
-                                            else if(tokens[n].type_ == "identifier-function")   //struct ÄÚº¯Êı³öÏÖº¯Êı£¬´ËÊ±µÄº¯Êı¼´Îªº¯Êıµ÷ÓÃ
+                                            else if(tokens[n].type_ == "identifier-function")   //struct å†…å‡½æ•°å‡ºç°å‡½æ•°ï¼Œæ­¤æ—¶çš„å‡½æ•°å³ä¸ºå‡½æ•°è°ƒç”¨
                                             {
                                                 cout << name << endl;
                                                 symbol_table_.get_struct(struct_name).get_struct_function(name).emplace_function_call(tokens[n].value_);
-                                                //ĞèÒª¹Û²ì ·ûºÅ±íÖĞÊÇ·ñ´æÔÚ¸Ãº¯ÊıµÄ·ûºÅÏî
-                                                if(symbol_table_.function_exists(tokens[n].value_) || symbol_table_.get_struct(struct_name).function_exists(tokens[n].value_)) //Èç¹û´æÔÚ
+                                                //éœ€è¦è§‚å¯Ÿ ç¬¦å·è¡¨ä¸­æ˜¯å¦å­˜åœ¨è¯¥å‡½æ•°çš„ç¬¦å·é¡¹
+                                                if(symbol_table_.function_exists(tokens[n].value_) || symbol_table_.get_struct(struct_name).function_exists(tokens[n].value_)) //å¦‚æœå­˜åœ¨
                                                 {
                                                     if(tokens[n + 1].value_ != "(")
                                                     {
-                                                        //error handler
-                                                        cout << "ìÌ" << endl;
+                                                        // é”™è¯¯å¤„ç†
+                                                        cout << "ç„¯" << endl;
                                                         exit(1);
                                                     }
                                                     else if(tokens[n].value_ == "output")
@@ -1551,20 +1560,20 @@ void my_compiler::FrontEnd::generate_symbol_table_aux()
                                                                             break;
                                                                         }
 
-                                                                        //Èç¹ûÊÇ²ÎÊı
+                                                                        //å¦‚æœæ˜¯å‚æ•°
                                                                         if(tokens[m].type_ == "identifier" || tokens[m].type_ == "identifier1")
                                                                         {
                                                                             if(symbol_table_.global_symbol_exists(tokens[m].value_))
                                                                             {
-                                                                                cout << "µ÷ÓÃÊ±²ÎÊıÎªÈ«¾Ö±äÁ¿" << endl;
+                                                                                cout << "è°ƒç”¨æ—¶å‚æ•°ä¸ºå…¨å±€å˜é‡" << endl;
                                                                             }
                                                                             else if(st.get_struct_function(func.get_function_name()).local_symbol_exists(tokens[k].value_))
                                                                             {
-                                                                                cout << "º¯ÊıÄÚ¾Ö²¿±äÁ¿" << endl;
+                                                                                cout << "å‡½æ•°å†…å±€éƒ¨å˜é‡" << endl;
                                                                             }
                                                                             else if(st.get_struct_function(func.get_function_name()).parameter_exists(tokens[k].value_))
                                                                             {
-                                                                                cout << "º¯Êı²ÎÊı" << endl;
+                                                                                cout << "å‡½æ•°å‚æ•°" << endl;
                                                                             }
                                                                             else
                                                                             {
@@ -1579,7 +1588,7 @@ void my_compiler::FrontEnd::generate_symbol_table_aux()
                                                                     }
                                                                     if(count == (cur_func.parameters_size() - 1) || (count == 0 && cur_func.parameters_size() == 0))
                                                                     {
-                                                                        cout << "²ÎÊıÕıÈ·" << endl;
+                                                                        cout << "å‚æ•°æ­£ç¡®" << endl;
                                                                     }
                                                                     else
                                                                     {
@@ -1596,7 +1605,7 @@ void my_compiler::FrontEnd::generate_symbol_table_aux()
                                                                 {
                                                                     if(tokens[j].value_ == ",")
                                                                     {
-                                                                        cout << "²ÎÊı¹ı¶à" << endl;
+                                                                        cout << "å‚æ•°è¿‡å¤š" << endl;
                                                                         exit(1);
                                                                     }
                                                                 }
@@ -1617,7 +1626,7 @@ void my_compiler::FrontEnd::generate_symbol_table_aux()
                                                             FunctionSymbol& cur_func = symbol_table_.get_function(tokens[n].value_);
                                                             n+=2;
                                                             size_t count = 0;
-                                                            //²é¿´²ÎÊıÁĞ±íÊÇ·ñÕıÈ·
+                                                            //æŸ¥çœ‹å‚æ•°åˆ—è¡¨æ˜¯å¦æ­£ç¡®
                                                             for(size_t j = n; j < tokens.size();j++)
                                                             {
                                                                 if(tokens[j].value_ == ")")
@@ -1625,20 +1634,20 @@ void my_compiler::FrontEnd::generate_symbol_table_aux()
                                                                     n = j + 1;
                                                                     break;
                                                                 }
-                                                                //Èç¹ûÊÇ²ÎÊı
+                                                                //å¦‚æœæ˜¯å‚æ•°
                                                                 if(tokens[j].type_ == "identifier" || tokens[j].type_ == "identifier1")
                                                                 {
                                                                     if(symbol_table_.global_symbol_exists(tokens[j].value_))
                                                                     {
-                                                                        cout << "µ÷ÓÃÊ±²ÎÊıÎªÈ«¾Ö±äÁ¿" << endl;
+                                                                        cout << "è°ƒç”¨æ—¶å‚æ•°ä¸ºå…¨å±€å˜é‡" << endl;
                                                                     }
                                                                     else if(cur_func.local_symbol_exists(tokens[j].value_))
                                                                     {
-                                                                        cout << "µ÷ÓÃÊ±²ÎÊıÎª¾Ö²¿±äÁ¿" << endl;
+                                                                        cout << "è°ƒç”¨æ—¶å‚æ•°ä¸ºå±€éƒ¨å˜é‡" << endl;
                                                                     }
                                                                     else if(cur_func.parameter_exists(tokens[j].value_))
                                                                     {
-                                                                        cout << "µ÷ÓÃÊ±²ÎÊıÎª¶¨ÒåÊ±µÄ²ÎÊı" << endl;
+                                                                        cout << "è°ƒç”¨æ—¶å‚æ•°ä¸ºå®šä¹‰æ—¶çš„å‚æ•°" << endl;
                                                                     }
                                                                     else
                                                                     {
@@ -1653,7 +1662,7 @@ void my_compiler::FrontEnd::generate_symbol_table_aux()
                                                             }
                                                             if(count == (cur_func.parameters_size() - 1) || (count == 0 && cur_func.parameters_size() == 0))
                                                             {
-                                                                cout << "²ÎÊıÕıÈ·" << endl;
+                                                                cout << "å‚æ•°æ­£ç¡®" << endl;
                                                             }
                                                             else
                                                             {
@@ -1666,7 +1675,7 @@ void my_compiler::FrontEnd::generate_symbol_table_aux()
                                                             FunctionSymbol& cur_func = symbol_table_.get_struct(struct_name).get_struct_function(tokens[n].value_);
                                                             n+=2;
                                                             size_t count = 0;
-                                                            //²é¿´²ÎÊıÁĞ±íÊÇ·ñÕıÈ·
+                                                            //æŸ¥çœ‹å‚æ•°åˆ—è¡¨æ˜¯å¦æ­£ç¡®
                                                             for(size_t j = n; j < tokens.size();j++)
                                                             {
                                                                 if(tokens[j].value_ == ")")
@@ -1674,20 +1683,20 @@ void my_compiler::FrontEnd::generate_symbol_table_aux()
                                                                     n = j + 1;
                                                                     break;
                                                                 }
-                                                                //Èç¹ûÊÇ²ÎÊı
+                                                                //å¦‚æœæ˜¯å‚æ•°
                                                                 if(tokens[j].type_ == "identifier" || tokens[j].type_ == "identifier1")
                                                                 {
                                                                     if(symbol_table_.global_symbol_exists(tokens[j].value_))
                                                                     {
-                                                                        cout << "µ÷ÓÃÊ±²ÎÊıÎªÈ«¾Ö±äÁ¿" << endl;
+                                                                        cout << "è°ƒç”¨æ—¶å‚æ•°ä¸ºå…¨å±€å˜é‡" << endl;
                                                                     }
                                                                     else if(cur_func.local_symbol_exists(tokens[j].value_))
                                                                     {
-                                                                        cout << "µ÷ÓÃÊ±²ÎÊıÎª¾Ö²¿±äÁ¿" << endl;
+                                                                        cout << "è°ƒç”¨æ—¶å‚æ•°ä¸ºå±€éƒ¨å˜é‡" << endl;
                                                                     }
                                                                     else if(cur_func.parameter_exists(tokens[j].value_))
                                                                     {
-                                                                        cout << "µ÷ÓÃÊ±²ÎÊıÎª¶¨ÒåÊ±µÄ²ÎÊı" << endl;
+                                                                        cout << "è°ƒç”¨æ—¶å‚æ•°ä¸ºå®šä¹‰æ—¶çš„å‚æ•°" << endl;
                                                                     }
                                                                     else
                                                                     {
@@ -1702,7 +1711,7 @@ void my_compiler::FrontEnd::generate_symbol_table_aux()
                                                             }
                                                             if(count == (cur_func.parameters_size() - 1) || (count == 0 && cur_func.parameters_size() == 0))
                                                             {
-                                                                cout << "²ÎÊıÕıÈ·" << endl;
+                                                                cout << "å‚æ•°æ­£ç¡®" << endl;
                                                             }
                                                             else
                                                             {
@@ -1776,7 +1785,7 @@ void my_compiler::FrontEnd::generate_symbol_table_aux()
 
     }
 
-    // ÓÃÓÚ²âÊÔ
+    // ç”¨äºæµ‹è¯•
     //symbol_table_.print_table();
 
     symbol_table_.display(file_out_);

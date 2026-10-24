@@ -1,5 +1,5 @@
 //
-// Created by 86198 on 2024/11/1.
+// åˆ›å»ºè€…ï¼š86198ï¼›æ—¥æœŸï¼š2024/11/1ã€‚
 //
 
 #ifndef MY_COMPILER_CONTEXT_FREE_GRAMMAR_H
@@ -8,32 +8,33 @@
 
 
 
-//¸ÃÍ·ÎÄ¼şÓÃÓÚ ÉÏÏÂÎÄÎŞ¹ØÎÄ·¨
+//è¯¥å¤´æ–‡ä»¶ç”¨äº ä¸Šä¸‹æ–‡æ— å…³æ–‡æ³•
 /*
  *
- * ÉÏÏÂÎÄÎŞ¹ØÎÄ·¨
+ * ä¸Šä¸‹æ–‡æ— å…³æ–‡æ³•
  *
- * £¨ĞÎÊ½Èç£ºstmt -> if(expr) stmt else stmt    £©
- * 1. ¶¨Òå£ºÓÉÖÕ½á·ûºÅ£¬·ÇÖÕ½á·ûºÅ£¬Ò»¸ö¿ªÊ¼·ûºÅºÍÒ»×é²úÉúÊ½×é³É¡£
- *      1£©ÖÕ½á·ûºÅ£ºÊÇ×é³É´®µÄ»ù±¾·ûºÅ¡£¡°´Ê·¨µ¥ÔªÃû×Ö¡±ÊÇ¡°ÖÕ½á¡±·ûºÅµÄÍ¬Òå´Ê¡£Èç£ºif, else, {, }
- *      2£©·ÇÖÕ½á·û£º±íÊ¾´®µÄ¼¯ºÏµÄÓï·¨±äÁ¿¡£Èç£ºstmt, expr¡£·ÇÖÕ½á·ûºÅ±íÊ¾µÄ´®¼¯ºÏÓÃÓÚ¶¨ÒåÓÉÎÄ·¨Éú³ÉµÄÓïÑÔ¡£
- *     ·ÇÖÕ½á·û¸ø³öÁËÓïÑÔµÄ²ã´Î½á¹¹£¬¶øÕâÖÖ²ã´Î½á¹¹ÊÇÓï·¨·ÖÎöºÍ·­ÒëµÄ¹Ø¼ü
- *      3£©¿ªÊ¼·ûºÅ£ºÔÚÒ»¸öÎÄ·¨ÖĞ£¬Ö¸¶¨Ò»¸ö·ÇÖÕ½á·ûÎª¿ªÊ¼·ûºÅ¡£Õâ¸ö·ûºÅ±íÊ¾µÄ´®¼¯ºÏ¾ÍÊÇÕâ¸öÎÄ·¨Éú³ÉµÄÓïÑÔ¡£
- *     °´ÕÕ¹ßÀı£¬Ê×ÏÈÁĞ³ö¿ªÊ¼·ûºÅµÄ²úÉúÊ½¡£
- *      4£©²úÉúÊ½£ºÃèÊöÁË½«ÖÕ½á·ûºÅºÍ·ÇÖÕ½á·ûºÅ×é³É´®µÄ·½·¨¡£ÓÉÒÔÏÂÔªËØ×é³É£º
- *          £¨1£©Ò»¸ö±»³ÆÎª²úÉúÊ½Í·²¿»ò×ó²¿µÄ·ÇÖÕ½á·û£¬Õâ¸ö²úÉúÊ½¶¨ÒåÁËÕâ¸öÍ·Ëù´ú±íµÄ´®¼¯ºÏµÄÒ»²¿·Ö¡£
- *          £¨2£©·ûºÅ ->¡£ÓĞÊ±Ò²ÓÃ ::= ´úÌæ¼ıÍ·
- *          £¨3£©Ò»¸öÓÉÁã¸ö»ò¶à¸öÖÕ½á·ûºÅÓë·ÇÖÕ½á·ûºÅ×é³ÉµÄ²úÉúÊ½Ìå»òÓÒ²¿¡£²úÉúÊ½ÌåÖĞµÄ³É·ÖÃèÊöÁË²úÉúÊ½Í·ÉÏµÄ·ÇÖÕ½á·ûºÅËù¶ÔÓ¦µÄ´®µÄÄ³ÖÖ¹¹Ôì·½Ê½¡£
- * 2.Ô¼¶¨
+ * ï¼ˆå½¢å¼å¦‚ï¼šstmt -> if(expr) stmt else stmt    ï¼‰
+ * 1. å®šä¹‰ï¼šç”±ç»ˆç»“ç¬¦å·ï¼Œéç»ˆç»“ç¬¦å·ï¼Œä¸€ä¸ªå¼€å§‹ç¬¦å·å’Œä¸€ç»„äº§ç”Ÿå¼ç»„æˆã€‚
+ *      1ï¼‰ç»ˆç»“ç¬¦å·ï¼šæ˜¯ç»„æˆä¸²çš„åŸºæœ¬ç¬¦å·ã€‚â€œè¯æ³•å•å…ƒåå­—â€æ˜¯â€œç»ˆç»“â€ç¬¦å·çš„åŒä¹‰è¯ã€‚å¦‚ï¼šif, else, {, }
+ *      2ï¼‰éç»ˆç»“ç¬¦ï¼šè¡¨ç¤ºä¸²çš„é›†åˆçš„è¯­æ³•å˜é‡ã€‚å¦‚ï¼šstmt, exprã€‚éç»ˆç»“ç¬¦å·è¡¨ç¤ºçš„ä¸²é›†åˆç”¨äºå®šä¹‰ç”±æ–‡æ³•ç”Ÿæˆçš„è¯­è¨€ã€‚
+ *     éç»ˆç»“ç¬¦ç»™å‡ºäº†è¯­è¨€çš„å±‚æ¬¡ç»“æ„ï¼Œè€Œè¿™ç§å±‚æ¬¡ç»“æ„æ˜¯è¯­æ³•åˆ†æå’Œç¿»è¯‘çš„å…³é”®
+ *      3ï¼‰å¼€å§‹ç¬¦å·ï¼šåœ¨ä¸€ä¸ªæ–‡æ³•ä¸­ï¼ŒæŒ‡å®šä¸€ä¸ªéç»ˆç»“ç¬¦ä¸ºå¼€å§‹ç¬¦å·ã€‚è¿™ä¸ªç¬¦å·è¡¨ç¤ºçš„ä¸²é›†åˆå°±æ˜¯è¿™ä¸ªæ–‡æ³•ç”Ÿæˆçš„è¯­è¨€ã€‚
+ *     æŒ‰ç…§æƒ¯ä¾‹ï¼Œé¦–å…ˆåˆ—å‡ºå¼€å§‹ç¬¦å·çš„äº§ç”Ÿå¼ã€‚
+ *      4ï¼‰äº§ç”Ÿå¼ï¼šæè¿°äº†å°†ç»ˆç»“ç¬¦å·å’Œéç»ˆç»“ç¬¦å·ç»„æˆä¸²çš„æ–¹æ³•ã€‚ç”±ä»¥ä¸‹å…ƒç´ ç»„æˆï¼š
+ *          ï¼ˆ1ï¼‰ä¸€ä¸ªè¢«ç§°ä¸ºäº§ç”Ÿå¼å¤´éƒ¨æˆ–å·¦éƒ¨çš„éç»ˆç»“ç¬¦ï¼Œè¿™ä¸ªäº§ç”Ÿå¼å®šä¹‰äº†è¿™ä¸ªå¤´æ‰€ä»£è¡¨çš„ä¸²é›†åˆçš„ä¸€éƒ¨åˆ†ã€‚
+ *          ï¼ˆ2ï¼‰ç¬¦å· ->ã€‚æœ‰æ—¶ä¹Ÿç”¨ ::= ä»£æ›¿ç®­å¤´
+ *          ï¼ˆ3ï¼‰ä¸€ä¸ªç”±é›¶ä¸ªæˆ–å¤šä¸ªç»ˆç»“ç¬¦å·ä¸éç»ˆç»“ç¬¦å·ç»„æˆçš„äº§ç”Ÿå¼ä½“æˆ–å³éƒ¨ã€‚äº§ç”Ÿå¼ä½“ä¸­çš„æˆåˆ†æè¿°äº†äº§ç”Ÿå¼å¤´ä¸Šçš„éç»ˆç»“ç¬¦å·æ‰€å¯¹åº”çš„ä¸²çš„æŸç§æ„é€ æ–¹å¼ã€‚
+ * 2.çº¦å®š
  *
  *
- * ÍÆµ¼
- *      ½«²úÉúÊ½¿´×÷ÊÇÖØĞ´¹æÔò£¬¾Í¿ÉÒÔ´ÓÍÆµ¼µÄ½Ç¶È
+ * æ¨å¯¼
+ *      å°†äº§ç”Ÿå¼çœ‹ä½œæ˜¯é‡å†™è§„åˆ™ï¼Œå°±å¯ä»¥ä»æ¨å¯¼çš„è§’åº¦
  *
  * */
 
 
 #include"../../header_files.h"
+#include <cstddef>
 #include<unordered_map>
 #include<unordered_set>
 
@@ -44,29 +45,29 @@ namespace CFG
     using std::unordered_set;
 
 
-    //ÉÏÏÂÎÄÎŞ¹ØÎÄ·¨
+    //ä¸Šä¸‹æ–‡æ— å…³æ–‡æ³•
     class ContextFreeGrammar
     {
     private:
-        //ÊäÈëÊä³öÎÄ¼ş¶ÔÏó
+        //è¾“å…¥è¾“å‡ºæ–‡ä»¶å¯¹è±¡
         fstream file_in_;
         fstream file_out_;
-        //ÖÕ½á·ûÀàĞÍ
+        //ç»ˆç»“ç¬¦çš„å±•ç¤ºæ ‡ç­¾ï¼›æ–‡æ³•ç¬¦å·çš„æ”¶é›†ä¸ä¾èµ–è¿™å¼ è¡¨
         unordered_map<string, string> terminal_type_;
-        //ÖÕ½á·û¼¯ºÏ
+        //ç»ˆç»“ç¬¦é›†åˆ
         vector<string> terminal_set_;
-        //·ÇÖÕ½á·û¼¯ºÏ
+        //éç»ˆç»“ç¬¦é›†åˆ
         vector<string> non_terminal_set_;
-        //´æ´¢ËùÓĞ²úÉúÊ½
+        //å­˜å‚¨æ‰€æœ‰äº§ç”Ÿå¼
         unordered_map<string, vector<string>> productions_;
-        //FIRST ¼¯ºÏ
+        //FIRST é›†åˆ
         unordered_map<string, vector<string>> first_;
-        //FOLLOW ¼¯ºÏ
+        //FOLLOW é›†åˆ
         unordered_map<string, vector<string>> follow_;
 
     public:
 
-        //Ô¤²â·ÖÎö±í
+        //é¢„æµ‹åˆ†æè¡¨
         struct PredictiveAnalysisTable
         {
             unordered_map<string, unordered_map<string, vector<string>>> table_;
@@ -82,61 +83,59 @@ namespace CFG
         ContextFreeGrammar()
         {
             terminal_type_ = {
-                    {"<", "Compare-Operator"},
-                    {"<=", "Compare-Operator"},
-                    {">", "Compare-Operator"},
-                    {">=", "Compare-Operator"},
-                    {"!=", "Compare-Operator"},
-                    {"==", "Compare-Operator"},
-                    {"=", "Assignment-Operator"},
-                    {"+", "Arithmetic-Operator"},
-                    {"-", "Arithmetic-Operator"},
-                    {"*", "Arithmetic-Operator"},
-                    {"/", "Arithmetic-Operator"},
-                    {"^", "Arithmetic-Operator"},
-                    {"+=", "Compound-Assignment-Operator"},
-                    {"-=", "Compound-Assignment-Operator"},
-                    {"/=", "Compound-Assignment-Operator"},
-                    {"*=", "Compound-Assignment-Operator"},
-                    {"^=", "Compound-Assignment-Operator"},
-                    {"++", "In-Decrement"},
-                    {"--", "In-Decrement"},
-                    {";", "Delimiter"},
-                    {",", "Delimiter"},
-                    {":", "Delimiter"},
-                    {"(", "Delimiter"},
-                    {")", "Delimiter"},
-                    {"[", "Delimiter"},
-                    {"]", "Delimiter"},
-                    {"{", "Delimiter"},
-                    {"}", "Delimiter"},
-                    {"int", "Keyword"},
-                    {"void", "Keyword"},
-                    {"float", "Keyword"},
-                    {"double", "Keyword"},
-                    {"bool", "Keyword"},
-                    {"if", "Keyword"},
-                    {"else", "Keyword"},
-                    {"while", "Keyword"},
-                    {"for", "Keyword"},
-                    {"break", "Keyword"},
-                    {"switch", "Keyword"},
-                    {"case", "Keyword"},
-                    {"default", "Keyword"},
-                    {"break", "Keyword"},
-                    {"const", "Keyword"},
-                    {"struct", "Keyword"},
-                    {"return", "Keyword"},
-                    {"int", "Keyword"},
-                    {"const", "Keyword"},
-                    {"true", "Boolean"},
-                    {"false", "Boolean"},
-                    {"identifier", "identifier"},
-                    {"identifier-function", "identifier-function"},
-                    {"identifier-struct", "identifier-struct"},
-                    {"identifier1", "identifier1"},
-                    {"number", "number"},
-                    {"empty", "¦Å"}
+                    {"<", "æ¯”è¾ƒè¿ç®—ç¬¦"},
+                    {"<=", "æ¯”è¾ƒè¿ç®—ç¬¦"},
+                    {">", "æ¯”è¾ƒè¿ç®—ç¬¦"},
+                    {">=", "æ¯”è¾ƒè¿ç®—ç¬¦"},
+                    {"!=", "æ¯”è¾ƒè¿ç®—ç¬¦"},
+                    {"==", "æ¯”è¾ƒè¿ç®—ç¬¦"},
+                    {"=", "èµ‹å€¼è¿ç®—ç¬¦"},
+                    {"+", "ç®—æœ¯è¿ç®—ç¬¦"},
+                    {"-", "ç®—æœ¯è¿ç®—ç¬¦"},
+                    {"*", "ç®—æœ¯è¿ç®—ç¬¦"},
+                    {"/", "ç®—æœ¯è¿ç®—ç¬¦"},
+                    {"^", "ç®—æœ¯è¿ç®—ç¬¦"},
+                    {"+=", "å¤åˆèµ‹å€¼è¿ç®—ç¬¦"},
+                    {"-=", "å¤åˆèµ‹å€¼è¿ç®—ç¬¦"},
+                    {"/=", "å¤åˆèµ‹å€¼è¿ç®—ç¬¦"},
+                    {"*=", "å¤åˆèµ‹å€¼è¿ç®—ç¬¦"},
+                    {"^=", "å¤åˆèµ‹å€¼è¿ç®—ç¬¦"},
+                    {"++", "è‡ªå¢å‡è¿ç®—ç¬¦"},
+                    {"--", "è‡ªå¢å‡è¿ç®—ç¬¦"},
+                    {";", "åˆ†éš”ç¬¦"},
+                    {",", "åˆ†éš”ç¬¦"},
+                    {":", "åˆ†éš”ç¬¦"},
+                    {"(", "åˆ†éš”ç¬¦"},
+                    {")", "åˆ†éš”ç¬¦"},
+                    {"[", "åˆ†éš”ç¬¦"},
+                    {"]", "åˆ†éš”ç¬¦"},
+                    {"{", "åˆ†éš”ç¬¦"},
+                    {"}", "åˆ†éš”ç¬¦"},
+                    {"int", "å…³é”®å­—"},
+                    {"void", "å…³é”®å­—"},
+                    {"float", "å…³é”®å­—"},
+                    {"double", "å…³é”®å­—"},
+                    {"bool", "å…³é”®å­—"},
+                    {"if", "å…³é”®å­—"},
+                    {"else", "å…³é”®å­—"},
+                    {"while", "å…³é”®å­—"},
+                    {"for", "å…³é”®å­—"},
+                    {"break", "å…³é”®å­—"},
+                    {"switch", "å…³é”®å­—"},
+                    {"case", "å…³é”®å­—"},
+                    {"default", "å…³é”®å­—"},
+                    {"continue", "å…³é”®å­—"},
+                    {"const", "å…³é”®å­—"},
+                    {"struct", "å…³é”®å­—"},
+                    {"return", "å…³é”®å­—"},
+                    {"true", "å¸ƒå°”å­—é¢é‡"},
+                    {"false", "å¸ƒå°”å­—é¢é‡"},
+                    {"identifier", "æ ‡è¯†ç¬¦"},
+                    {"identifier-function", "å‡½æ•°æ ‡è¯†ç¬¦"},
+                    {"identifier-struct", "ç»“æ„ä½“æ ‡è¯†ç¬¦"},
+                    {"identifier1", "èµ‹å€¼ç›®æ ‡æ ‡è¯†ç¬¦"},
+                    {"number", "æ•°å€¼"},
+                    {"empty", "Îµ"}
             };
 
         }
@@ -144,10 +143,10 @@ namespace CFG
     public:
         void remove_left_recursion_and_factor()
         {
-            //´¦ÀíÖ±½Ó×óµİ¹éÒÔ¼°ÌáÈ¡¹«¹²Ç°×ºÒò×Ó
+            //å¤„ç†ç›´æ¥å·¦é€’å½’ä»¥åŠæå–å…¬å…±å‰ç¼€å› å­
             remove_direct_left_recursion_and_factor_aux(grammar_file, LL1grammar_file);
             divide_line();
-            //´¦Àí¼ä½Ó×óµİ¹é
+            //å¤„ç†é—´æ¥å·¦é€’å½’
         }
 
         void split_grammar()
@@ -157,12 +156,12 @@ namespace CFG
 
         void cal_Vn_Vt()
         {
-            //³õÊ¼»¯²úÉúÊ½
+            //åˆå§‹åŒ–äº§ç”Ÿå¼
             generate_productions(processed_grammar_file);
             cal_Vn_Vt_aux(processed_grammar_file, Vn_Vt_file);
         }
 
-        //¼ÆËãfirst, follow¼¯ºÏ
+        //è®¡ç®—first, followé›†åˆ
         void cal_first_and_follow()
         {
             output_file(file_out_, first_follow_file);
@@ -171,7 +170,7 @@ namespace CFG
             file_out_.close();
         }
 
-        //ÒÔÍ¼±í¸ñÊ½±ê×¼Êä³ö
+        //ä»¥å›¾è¡¨æ ¼å¼æ ‡å‡†è¾“å‡º
         void generate_predictive_analysis_table()
         {
             input_file(file_in_, processed_grammar_file);
@@ -183,37 +182,37 @@ namespace CFG
 
         void context_free_grammar_pretreatment()
         {
-            //½«Ô­Ê¼ÎÄ·¨ÎÄ¼ş processed_grammar.txt ½øĞĞÏû³ıÖ±½Ó×óµİ¹éºÍÌáÈ¡¹«¹²Òò×Ó
-            cout << "************------------ ¹ı³Ì£º" << period[3] << "----²½Öè£º" << step[4] << "------------************" << endl;
-            cout << "¶ÁÈëÎÄ¼ş" << grammar_file << endl;
-            cout << "ÎÄ¼şĞ´Èë" << LL1grammar_file << endl;
+            //å°†åŸå§‹æ–‡æ³•æ–‡ä»¶ processed_grammar.txt è¿›è¡Œæ¶ˆé™¤ç›´æ¥å·¦é€’å½’å’Œæå–å…¬å…±å› å­
+            cout << "************------------ è¿‡ç¨‹ï¼š" << period[3] << "----æ­¥éª¤ï¼š" << step[4] << "------------************" << endl;
+            cout << "è¯»å…¥æ–‡ä»¶" << grammar_file << endl;
+            cout << "æ–‡ä»¶å†™å…¥" << LL1grammar_file << endl;
             remove_left_recursion_and_factor();
             divide_line();
 
-            //¶ÔÆä½øĞĞ»®·Ö
-            cout << "************------------ ¹ı³Ì£º" << period[3] << "----²½Öè£º" << step[5] << "------------************" << endl;
-            cout << "¶ÁÈëÎÄ¼ş" << LL1grammar_file << endl;
-            cout << "ÎÄ¼şĞ´Èë" << processed_grammar_file << endl;
+            //å¯¹å…¶è¿›è¡Œåˆ’åˆ†
+            cout << "************------------ è¿‡ç¨‹ï¼š" << period[3] << "----æ­¥éª¤ï¼š" << step[5] << "------------************" << endl;
+            cout << "è¯»å…¥æ–‡ä»¶" << LL1grammar_file << endl;
+            cout << "æ–‡ä»¶å†™å…¥" << processed_grammar_file << endl;
             split_grammar();
             divide_line();
 
-            //ÖÕ½á·ûÒÔ¼°·ÇÖÕ½á·û¼¯ºÏ
-            cout << "************------------ ¹ı³Ì£º" << period[3] << "----²½Öè£º" << step[6] << "------------************" << endl;
-            cout << "¶ÁÈëÎÄ¼ş" << processed_grammar_file << endl;
-            cout << "ÎÄ¼şĞ´Èë" << Vn_Vt_file << endl;
+            //ç»ˆç»“ç¬¦ä»¥åŠéç»ˆç»“ç¬¦é›†åˆ
+            cout << "************------------ è¿‡ç¨‹ï¼š" << period[3] << "----æ­¥éª¤ï¼š" << step[6] << "------------************" << endl;
+            cout << "è¯»å…¥æ–‡ä»¶" << processed_grammar_file << endl;
+            cout << "æ–‡ä»¶å†™å…¥" << Vn_Vt_file << endl;
             cal_Vn_Vt();
             divide_line();
 
-            //FIRST ºÍ FOLLOW¼¯ºÏ
-            cout << "************------------ ¹ı³Ì£º" << period[3] << "----²½Öè£º" << step[7] << "------------************" << endl;
-            cout << "ÎÄ¼şĞ´Èë" << first_follow_file << endl;
+            //FIRST å’Œ FOLLOWé›†åˆ
+            cout << "************------------ è¿‡ç¨‹ï¼š" << period[3] << "----æ­¥éª¤ï¼š" << step[7] << "------------************" << endl;
+            cout << "æ–‡ä»¶å†™å…¥" << first_follow_file << endl;
             cal_first_and_follow();
             divide_line();
 
-            //¹¹½¨ Ô¤²â·ÖÎö±í
-            cout << "************------------ ¹ı³Ì£º" << period[3] << "----²½Öè£º" << step[8] << "------------************" << endl;
-            cout << "¶ÁÈëÎÄ¼ş£º" << processed_grammar_file << endl;
-            cout << "ÎÄ¼şĞ´Èë" << pred_table_file << endl;
+            //æ„å»º é¢„æµ‹åˆ†æè¡¨
+            cout << "************------------ è¿‡ç¨‹ï¼š" << period[3] << "----æ­¥éª¤ï¼š" << step[8] << "------------************" << endl;
+            cout << "è¯»å…¥æ–‡ä»¶ï¼š" << processed_grammar_file << endl;
+            cout << "æ–‡ä»¶å†™å…¥" << pred_table_file << endl;
             generate_predictive_analysis_table();
             divide_line();
 
@@ -224,20 +223,20 @@ namespace CFG
 
         void generate_productions(const string& from_file);
 
-        //Ïû³ı¼ä½Ó×óµİ¹é
+        //æ¶ˆé™¤é—´æ¥å·¦é€’å½’
         //void remove_indirect_left_recursion_aux(const string& from_file, const string& to_file);
 
 
-        //Ïû³ıÖ±½Ó×óµİ¹éºÍ¹«¹²Òò×Ó
+        //æ¶ˆé™¤ç›´æ¥å·¦é€’å½’å’Œå…¬å…±å› å­
         /*
-         * 1.Ö±½Ó×óµİ¹éÏû³ı£º×óµİ¹é»áµ¼ÖÂµİ¹éÏÂ½µ·ÖÎöÆ÷ÎŞÏŞµİ¹é¡£¿ÉÒÔÍ¨¹ıÖØĞÂ¸ñÊ½»¯À´Ïû³ı×óµİ¹é
-         * 2.¹«¹²Òò×Ó£ºµ±Á½¸ö»ò¶à¸ö²úÉúÊ½¹²ÏíÏàÍ¬µÄÇ°×ºÊ±£¬³ÆÎª¹«¹²×óÒò×Ó¡£ÌáÈ¡¹«¹²×óÒò×Ó¿ÉÒÔ±ÜÃâ·ÖÎöÆ÷µÄÆçÒåĞÔ
+         * 1.ç›´æ¥å·¦é€’å½’æ¶ˆé™¤ï¼šå·¦é€’å½’ä¼šå¯¼è‡´é€’å½’ä¸‹é™åˆ†æå™¨æ— é™é€’å½’ã€‚å¯ä»¥é€šè¿‡é‡æ–°æ ¼å¼åŒ–æ¥æ¶ˆé™¤å·¦é€’å½’
+         * 2.å…¬å…±å› å­ï¼šå½“ä¸¤ä¸ªæˆ–å¤šä¸ªäº§ç”Ÿå¼å…±äº«ç›¸åŒçš„å‰ç¼€æ—¶ï¼Œç§°ä¸ºå…¬å…±å·¦å› å­ã€‚æå–å…¬å…±å·¦å› å­å¯ä»¥é¿å…åˆ†æå™¨çš„æ­§ä¹‰æ€§
          * */
         void remove_direct_left_recursion_and_factor_aux(const string& from_file, const string& to_file);
 
         void split_grammar_aux(const string& from_file, const string& to_file);
 
-        //¼ÆËãÖÕ½á·û Vt ºÍ ·ÇÖÕ½á·ûVn¼¯ºÏ
+        //è®¡ç®—ç»ˆç»“ç¬¦ Vt å’Œ éç»ˆç»“ç¬¦Vné›†åˆ
         void cal_Vn_Vt_aux(const string& from_file, const string& to_file);
 
         bool is_non_terminal(const string &symbol)
@@ -250,15 +249,25 @@ namespace CFG
             return std::find(terminal_set_.begin(), terminal_set_.end(), symbol) != terminal_set_.end();
         }
 
-        //·ÇÖÕ½á·û¼ÆËãµÄµİ¹é¹ı³Ì
+        //éç»ˆç»“ç¬¦è®¡ç®—çš„é€’å½’è¿‡ç¨‹
         void _cal_first_aux(const string& symbol);
 
         void cal_first_aux();
 
+        // æ±‚ symbols[begin..end) çš„ FIRSTï¼›terminals ä¸å­˜ emptyï¼Œå¯ç©ºæ€§å•ç‹¬è®°å½•ã€‚
+        struct SequenceFirst
+        {
+            std::vector<std::string> terminals;
+            bool nullable = true;
+        };
+
+        SequenceFirst first_of_sequence(
+            const std::vector<std::string>& symbols, std::size_t begin) const;
+
         void cal_follow_aux();
 
 
-        //Éú³ÉÔ¤²â·ÖÎö±í
+        //ç”Ÿæˆé¢„æµ‹åˆ†æè¡¨
         void generate_predictive_analysis_table_aux();
 
 
