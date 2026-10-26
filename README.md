@@ -1,6 +1,6 @@
 # 类C语言编译器
 
-基于C++17的教学编译器。前端提供预处理、词法分析、表驱动语法分析、分层符号表与DOT语法树输出；受限AST路径进一步检查作用域、初始化和函数调用，并可接入LLVM18生成IR和原生目标文件。仓库附带具有main入口、函数调用、while循环和条件判断的简易C程序；新版样例还能包含本地头文件并调用printf输出结果；CP04继续加入多类型函数与结构体，使用者已完成当前11/11、17/17及typed样例O0/O2验收。
+基于C++17的教学编译器。前端提供预处理、词法分析、表驱动语法分析、分层符号表与DOT语法树输出；受限AST路径进一步检查作用域、初始化和函数调用，并可接入LLVM18生成IR和原生目标文件。仓库附带具有main入口、函数调用、while循环和条件判断的简易C程序；新版样例还能包含本地头文件并调用printf输出结果；CP04加入多类型函数与结构体；CP05进一步支持固定数组、对象指针与for。当前前端12/12、LLVM配置19/19全量回归通过，包含与Clang的O0/O2运行对照。
 
 ## 支持范围
 
@@ -9,8 +9,8 @@
 - 支持整数、小数、科学记数法、ASCII字符字面量、数值转换、加减乘与六种比较；局部变量、成员赋值、词法块、带花括号的if/else和while保留。支持块内交错声明。
 - 调用处必须有可见且相容的函数签名，支持原型、嵌套调用及自递归。检查参数数量、类型转换、局部遮蔽和使用前初始化。
 - 顶层具名结构体可含基础类型或先定义的结构体成员，支持局部对象、嵌套成员读写、整值复制及同一翻译单元内按值传参/返回。初始化按叶成员追踪，不能因为写了一个成员就读取整个对象。结构体签名使用internal链接，不支持外部C聚合ABI对接。
-- 本地头文件、包含保护、简单整数宏和受限stdio契约保留；新增stdbool.h的有限适配，不展开完整系统头文件。printf新增%f/%e/%g及固定精度，并正确提升float为double、char/bool为int；%s仍仅接受字符串字面量。
-- 尚未提供完整C：不支持其他任意系统库接口、完整宏、const/volatile限定、指针、数组、全局对象、结构体花括号初始化/位域、通用外部聚合ABI、除法/取余、逻辑短路、for、break/continue、分支提前return或多源文件分别编译。
+- 本地头文件、包含保护、简单整数宏和受限stdio契约保留；新增stdbool.h的有限适配，不展开完整系统头文件。printf新增%f/%e/%g及固定精度，并正确提升float为double、char/bool为int；%s接受字符串字面量或char指针。
+- 尚未提供完整C：不支持其他任意系统库接口、完整宏、const/volatile限定、函数指针、变长数组、全局对象、结构体花括号初始化/位域、通用外部聚合ABI、除法/取余、逻辑短路、break/continue、分支提前return或多源文件分别编译。
 - int使用i32回绕加减乘；char为有符号i8，bool为真/假，float/double为相应LLVM浮点类型。数值窄化和浮点转整数只对结果可表示的输入作对照。while初始化检查保守保留入口，不证明循环终止。
 - LLVM标准O2负责优化，目标后端生成.o，Clang负责链接。未实现自定义优化算法，未作性能测量。各层修改和边界见[CP04说明](docs/14_多类型函数与结构体.md)。
 
@@ -29,10 +29,10 @@ cmake --workflow --preset llvm-check
 
 | 工作流 | 构建目录 | LLVM | 当前注册测试 |
 |---|---|---|---:|
-| frontend-check | build-presets/frontend-debug | 关闭 | 11 |
-| llvm-check | build-presets/llvm-debug | 启用 | 17 |
+| frontend-check | build-presets/frontend-debug | 关闭 | 12 |
+| llvm-check | build-presets/llvm-debug | 启用 | 19 |
 
-当前CP04前端11/11、LLVM配置17/17已通过；下方10/10、15/15记录属于CP03历史版本。
+当前CP05前端12/12、LLVM配置19/19已通过；CP04的11/11、17/17及CP03的10/10、15/15作为历史记录保留。
 
 每个工作流依次执行配置、构建、测试，各阶段使用同一个configurePreset。默认并行构建数2；若没有任何测试，测试阶段报错。可以用cmake --list-presets=all查看预设，或分别运行cmake --preset、cmake --build --preset与ctest --preset。
 
@@ -120,3 +120,20 @@ python3 examples/run_mini_c.py build-presets/llvm-debug/my_compiler --example ty
 CP04新增71项前端用例与103项原生用例（含O0/O2、实际仓库样例、Clang双向标量ABI），使用者本轮已实际完成：前端11/11、LLVM17/17全量通过，71/103项类型用例记录及typed样例O0/O2输出已核对。没有性能计时结论。
 
 第一次实际使用或编译自己的.c文件，请看[从源码到可执行程序](docs/15_实际使用与完整程序.md)。my_compiler输出.o，Clang驱动链接，最终程序再执行main；这三步的退出状态分别检查。
+
+
+## CP05 数组 对象指针与for
+
+支持固定长度及初始化推断长度数组、多维下标、嵌套花括号初始化与省略项补零、char数组字符串初始化；数组实参按外层维度退化为指针。对象指针覆盖多级指针、&、*、下标、->、参数/返回值、void*转换、同数组偏移/相减/比较，以及前后缀自增减。指针差在当前子集中返回i32，仅对差值可表示的输入验证；不宣称完整ptrdiff_t语义。
+
+for生成初始化、条件、循环体、步进及出口控制流，初始化声明仅在该循环中可见。支持空子句及+=、-=、*=；仍要求花括号循环体，不支持break/continue、嵌套提前return。数组赋值、VLA、函数指针和括号声明器不在本轮范围。
+
+新增测试在O0/O2下，将本编译器生成的目标文件链接运行，与Clang编译相同源码的结果及独立预期比较，包含非零退出码、零次循环、多维数组、指针ABI双向互调和预期失败诊断。数组越界、悬空/空指针解引用、别名后的完整初始化分析尚未实现；正例只使用有定义行为的输入。未测量性能。
+
+```bash
+cmake --workflow --preset frontend-check
+cmake --workflow --preset llvm-check
+python3 examples/run_mini_c.py build-presets/llvm-debug/my_compiler --example memory --opt-level 2 --output-root build-memory-demo
+```
+
+综合样例输出：`count=4 total=15.0 label=verified`。原理和限制见[数组、对象指针与for](docs/16_数组对象指针与for.md)。

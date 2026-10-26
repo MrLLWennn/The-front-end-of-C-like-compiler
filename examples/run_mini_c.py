@@ -32,7 +32,7 @@ def main():
     parser.add_argument("compiler", type=Path)
     parser.add_argument("--opt-level", type=int, choices=[0, 2], default=2)
     parser.add_argument("--clang", default="clang-18")
-    parser.add_argument("--example", choices=["basic", "stdio", "typed"], default="stdio")
+    parser.add_argument("--example", choices=["basic", "stdio", "typed", "memory"], default="stdio")
     parser.add_argument("--output-root", type=Path, default=Path("build-mini-c-runs"))
     args = parser.parse_args()
     compiler = args.compiler.resolve(strict=True)
@@ -40,12 +40,12 @@ def main():
     if not clang:
         raise RuntimeError(f"cannot find linker driver: {args.clang}")
     root = Path(__file__).resolve().parents[1]
-    examples = {"basic": "mini_c.c", "stdio": "mini_c_io.c", "typed": "typed_structs.c"}
+    examples = {"basic": "mini_c.c", "stdio": "mini_c_io.c", "typed": "typed_structs.c", "memory": "arrays_pointers_for.c"}
     source = root / "examples" / examples[args.example]
     grammar = root / "files" / "04-grammar.txt"
     original_source, original_grammar = source.read_bytes(), grammar.read_bytes()
     header = root / "examples" / ("typed_structs.h" if args.example == "typed" else "mini_c_math.h")
-    original_header = header.read_bytes() if args.example != "basic" else None
+    original_header = header.read_bytes() if args.example in ["stdio", "typed"] else None
     args.output_root.mkdir(parents=True, exist_ok=True)
     run = Path(tempfile.mkdtemp(prefix=f"O{args.opt_level}-", dir=args.output_root)).resolve()
     output = run / "output"
@@ -61,7 +61,8 @@ def main():
     stage("运行验证", "执行main并核对退出码与标准输出")
     actual = command([exe], run, "run")
     expected = {"basic": b"", "stdio": b"sum_squares(5) = 55\nstatus: ok\n",
-                "typed": b"value=3.00 grade=A accepted=1\nscore=3.50\n"}[args.example]
+                "typed": b"value=3.00 grade=A accepted=1\nscore=3.50\n",
+                "memory": b"count=4 total=15.0 label=verified\n"}[args.example]
     if actual.stdout != expected:
         raise RuntimeError(f"unexpected program output: {actual.stdout!r}")
     print("程序退出码：0；标准输出与样例预期一致。", flush=True)
@@ -86,6 +87,7 @@ def main():
         "checks": ["sum_squares(5)==55", "sum_squares(0)==0", "sum_squares(10)==385"]
                   if args.example == "basic" else ["sum_squares(5)==55", "printf output matches Clang"]
                   if args.example == "stdio" else ["typed structs and conversions", "printf output matches Clang"]
+                  if args.example == "typed" else ["arrays, pointers and for", "printf output matches Clang"]
     }, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
     print("PASS：本编译器生成程序与Clang对照程序均通过自检；未测量性能。", flush=True)
     print(f"{'-' * 78}\nAST、优化前后IR、目标文件、可执行文件和日志：{run}", flush=True)

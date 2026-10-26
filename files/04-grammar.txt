@@ -1,49 +1,45 @@
-<S> -> <program>
-<program> -> <declaration-list>
-<declaration-list> -> <declaration-list> <declaration> | <declaration>
-<declaration> -> <var-declaration> | <func-declaration> | <struct-declaration>
-<var-declaration> -> <type-specifier> identifier ; | <type-specifier> identifier [ number ] ; | <type-specifier> identifier1 = <expression> ;
-<type-specifier> -> <const-type> | <type>
-<const-type> -> const int | const double | const float
-<type> -> int | float | double | void | bool | char | struct identifier-struct
-<func-declaration> -> <type-specifier> identifier-function ( <params> ) ; | <type-specifier> identifier-function ( <params> ) <compound-stmt>
-<struct-declaration> -> struct identifier-struct <struct-stmt> ;
-<params> -> <params-list> | void | empty
-<params-list> -> <params-list> , <param> | <param>
-<param> -> <type-specifier> identifier | <type-specifier> identifier [ ] | const <type-specifier> identifier | const <type-specifier> identifier [ ]
-<compound-stmt> -> { <local-declarations> <statement-list> }
-<struct-stmt> -> { <struct-members> }
-<struct-members> -> <struct-members> <var-declaration> | empty
-<local-declarations> -> <local-declarations> <var-declaration> | empty
-<statement-list> -> <statement-list> <statement> | empty
-<statement> -> <var-declaration> | <expression-stmt> | <compound-stmt> | <selection-stmt> | <while-stmt> | <for-stmt> | <jump-stmt> | <break-stmt> | <continue-stmt> | <switch-case-default-stmt>
-<expression-stmt> -> ; | <expression> ;
-<selection-stmt> -> if ( <expression> ) <statement> | if ( <expression> ) <statement> else <statement>
-<for-stmt> -> for ( <assign-expression> ; <expression> ; <in-de-expression> ) <compound-stmt>
-<assign-expression> -> <type-specifier> <expression> | <expression>
-<while-stmt> -> while ( <expression> ) <compound-stmt>
-<jump-stmt> -> return ; | return <expression> ;
-<break-stmt> -> break ;
-<continue-stmt> -> continue ;
-<switch-case-default-stmt> -> switch ( <expression> ) { <case-stmt-list> default : <statement-list> }
-<case-stmt-list> -> <case-stmt-list> <case-stmt> | <case-stmt>
-<case-stmt> -> case number : <statement-list> | empty
-<expression> -> <var1> <assignment-op> <expression> | <simple-expression>
-<boolean> -> true | false
-<in-de-expression> -> <in-de> <var> | <var> <in-de>
-<in-de> -> ++ | --
-<assignment-op> -> = | <compound-assignment-op>
-<compound-assignment-op> -> += | -= | *= | /=
-<var> -> identifier <member-tail> | identifier [ <expression> ]
-<var1> -> identifier1 <member-tail> | identifier1 [ <expression> ]
-<member-tail> -> . identifier <member-tail> | empty
-<simple-expression> -> <additive-expression> <compare-operator> <additive-expression> | <additive-expression>
-<compare-operator> -> <= | < | > | >= | == | !=
-<additive-expression> -> <additive-expression> <add_sub_op> <term> | <term>
-<add_sub_op> -> + | -
-<term> -> <term> <mul_div_op> <factor> | <factor>
-<mul_div_op> -> * | /
-<factor> -> ( <expression> ) <member-tail> | ( <type> ) <factor> | + <factor> | - <factor> | <var> | <call> <member-tail> | <boolean> | number | string-literal | character-literal
-<call> -> identifier-function ( <args> )
-<args> -> <arg-list> | empty
-<arg-list> -> <arg-list> , <expression> | <expression>
+<S> -> <unit>
+<unit> -> <external> <unit-tail>
+<unit-tail> -> <external> <unit-tail> | empty
+<external> -> <record-definition> | <function-or-object>
+<record-definition> -> struct identifier { <field-seq> } ;
+<function-or-object> -> <base-type> <declarator-stars> identifier <external-tail>
+<base-type> -> int | float | double | void | bool | char | struct identifier
+<declarator-stars> -> * <declarator-stars> | empty
+<external-tail> -> ( <parameters> ) <function-tail> | <array-suffix> <init-opt> ;
+<function-tail> -> ; | <block>
+<parameters> -> <parameter> <parameter-tail> | empty
+<parameter-tail> -> , <parameter> <parameter-tail> | empty
+<parameter> -> <base-type> <declarator-stars> identifier <array-suffix>
+<array-suffix> -> [ <array-size> ] <array-suffix> | empty
+<array-size> -> number | identifier | - number | empty
+<field-seq> -> <local-decl> ; <field-seq> | empty
+<local-decl> -> <base-type> <declarator-stars> identifier <array-suffix> <init-opt>
+<init-opt> -> = <initializer> | empty
+<initializer> -> { <initializer> <initializer-tail> } | <expr>
+<initializer-tail> -> , <initializer-after-comma> | empty
+<initializer-after-comma> -> <initializer> <initializer-tail> | empty
+<block> -> { <stmt-seq> }
+<stmt-seq> -> <stmt> <stmt-seq> | empty
+<stmt> -> <local-decl> ; | <expr-opt> ; | <block> | if ( <expr> ) <stmt> <else-opt> | while ( <expr> ) <block> | for ( <for-init> ; <expr-opt> ; <expr-opt> ) <block> | return <expr-opt> ; | break ; | continue ;
+<else-opt> -> else <stmt> | empty
+<for-init> -> <local-decl> | <expr-opt>
+<expr-opt> -> <expr> | empty
+<expr> -> <equality> <assignment-tail>
+<assignment-tail> -> <assign-op> <expr> | empty
+<assign-op> -> = | += | -= | *= | /=
+<equality> -> <relational> <equality-tail>
+<equality-tail> -> == <relational> <equality-tail> | != <relational> <equality-tail> | empty
+<relational> -> <sum> <relational-tail>
+<relational-tail> -> <rel-op> <sum> <relational-tail> | empty
+<rel-op> -> < | <= | > | >=
+<sum> -> <product> <sum-tail>
+<sum-tail> -> + <product> <sum-tail> | - <product> <sum-tail> | empty
+<product> -> <unary> <product-tail>
+<product-tail> -> * <unary> <product-tail> | / <unary> <product-tail> | empty
+<unary> -> + <unary> | - <unary> | & <unary> | * <unary> | ++ <unary> | -- <unary> | <postfix> | ( <base-type> <declarator-stars> ) <unary>
+<postfix> -> <atom> <postfix-tail>
+<atom> -> identifier | number | character-literal | string-literal | true | false | ( <expr> )
+<postfix-tail> -> [ <expr> ] <postfix-tail> | . identifier <postfix-tail> | -> identifier <postfix-tail> | ( <arguments> ) <postfix-tail> | ++ | -- | empty
+<arguments> -> <expr> <argument-tail> | empty
+<argument-tail> -> , <expr> <argument-tail> | empty

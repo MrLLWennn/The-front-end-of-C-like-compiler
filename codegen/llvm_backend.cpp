@@ -141,6 +141,9 @@ namespace my_compiler::llvm_backend
                     return builder_.getDoubleTy();
                 case ast::TypeKind::Structure:
                     return structures_.at(value.tag);
+                case ast::TypeKind::Array:
+                    return llvm::ArrayType::get(type(*value.element), value.extent);
+                case ast::TypeKind::Pointer:
                 case ast::TypeKind::String:
                     return builder_.getPtrTy();
                 }
@@ -167,7 +170,8 @@ namespace my_compiler::llvm_backend
 
             static bool named_place(const ast::Expression& node)
             {
-                return node.kind == ast::ExpressionKind::Name ||
+                return node.kind == ast::ExpressionKind::Name || node.kind == ast::ExpressionKind::Index ||
+                       node.kind == ast::ExpressionKind::Dereference ||
                        (node.kind == ast::ExpressionKind::Member && named_place(*node.left));
             }
 
@@ -175,12 +179,22 @@ namespace my_compiler::llvm_backend
             {
                 if(node.kind == ast::ExpressionKind::Name)
                     return find(names, node.name);
+                if(node.kind == ast::ExpressionKind::Dereference)
+                    return expression(*node.left, names);
+                if(node.kind == ast::ExpressionKind::Index)
+                {
+                    auto* index = expression(*node.right, names);
+                    index = builder_.CreateIntCast(index, builder_.getInt64Ty(), node.right->type.kind != ast::TypeKind::Bool);
+                    return builder_.CreateGEP(type(node.type), expression(*node.left, names), index, "element.addr");
+                }
                 return builder_.CreateStructGEP(type(node.left->type), address(*node.left, names),
                     static_cast<unsigned>(node.member_index), node.name + ".addr");
             }
 
             llvm::Value* truth(llvm::Value* value)
             {
+                if(value->getType()->isPointerTy())
+                    return builder_.CreateIsNotNull(value, "truth.ptr");
                 if(value->getType()->isFloatingPointTy())
                     return builder_.CreateFCmpUNE(value, llvm::ConstantFP::get(value->getType(), 0), "truth.fp");
                 return builder_.CreateICmpNE(value, llvm::ConstantInt::get(value->getType(), 0), "truth.int");
@@ -188,8 +202,12 @@ namespace my_compiler::llvm_backend
 
             llvm::Value* convert(llvm::Value* value, const ast::Type& from, const ast::Type& to)
             {
-                if(from == to)
+                const auto source = from.decayed();
+                if(source == to || (source.kind == ast::TypeKind::Pointer && to.kind == ast::TypeKind::Pointer))
                     return value;
+                if(to.kind == ast::TypeKind::Pointer)
+                    return llvm::ConstantPointerNull::get(builder_.getPtrTy()); // 语义阶段仅允许整数常量0。
+
                 if(to.kind == ast::TypeKind::Bool)
                     return truth(value);
                 if(from.floating() && to.floating())
@@ -207,6 +225,11 @@ namespace my_compiler::llvm_backend
             llvm::Value* expression(const ast::Expression& node, const Scopes& names)
             {
                 using ast::ExpressionKind;
+                if(node.type.kind == ast::TypeKind::Array)
+                {
+                    auto* zero = builder_.getInt32(0);
+                    return builder_.CreateGEP(type(node.type), address(node, names), {zero, zero}, "array.decay");
+                }
                 switch(node.kind)
                 {
                 case ExpressionKind::String:
@@ -224,6 +247,26 @@ namespace my_compiler::llvm_backend
                         return builder_.CreateLoad(type(node.type), address(node, names), node.name + ".value");
                     return builder_.CreateExtractValue(expression(*node.left, names),
                         {static_cast<unsigned>(node.member_index)}, node.name + ".value");
+                case ExpressionKind::Index:
+                case ExpressionKind::Dereference:
+                    return builder_.CreateLoad(type(node.type), address(node, names), "indirect.value");
+                case ExpressionKind::Address:
+                    return address(*node.left, names);
+                case ExpressionKind::Update:
+                {
+                    auto* slot = address(*node.left, names); // 左值只求值一次，避免p++等副作用被重复执行。
+                    auto* old = builder_.CreateLoad(type(node.type), slot, "update.old");
+                    const bool decrement = node.operation.find("--") != std::string::npos;
+                    llvm::Value* next;
+                    if(node.type.kind == ast::TypeKind::Pointer)
+                        next = builder_.CreateGEP(type(*node.type.element), old, builder_.getInt64(decrement ? -1 : 1), "update.ptr");
+                    else if(node.type.floating())
+                        next = builder_.CreateFAdd(old, llvm::ConstantFP::get(type(node.type), decrement ? -1 : 1));
+                    else
+                        next = builder_.CreateAdd(old, llvm::ConstantInt::get(type(node.type), decrement ? -1 : 1, true));
+                    builder_.CreateStore(next, slot);
+                    return node.operation.rfind("post", 0) == 0 ? old : next;
+                }
                 case ExpressionKind::Cast:
                     return convert(expression(*node.left, names), node.left->type, node.type);
                 case ExpressionKind::Unary:
@@ -235,6 +278,32 @@ namespace my_compiler::llvm_backend
                 }
                 case ExpressionKind::Binary:
                 {
+                    if(node.operand_type.kind == ast::TypeKind::Pointer)
+                    {
+                        auto* left = expression(*node.left, names);
+                        auto* right = expression(*node.right, names);
+                        const bool left_pointer = node.left->type.decayed().kind == ast::TypeKind::Pointer;
+                        const bool right_pointer = node.right->type.decayed().kind == ast::TypeKind::Pointer;
+                        if((node.operation == "+" || node.operation == "-") && !(left_pointer && right_pointer))
+                        {
+                            auto* offset = left_pointer ? right : left;
+                            const auto index_type = left_pointer ? node.right->type : node.left->type;
+                            offset = builder_.CreateIntCast(offset, builder_.getInt64Ty(), index_type.kind != ast::TypeKind::Bool);
+                            if(node.operation == "-") offset = builder_.CreateNeg(offset);
+                            return builder_.CreateGEP(type(*node.operand_type.element), left_pointer ? left : right, offset, "pointer.offset");
+                        }
+                        if(node.operation == "-")
+                            return builder_.CreateIntCast(builder_.CreatePtrDiff(type(*node.operand_type.element), left, right), builder_.getInt32Ty(), true, "pointer.distance");
+                        left = convert(left, node.left->type, node.operand_type);
+                        right = convert(right, node.right->type, node.operand_type);
+                        llvm::CmpInst::Predicate predicate = llvm::CmpInst::ICMP_EQ;
+                        if(node.operation == "!=") predicate = llvm::CmpInst::ICMP_NE;
+                        else if(node.operation == "<") predicate = llvm::CmpInst::ICMP_ULT;
+                        else if(node.operation == "<=") predicate = llvm::CmpInst::ICMP_ULE;
+                        else if(node.operation == ">") predicate = llvm::CmpInst::ICMP_UGT;
+                        else if(node.operation == ">=") predicate = llvm::CmpInst::ICMP_UGE;
+                        return builder_.CreateZExt(builder_.CreateICmp(predicate, left, right), builder_.getInt32Ty(), "pointer.cmp");
+                    }
                     auto* left = convert(expression(*node.left, names), node.left->type, node.operand_type);
                     auto* right = convert(expression(*node.right, names), node.right->type, node.operand_type);
                     const bool fp = node.operand_type.floating();
@@ -294,6 +363,34 @@ namespace my_compiler::llvm_backend
                 throw std::logic_error("unknown checked expression");
             }
 
+            void initialize(const ast::Initializer& init, const ast::Type& value, llvm::Value* slot, const Scopes& names)
+            {
+                if(value.kind == ast::TypeKind::Array)
+                {
+                    // 省略的聚合元素归零；不是把未初始化的普通数组默认清零。
+                    builder_.CreateStore(llvm::Constant::getNullValue(type(value)), slot);
+                    if(!init.list)
+                    {
+                        for(std::size_t i = 0; i < init.value->text.size(); ++i)
+                        {
+                            auto* item = builder_.CreateGEP(type(value), slot, {builder_.getInt32(0), builder_.getInt32(i)});
+                            builder_.CreateStore(builder_.getInt8(static_cast<unsigned char>(init.value->text[i])), item);
+                        }
+                    }
+                    else
+                    {
+                        for(std::size_t i = 0; i < init.entries.size(); ++i)
+                        {
+                            auto* item = builder_.CreateGEP(type(value), slot, {builder_.getInt32(0), builder_.getInt32(i)});
+                            initialize(init.entries[i], *value.element, item, names);
+                        }
+                    }
+                    return;
+                }
+                if(init.list) initialize(init.entries.at(0), value, slot, names);
+                else builder_.CreateStore(convert(expression(*init.value, names), init.value->type, value), slot);
+            }
+
             void statement(const ast::Statement& node, llvm::Function& function, Scopes& names)
             {
                 using ast::StatementKind;
@@ -306,14 +403,37 @@ namespace my_compiler::llvm_backend
                 {
                     auto* slot = create_slot(function, node.type, node.name);
                     names.back().emplace(node.name, slot);
-                    if(node.value)
-                        builder_.CreateStore(convert(expression(*node.value, names), node.value->type, node.type), slot);
+                    if(node.initializer) initialize(*node.initializer, node.type, slot, names);
                     break;
                 }
                 case StatementKind::Assignment:
-                    builder_.CreateStore(convert(expression(*node.value, names), node.value->type, node.target->type),
-                        address(*node.target, names));
+                {
+                    auto* slot = address(*node.target, names);
+                    auto* right = expression(*node.value, names);
+                    if(node.operation == "=")
+                        right = convert(right, node.value->type, node.target->type);
+                    else
+                    {
+                        llvm::Value* old = builder_.CreateLoad(type(node.target->type), slot);
+                        if(node.type.kind == ast::TypeKind::Pointer)
+                        {
+                            right = builder_.CreateIntCast(right, builder_.getInt64Ty(), node.value->type.kind != ast::TypeKind::Bool);
+                            if(node.operation == "-=") right = builder_.CreateNeg(right);
+                            right = builder_.CreateGEP(type(*node.type.element), old, right);
+                        }
+                        else
+                        {
+                            old = convert(old, node.target->type, node.type);
+                            right = convert(right, node.value->type, node.type);
+                            if(node.operation == "+=") right = node.type.floating() ? builder_.CreateFAdd(old, right) : builder_.CreateAdd(old, right);
+                            else if(node.operation == "-=") right = node.type.floating() ? builder_.CreateFSub(old, right) : builder_.CreateSub(old, right);
+                            else right = node.type.floating() ? builder_.CreateFMul(old, right) : builder_.CreateMul(old, right);
+                            right = convert(right, node.type, node.target->type);
+                        }
+                    }
+                    builder_.CreateStore(right, slot);
                     break;
+                }
                 case StatementKind::Conditional:
                 {
                     auto* condition = truth(expression(*node.condition, names));
@@ -347,6 +467,29 @@ namespace my_compiler::llvm_backend
                     statement(*node.body, function, names);
                     builder_.CreateBr(condition);
                     builder_.SetInsertPoint(end);
+                    break;
+                }
+                case StatementKind::For:
+                {
+                    names.emplace_back();
+                    if(node.setup) statement(*node.setup, function, names);
+                    auto& context = builder_.getContext();
+                    auto* condition = llvm::BasicBlock::Create(context, "for.condition", &function);
+                    auto* body = llvm::BasicBlock::Create(context, "for.body", &function);
+                    auto* step = llvm::BasicBlock::Create(context, "for.step", &function);
+                    auto* end = llvm::BasicBlock::Create(context, "for.end", &function);
+                    builder_.CreateBr(condition);
+                    builder_.SetInsertPoint(condition);
+                    auto* check = node.condition ? truth(expression(*node.condition, names)) : builder_.getTrue();
+                    builder_.CreateCondBr(check, body, end);
+                    builder_.SetInsertPoint(body);
+                    statement(*node.body, function, names);
+                    builder_.CreateBr(step);
+                    builder_.SetInsertPoint(step);
+                    if(node.step) statement(*node.step, function, names);
+                    builder_.CreateBr(condition);
+                    builder_.SetInsertPoint(end);
+                    names.pop_back();
                     break;
                 }
                 case StatementKind::Block:

@@ -28,6 +28,10 @@ namespace my_compiler::ast
             return "double";
         case TypeKind::Structure:
             return "struct " + type.tag;
+        case TypeKind::Pointer:
+            return type_name(*type.element) + "*";
+        case TypeKind::Array:
+            return "[" + std::to_string(type.extent) + " x " + type_name(*type.element) + "]";
         case TypeKind::String:
             return "字符串常量";
         }
@@ -47,6 +51,8 @@ namespace my_compiler::ast
         struct Binding
         {
             Type type;
+            // 地址逃逸后不冒充完整别名分析：间接写入及数组内容由运行时有效性约束负责。
+            bool escaped = false;
             // 标量使用空路径；结构体按叶成员路径记录，不能把p.x赋值算作整个p已初始化。
             std::unordered_set<std::string> initialized;
         };
@@ -103,6 +109,30 @@ namespace my_compiler::ast
 
             void object_type(const Type& type, std::size_t line, std::size_t before) const
             {
+                if(type.kind == TypeKind::Pointer)
+                {
+                    auto target = type.element;
+                    while(target->kind == TypeKind::Pointer || target->kind == TypeKind::Array) target = target->element;
+                    if(target->kind == TypeKind::Structure && !structures_.count(target->tag))
+                        fail("E_SEMA_STRUCT", line, "unknown struct pointer target '" + target->tag + "'");
+                    return;
+                }
+                if(type.kind == TypeKind::Array)
+                {
+                    if(type.extent == 0 || type.extent > 65536)
+                        fail("E_SEMA_ARRAY", line, "invalid array extent");
+                    object_type(*type.element, line, before);
+                    std::size_t count = 1;
+                    const Type* part = &type;
+                    while(part->kind == TypeKind::Array)
+                    {
+                        if(count > 1048576 / part->extent)
+                            fail("E_SEMA_ARRAY", line, "array exceeds 1048576 elements");
+                        count *= part->extent;
+                        part = part->element.get();
+                    }
+                    return;
+                }
                 if(type.kind == TypeKind::Void || type.kind == TypeKind::String)
                     fail("E_SEMA_TYPE", line, "object or parameter cannot have void/string type");
                 if(type.kind == TypeKind::Structure)
@@ -118,6 +148,8 @@ namespace my_compiler::ast
             {
                 if(depth > 16 || result.size() >= 1024)
                     fail("E_SEMA_STRUCT", 0, "struct layout exceeds depth/leaf limit");
+                if(type.kind == TypeKind::Array)
+                    return; // 不将未知下标读写伪装成“整个数组已初始化”。
                 if(type.kind != TypeKind::Structure)
                     result.push_back(prefix);
                 else
@@ -187,17 +219,29 @@ namespace my_compiler::ast
                     base.path = base.path.empty() ? node.name : base.path + "." + node.name;
                     return base;
                 }
-                fail("E_SEMA_LVALUE", node.line, "assignment requires a named object or member");
+                if(node.kind == ExpressionKind::Dereference || node.kind == ExpressionKind::Index)
+                {
+                    const auto pointer = expression(*node.left, scopes).decayed();
+                    if(pointer.kind != TypeKind::Pointer || pointer.element->kind == TypeKind::Void)
+                        fail("E_SEMA_POINTER", node.line, "dereference/index requires a pointer to an object");
+                    if(node.right && !expression(*node.right, scopes).integral())
+                        fail("E_SEMA_POINTER", node.line, "array index must have integral type");
+                    node.type = *pointer.element;
+                    return {nullptr, node.type, {}, "indirect object"};
+                }
+                fail("E_SEMA_LVALUE", node.line, "assignment requires a modifiable object lvalue");
             }
 
             static bool named_place(const Expression& node)
             {
-                return node.kind == ExpressionKind::Name ||
+                return node.kind == ExpressionKind::Name || node.kind == ExpressionKind::Index ||
+                       node.kind == ExpressionKind::Dereference ||
                        (node.kind == ExpressionKind::Member && named_place(*node.left));
             }
 
             void require_initialized(const Place& target, std::size_t line) const
             {
+                if(!target.binding || target.binding->escaped) return;
                 for(const auto& leaf : leaves(target.type, target.path))
                 {
                     if(!target.binding->initialized.count(leaf))
@@ -209,21 +253,66 @@ namespace my_compiler::ast
 
             void initialize(const Place& target) const
             {
+                if(!target.binding) return;
                 for(const auto& leaf : leaves(target.type, target.path))
                     target.binding->initialized.insert(leaf);
             }
 
-            void conversion(const Type& from, const Type& to, std::size_t line) const
+            static bool compatible_pointer(const Type& from, const Type& to)
             {
-                if((from.numeric() && to.numeric()) || (from == to && from.kind == TypeKind::Structure))
+                return from.kind == TypeKind::Pointer && to.kind == TypeKind::Pointer &&
+                    (*from.element == *to.element || from.element->kind == TypeKind::Void || to.element->kind == TypeKind::Void);
+            }
+
+            void conversion(Type from, const Type& to, std::size_t line, bool null = false) const
+            {
+                from = from.decayed();
+                if((from.numeric() && to.numeric()) || (from == to && from.kind == TypeKind::Structure) ||
+                   compatible_pointer(from, to) || (null && to.kind == TypeKind::Pointer) ||
+                   (from.kind == TypeKind::Pointer && to.kind == TypeKind::Bool))
                     return;
                 fail("E_SEMA_TYPE", line, "cannot convert " + type_name(from) + " to " + type_name(to));
             }
 
+            void converted(Expression& value, const Type& to, Scopes& scopes)
+            {
+                const auto from = expression(value, scopes);
+                conversion(from, to, value.line, value.kind == ExpressionKind::Integer && value.integer == 0);
+            }
+
+            void check_initializer(Initializer& init, const Type& to, Scopes& scopes, std::size_t line)
+            {
+                if(to.kind == TypeKind::Array)
+                {
+                    if(!init.list)
+                    {
+                        if(to.element->kind == TypeKind::Char && init.value->kind == ExpressionKind::String &&
+                           init.value->text.size() <= to.extent)
+                        {
+                            expression(*init.value, scopes);
+                            return;
+                        }
+                        fail("E_SEMA_INITIALIZER", line, "array requires a brace list or char string initializer");
+                    }
+                    if(init.entries.size() > to.extent)
+                        fail("E_SEMA_INITIALIZER", line, "too many array initializer elements");
+                    for(auto& item : init.entries) check_initializer(item, *to.element, scopes, line);
+                    return;
+                }
+                if(init.list)
+                {
+                    if(init.entries.size() != 1)
+                        fail("E_SEMA_INITIALIZER", line, "scalar initializer requires one element");
+                    check_initializer(init.entries[0], to, scopes, line);
+                    return;
+                }
+                converted(*init.value, to, scopes);
+            }
+
             void scalar(const Type& type, std::size_t line) const
             {
-                if(!type.numeric())
-                    fail("E_SEMA_TYPE", line, "condition/arithmetic requires a numeric value");
+                if(!type.numeric() && type.decayed().kind != TypeKind::Pointer)
+                    fail("E_SEMA_TYPE", line, "condition requires a numeric value or pointer");
             }
 
             std::vector<char> formats(const Expression& node) const
@@ -286,8 +375,10 @@ namespace my_compiler::ast
                 case ExpressionKind::Floating:
                     return node.type;
                 case ExpressionKind::String:
-                    fail("E_SEMA_TYPE", node.line, "string literals are only supported as printf arguments");
+                    return node.type = Type::pointer({TypeKind::Char, {}});
                 case ExpressionKind::Name:
+                case ExpressionKind::Index:
+                case ExpressionKind::Dereference:
                 case ExpressionKind::Member:
                     if(named_place(node))
                     {
@@ -296,26 +387,70 @@ namespace my_compiler::ast
                         return node.type;
                     }
                     node.type = member_type(expression(*node.left, scopes), node);
+                    if(node.type.kind == TypeKind::Array)
+                        fail("E_SEMA_LVALUE", node.line, "array member of a temporary struct is not supported");
                     return node.type;
+                case ExpressionKind::Address:
+                {
+                    const auto target = place(*node.left, scopes);
+                    if(target.binding) target.binding->escaped = true;
+                    return node.type = Type::pointer(target.type);
+                }
+                case ExpressionKind::Update:
+                {
+                    const auto target = place(*node.left, scopes);
+                    require_initialized(target, node.line);
+                    if(target.type.kind == TypeKind::Array || target.type.kind == TypeKind::Bool ||
+                       (!target.type.numeric() && target.type.kind != TypeKind::Pointer) ||
+                       (target.type.kind == TypeKind::Pointer && target.type.element->kind == TypeKind::Void))
+                        fail("E_SEMA_POINTER", node.line, "increment/decrement requires numeric or object pointer lvalue");
+                    initialize(target);
+                    return node.type = target.type;
+                }
                 case ExpressionKind::Unary:
                 {
                     const auto operand = expression(*node.left, scopes);
-                    scalar(operand, node.line);
+                    if(!operand.numeric()) fail("E_SEMA_TYPE", node.line, "unary arithmetic requires a numeric value");
                     return node.type = arithmetic_type(operand, operand);
                 }
                 case ExpressionKind::Cast:
                 {
                     const auto operand = expression(*node.left, scopes);
-                    if(!operand.numeric() || !node.type.numeric())
-                        fail("E_SEMA_TYPE", node.line, "casts currently require numeric source and destination");
+                    if(!(operand.numeric() && node.type.numeric()) &&
+                       !(operand.decayed().kind == TypeKind::Pointer && node.type.kind == TypeKind::Pointer) &&
+                       !(node.left->kind == ExpressionKind::Integer && node.left->integer == 0 && node.type.kind == TypeKind::Pointer))
+                        fail("E_SEMA_TYPE", node.line, "cast requires numeric types or object pointers");
                     return node.type;
                 }
                 case ExpressionKind::Binary:
                 {
-                    const auto left = expression(*node.left, scopes);
-                    const auto right = expression(*node.right, scopes);
-                    scalar(left, node.line);
-                    scalar(right, node.line);
+                    const auto left = expression(*node.left, scopes).decayed();
+                    const auto right = expression(*node.right, scopes).decayed();
+                    if(left.kind == TypeKind::Pointer || right.kind == TypeKind::Pointer)
+                    {
+                        const auto pointer = left.kind == TypeKind::Pointer ? left : right;
+                        const auto other = left.kind == TypeKind::Pointer ? right : left;
+                        const bool offset = (node.operation == "+" || (node.operation == "-" && left.kind == TypeKind::Pointer)) && other.integral();
+                        if(offset && pointer.element->kind != TypeKind::Void)
+                            return node.type = node.operand_type = pointer;
+                        if(node.operation == "-" && left == right && pointer.element->kind != TypeKind::Void)
+                        {
+                            node.operand_type = pointer;
+                            return node.type = {TypeKind::Int, {}};
+                        }
+                        const bool equality = node.operation == "==" || node.operation == "!=";
+                        const auto& integer = left.kind == TypeKind::Pointer ? *node.right : *node.left;
+                        const bool null = integer.kind == ExpressionKind::Integer && integer.integer == 0;
+                        if((equality && (compatible_pointer(left, right) || null)) ||
+                           (!equality && left == right && (node.operation == "<" || node.operation == "<=" || node.operation == ">" || node.operation == ">=")))
+                        {
+                            node.operand_type = pointer;
+                            return node.type = {TypeKind::Int, {}};
+                        }
+                        fail("E_SEMA_POINTER", node.line, "invalid pointer arithmetic or comparison");
+                    }
+                    if(!left.numeric() || !right.numeric())
+                        fail("E_SEMA_TYPE", node.line, "arithmetic requires a numeric value");
                     node.operand_type = arithmetic_type(left, right);
                     const bool arithmetic = node.operation == "+" || node.operation == "-" || node.operation == "*";
                     return node.type = arithmetic ? node.operand_type : Type{TypeKind::Int, {}};
@@ -343,9 +478,9 @@ namespace my_compiler::ast
                             const bool string = argument.kind == ExpressionKind::String;
                             if(spec == 's')
                             {
-                                if(!string)
-                                    fail("E_SEMA_FORMAT", argument.line, "%s requires a string literal");
-                                argument.type = {TypeKind::String, {}};
+                                const auto value = expression(argument, scopes).decayed();
+                                if(value.kind != TypeKind::Pointer || value.element->kind != TypeKind::Char)
+                                    fail("E_SEMA_FORMAT", argument.line, "%s requires a string literal or char pointer");
                                 continue;
                             }
                             if(string)
@@ -362,7 +497,7 @@ namespace my_compiler::ast
                             fail("E_SEMA_ARGUMENTS", node.line, "wrong argument count for '" + node.name + "': expected " +
                                  std::to_string(signature.parameters.size()) + ", got " + std::to_string(node.arguments.size()));
                         for(std::size_t i = 0; i < node.arguments.size(); ++i)
-                            conversion(expression(*node.arguments[i], scopes), signature.parameters[i], node.arguments[i]->line);
+                            converted(*node.arguments[i], signature.parameters[i], scopes);
                     }
                     return node.type = signature.returned;
                 }
@@ -380,11 +515,11 @@ namespace my_compiler::ast
                 case StatementKind::Declaration:
                 {
                     object_type(node.type, node.line, current_order_);
-                    if(!scopes.back().emplace(node.name, Binding{node.type, {}}).second)
+                    if(!scopes.back().emplace(node.name, Binding{node.type, false, {}}).second)
                         fail("E_SEMA_LOCAL", node.line, "duplicate local name '" + node.name + "'");
-                    if(node.value)
+                    if(node.initializer)
                     {
-                        conversion(expression(*node.value, scopes), node.type, node.line);
+                        check_initializer(*node.initializer, node.type, scopes, node.line);
                         initialize({&scopes.back().at(node.name), node.type, {}, node.name});
                     }
                     break;
@@ -392,7 +527,25 @@ namespace my_compiler::ast
                 case StatementKind::Assignment:
                 {
                     const auto target = place(*node.target, scopes);
-                    conversion(expression(*node.value, scopes), target.type, node.line);
+                    if(target.type.kind == TypeKind::Array)
+                        fail("E_SEMA_LVALUE", node.line, "arrays are not assignable");
+                    if(node.operation != "=")
+                    {
+                        require_initialized(target, node.line);
+                        const auto right = expression(*node.value, scopes);
+                        if(target.type.kind == TypeKind::Pointer)
+                        {
+                            if((node.operation != "+=" && node.operation != "-=") || !right.integral() || target.type.element->kind == TypeKind::Void)
+                                fail("E_SEMA_POINTER", node.line, "invalid compound pointer assignment");
+                            node.type = target.type;
+                        }
+                        else
+                        {
+                            if(!target.type.numeric() || !right.numeric()) fail("E_SEMA_TYPE", node.line, "compound assignment requires numeric values");
+                            node.type = arithmetic_type(target.type, right);
+                        }
+                    }
+                    else converted(*node.value, target.type, scopes);
                     initialize(target);
                     break;
                 }
@@ -409,6 +562,7 @@ namespace my_compiler::ast
                         for(auto& entry : scopes[i])
                         {
                             auto& initialized = entry.second.initialized;
+                            entry.second.escaped = yes[i].at(entry.first).escaped || no[i].at(entry.first).escaped;
                             initialized.clear();
                             for(const auto& path : yes[i].at(entry.first).initialized)
                                 if(no[i].at(entry.first).initialized.count(path))
@@ -422,6 +576,21 @@ namespace my_compiler::ast
                     scalar(expression(*node.condition, scopes), node.line);
                     auto body = scopes;
                     statement(*node.body, body);
+                    for(std::size_t i = 0; i < scopes.size(); ++i)
+                        for(auto& entry : scopes[i]) entry.second.escaped = entry.second.escaped || body[i].at(entry.first).escaped;
+                    break;
+                }
+                case StatementKind::For:
+                {
+                    scopes.emplace_back();
+                    if(node.setup) statement(*node.setup, scopes);
+                    if(node.condition) scalar(expression(*node.condition, scopes), node.line);
+                    auto body = scopes;
+                    statement(*node.body, body);
+                    if(node.step) statement(*node.step, body);
+                    for(std::size_t i = 0; i < scopes.size(); ++i)
+                        for(auto& entry : scopes[i]) entry.second.escaped = entry.second.escaped || body[i].at(entry.first).escaped;
+                    scopes.pop_back();
                     break;
                 }
                 case StatementKind::Block:
@@ -466,7 +635,7 @@ namespace my_compiler::ast
                 Scopes scopes(1);
                 for(const auto& parameter : function.parameters)
                 {
-                    auto inserted_parameter = scopes.back().emplace(parameter.name, Binding{parameter.type, {}});
+                    auto inserted_parameter = scopes.back().emplace(parameter.name, Binding{parameter.type, false, {}});
                     if(!inserted_parameter.second)
                         fail("E_SEMA_PARAMETER", parameter.line, "duplicate parameter '" + parameter.name + "'");
                     initialize({&inserted_parameter.first->second, parameter.type, {}, parameter.name});
@@ -484,7 +653,7 @@ namespace my_compiler::ast
                 {
                     if(!function.returned)
                         fail("E_SEMA_RETURN", function.line, "non-void function requires a return value");
-                    conversion(expression(*function.returned, scopes), function.return_type, function.line);
+                    converted(*function.returned, function.return_type, scopes);
                 }
             }
         };
@@ -505,6 +674,14 @@ namespace my_compiler::ast
                 out << "名字 " << node.name; break;
             case ExpressionKind::Member:
                 out << "成员 " << node.name << "（索引=" << node.member_index << "）"; break;
+            case ExpressionKind::Address:
+                out << "取地址"; break;
+            case ExpressionKind::Dereference:
+                out << "解引用"; break;
+            case ExpressionKind::Index:
+                out << "数组下标"; break;
+            case ExpressionKind::Update:
+                out << "自增减 " << node.operation; break;
             case ExpressionKind::Unary:
                 out << "一元运算 " << node.operation; break;
             case ExpressionKind::Binary:
@@ -570,6 +747,13 @@ namespace my_compiler::ast
                     dump_statement(*node.else_branch, out, indent + 4);
                 }
                 break;
+            case StatementKind::For:
+                out << "for循环（初始化、条件、循环体、步进）\n";
+                if(node.setup) dump_statement(*node.setup, out, indent + 2);
+                if(node.condition) dump_expression(*node.condition, out, indent + 2);
+                dump_statement(*node.body, out, indent + 2);
+                if(node.step) dump_statement(*node.step, out, indent + 2);
+                break;
             case StatementKind::While:
                 out << "while循环\n";
                 out << std::string(static_cast<std::size_t>(indent + 2), ' ') << "条件\n";
@@ -580,6 +764,15 @@ namespace my_compiler::ast
             }
             if(node.value)
                 dump_expression(*node.value, out, indent + 2);
+            if(node.initializer)
+            {
+                const auto visit = [&](const auto& self, const Initializer& init, int level) -> void
+                {
+                    if(init.value) dump_expression(*init.value, out, level);
+                    for(const auto& item : init.entries) self(self, item, level + 2);
+                };
+                visit(visit, *node.initializer, indent + 2);
+            }
         }
     }
 

@@ -18,6 +18,7 @@ set<char> my_compiler_token::OperatorToken::operators_ = {
         ASSIGNMENT,
         POWER,
         NEGATION,
+        '&',
 };
 
 

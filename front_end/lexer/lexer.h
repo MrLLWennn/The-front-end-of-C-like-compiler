@@ -307,7 +307,7 @@ namespace my_compiler
                 {
                     string value(1, ch);
                     const int next = file_in_.peek();
-                    if(next == '=' || (ch == '+' && next == '+') || (ch == '-' && next == '-'))
+                    if(next == '=' || (ch == '+' && next == '+') || (ch == '-' && (next == '-' || next == '>')))
                     {
                         value += static_cast<char>(file_in_.get());
                         ++current_column_;

@@ -155,6 +155,14 @@ if(BUILD_TESTING)
                     "${CMAKE_CURRENT_BINARY_DIR}/test-runs")
         set_tests_properties(compiler_types_structures_semantics PROPERTIES TIMEOUT 180)
 
+        add_test(NAME compiler_arrays_pointers_for_semantics
+                COMMAND "${Python3_EXECUTABLE}"
+                    "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_arrays_pointers_for.py"
+                    "$<TARGET_FILE:my_compiler>"
+                    "${CMAKE_CURRENT_SOURCE_DIR}/files/04-grammar.txt"
+                    "${CMAKE_CURRENT_BINARY_DIR}/test-runs")
+        set_tests_properties(compiler_arrays_pointers_for_semantics PROPERTIES TIMEOUT 180)
+
         if(MY_COMPILER_ENABLE_LLVM)
                 find_program(LLVM_TEST_CLANG NAMES clang-18
                         HINTS "${LLVM_TOOLS_BINARY_DIR}" REQUIRED)
@@ -206,6 +214,14 @@ if(BUILD_TESTING)
                             "${CMAKE_CURRENT_BINARY_DIR}/test-runs"
                             --clang "${LLVM_TEST_CLANG}")
                 set_tests_properties(compiler_types_structures_llvm PROPERTIES TIMEOUT 300)
+                add_test(NAME compiler_arrays_pointers_for_llvm
+                        COMMAND "${Python3_EXECUTABLE}"
+                            "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_arrays_pointers_for.py"
+                            "$<TARGET_FILE:my_compiler>"
+                            "${CMAKE_CURRENT_SOURCE_DIR}/files/04-grammar.txt"
+                            "${CMAKE_CURRENT_BINARY_DIR}/test-runs"
+                            --clang "${LLVM_TEST_CLANG}")
+                set_tests_properties(compiler_arrays_pointers_for_llvm PROPERTIES TIMEOUT 300)
         endif()
 
 endif()

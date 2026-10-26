@@ -5,21 +5,46 @@
 #include <memory>
 #include <string>
 #include <vector>
+#include <utility>
 
 namespace my_compiler::ast
 {
     enum class TypeKind
     {
-        Void, Bool, Char, Int, Float, Double, Structure, String
+        Void, Bool, Char, Int, Float, Double, Structure, String, Pointer, Array
     };
 
     struct Type
     {
         TypeKind kind = TypeKind::Int;
         std::string tag;
+        std::shared_ptr<Type> element;
+        std::size_t extent = 0;
+        static Type pointer(Type value)
+        {
+            Type result{TypeKind::Pointer, {}};
+            result.element = std::make_shared<Type>(std::move(value));
+            return result;
+        }
+        static Type array(Type value, std::size_t count)
+        {
+            Type result{TypeKind::Array, {}};
+            result.element = std::make_shared<Type>(std::move(value));
+            result.extent = count;
+            return result;
+        }
+        Type decayed() const
+        {
+            return kind == TypeKind::Array ? pointer(*element) : *this;
+        }
+        bool integral() const
+        {
+            return kind == TypeKind::Bool || kind == TypeKind::Char || kind == TypeKind::Int;
+        }
         bool operator==(const Type& other) const
         {
-            return kind == other.kind && tag == other.tag;
+            return kind == other.kind && tag == other.tag && extent == other.extent &&
+                   ((!element && !other.element) || (element && other.element && *element == *other.element));
         }
         bool operator!=(const Type& other) const
         {
@@ -40,7 +65,7 @@ namespace my_compiler::ast
 
     enum class ExpressionKind
     {
-        Integer, Floating, Character, Boolean, Name, Member, Unary, Binary, Call, String, Cast
+        Integer, Floating, Character, Boolean, Name, Member, Unary, Binary, Call, String, Cast, Address, Dereference, Index, Update
     };
 
     // 类型在语义阶段写回，后端只消费已经检查过的树，不再猜测表达式类型。
@@ -61,9 +86,16 @@ namespace my_compiler::ast
         std::vector<std::unique_ptr<Expression>> arguments;
     };
 
+    struct Initializer
+    {
+        bool list = false;
+        std::unique_ptr<Expression> value;
+        std::vector<Initializer> entries;
+    };
+
     enum class StatementKind
     {
-        Declaration, Assignment, Block, Conditional, While, Expression
+        Declaration, Assignment, Block, Conditional, While, For, Expression
     };
 
     struct Statement
@@ -72,6 +104,10 @@ namespace my_compiler::ast
         std::size_t line = 0;
         std::string name;
         Type type;
+        std::unique_ptr<Initializer> initializer;
+        std::unique_ptr<Statement> setup;
+        std::unique_ptr<Statement> step;
+        std::string operation = "=";
         std::unique_ptr<Expression> target;
         std::unique_ptr<Expression> value;
         std::vector<Statement> statements;

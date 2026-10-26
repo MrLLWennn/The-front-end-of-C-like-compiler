@@ -156,6 +156,8 @@ void my_compiler::Parser::predictive_analysis_aux()
     //保存语法预测分析推导的各个产生式, 用于构建语法分析树
     vector<string> productions_;
 
+    // 新文法把声明、后缀和赋值分开，不再按“后面是否为=”篡改标识符类别。
+    const bool declarators = is_non_terminal("<declarator-stars>");
     vector<string> input;
     for(size_t i = 0; i < tokens_.size(); ++i)
     {
@@ -166,6 +168,8 @@ void my_compiler::Parser::predictive_analysis_aux()
             input.emplace_back("character-literal");
         else if(tokens_[i].is_number())
             input.emplace_back("number");
+        else if(tokens_[i].is_identifier() && declarators)
+            input.emplace_back("identifier");
         else if(tokens_[i].is_identifier())
         {
             if(i > 0 && tokens_[i - 1].get_attribute_value() == "struct")
@@ -267,6 +271,38 @@ void my_compiler::Parser::predictive_analysis_aux()
         {
             stack_.pop();
             ++cur;
+        }
+        else if(declarators && top == "<external>")
+        {
+            const string rule = symbol == "struct" && peek(cur + 2) == "{"
+                ? "<record-definition>" : "<function-or-object>";
+            stack_.pop();
+            stack_.emplace(rule);
+            productions_.emplace_back(top + " -> " + rule);
+        }
+        else if(declarators && top == "<parameters>" && symbol == "void" && peek(next) == ")")
+        {
+            stack_.pop();
+            stack_.emplace("void");
+            productions_.emplace_back(top + " -> void");
+        }
+        else if(declarators && top == "<unary>" && symbol == "(")
+        {
+            const auto look = peek(next);
+            const bool cast = look == "int" || look == "char" || look == "bool" || look == "float" ||
+                              look == "double" || look == "void" || look == "struct";
+            const string rule = cast ? "( <base-type> <declarator-stars> ) <unary>" : "<postfix>";
+            stack_.pop();
+            const auto parts = split_string(rule);
+            for(auto i = parts.rbegin(); i != parts.rend(); ++i) stack_.emplace(*i);
+            productions_.emplace_back(top + " -> " + rule);
+        }
+        else if(declarators && top == "<else-opt>" && symbol == "else")
+        {
+            stack_.pop();
+            stack_.emplace("<stmt>");
+            stack_.emplace("else");
+            productions_.emplace_back(top + " -> else <stmt>");
         }
         else if(top == "<declaration>" && symbol == "struct")
         {

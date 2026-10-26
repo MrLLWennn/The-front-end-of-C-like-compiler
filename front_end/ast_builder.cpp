@@ -89,21 +89,71 @@ namespace my_compiler::ast
             {
                 const auto value = peek();
                 ++position_;
-                if(value == "int")
-                    return {TypeKind::Int, {}};
-                if(value == "char")
-                    return {TypeKind::Char, {}};
-                if(value == "bool")
-                    return {TypeKind::Bool, {}};
-                if(value == "float")
-                    return {TypeKind::Float, {}};
-                if(value == "double")
-                    return {TypeKind::Double, {}};
-                if(value == "void")
-                    return {TypeKind::Void, {}};
-                if(value == "struct")
-                    return {TypeKind::Structure, identifier()};
-                fail("E_AST_TYPE", "expected a supported type, got '" + value + "'");
+                Type result;
+                if(value == "int") result.kind = TypeKind::Int;
+                else if(value == "char") result.kind = TypeKind::Char;
+                else if(value == "bool") result.kind = TypeKind::Bool;
+                else if(value == "float") result.kind = TypeKind::Float;
+                else if(value == "double") result.kind = TypeKind::Double;
+                else if(value == "void") result.kind = TypeKind::Void;
+                else if(value == "struct") result = {TypeKind::Structure, identifier()};
+                else fail("E_AST_TYPE", "expected a supported type, got '" + value + "'");
+                while(peek() == "*")
+                {
+                    expect("*");
+                    result = Type::pointer(std::move(result));
+                }
+                return result;
+            }
+
+            Type dimensions(Type base, bool parameter = false)
+            {
+                std::vector<std::size_t> counts;
+                while(peek() == "[")
+                {
+                    expect("[");
+                    std::size_t count = 0;
+                    if(peek() != "]")
+                    {
+                        const auto text = peek();
+                        const auto parsed = std::from_chars(text.data(), text.data() + text.size(), count);
+                        if(parsed.ec != std::errc{} || parsed.ptr != text.data() + text.size() || count == 0 || count > 65536)
+                            fail("E_AST_ARRAY", "array bound must be a decimal constant in 1..65536");
+                        ++position_;
+                    }
+                    if(count == 0 && !counts.empty())
+                        fail("E_AST_ARRAY", "only the first array bound may be omitted");
+                    expect("]");
+                    counts.push_back(count);
+                    if(counts.size() > 8)
+                        fail("E_AST_ARRAY", "array nesting exceeds 8 dimensions");
+                }
+                for(auto i = counts.rbegin(); i != counts.rend(); ++i)
+                    base = Type::array(std::move(base), *i);
+                return parameter ? base.decayed() : base;
+            }
+
+            Initializer initializer()
+            {
+                Initializer result;
+                if(peek() != "{")
+                {
+                    result.value = expression(0);
+                    return result;
+                }
+                result.list = true;
+                expect("{");
+                if(peek() == "}")
+                    fail("E_AST_INITIALIZER", "empty initializer lists are not supported");
+                while(true)
+                {
+                    result.entries.push_back(initializer());
+                    if(peek() != ",") break;
+                    expect(",");
+                    if(peek() == "}") break;
+                }
+                expect("}");
+                return result;
             }
 
             Structure structure()
@@ -121,6 +171,7 @@ namespace my_compiler::ast
                     member.line = line();
                     member.type = type();
                     member.name = identifier();
+                    member.type = dimensions(std::move(member.type));
                     expect(";");
                     result.members.push_back(std::move(member));
                 }
@@ -146,6 +197,7 @@ namespace my_compiler::ast
                         parameter.line = line();
                         parameter.type = type();
                         parameter.name = identifier();
+                        parameter.type = dimensions(std::move(parameter.type), true);
                         result.parameters.push_back(std::move(parameter));
                         if(peek() != ",")
                             break;
@@ -228,41 +280,76 @@ namespace my_compiler::ast
                     result.body = std::make_unique<Statement>(statement());
                     return result;
                 }
-                if(type_start(peek()))
+                if(peek() == "for")
+                {
+                    result.kind = StatementKind::For;
+                    expect("for");
+                    expect("(");
+                    if(peek() != ";") result.setup = std::make_unique<Statement>(simple());
+                    expect(";");
+                    if(peek() != ";") result.condition = expression(0);
+                    expect(";");
+                    if(peek() != ")") result.step = std::make_unique<Statement>(simple(false));
+                    expect(")");
+                    if(peek() != "{") fail("E_AST_LOOP", "expected a braced block after for clauses");
+                    result.body = std::make_unique<Statement>(statement());
+                    return result;
+                }
+                if(peek() == ";")
+                {
+                    result.kind = StatementKind::Block;
+                    expect(";");
+                    return result;
+                }
+                if(peek() == "break" || peek() == "continue" || peek() == "return" || peek() == "switch")
+                    fail("E_AST_STATEMENT", "expected a declaration, assignment, lexical block, if or while statement, got '" + peek() + "'");
+                result = simple();
+                expect(";");
+                return result;
+            }
+
+            Statement simple(bool declaration = true)
+            {
+                Statement result;
+                result.line = line();
+                if(type_start(peek()) && declaration)
                 {
                     result.kind = StatementKind::Declaration;
                     result.type = type();
                     result.name = identifier();
+                    result.type = dimensions(std::move(result.type));
                     if(peek() == "=")
                     {
                         expect("=");
-                        result.value = expression(0);
+                        result.initializer = std::make_unique<Initializer>(initializer());
                     }
-                    expect(";");
+                    if(result.type.kind == TypeKind::Array && result.type.extent == 0)
+                    {
+                        if(!result.initializer)
+                            fail("E_AST_ARRAY", "omitted array bound requires an initializer");
+                        const auto& init = *result.initializer;
+                        if(init.list) result.type.extent = init.entries.size();
+                        else if(init.value->kind == ExpressionKind::String && result.type.element->kind == TypeKind::Char)
+                            result.type.extent = init.value->text.size() + 1;
+                        else fail("E_AST_ARRAY", "cannot infer array bound from initializer");
+                    }
                     return result;
                 }
-                if(position_ < tokens_.size() && tokens_[position_].is_identifier())
+                auto target = expression(0);
+                if(peek() == "=" || peek() == "+=" || peek() == "-=" || peek() == "*=")
                 {
-                    auto target = primary();
-                    if(peek() == "=")
-                    {
-                        result.kind = StatementKind::Assignment;
-                        result.name = target->name;
-                        result.target = std::move(target);
-                        expect("=");
-                        result.value = expression(0);
-                    }
-                    else
-                    {
-                        if(target->kind != ExpressionKind::Call)
-                            fail("E_AST_STATEMENT", "expected an assignment or function call");
-                        result.kind = StatementKind::Expression;
-                        result.value = std::move(target);
-                    }
-                    expect(";");
-                    return result;
+                    result.kind = StatementKind::Assignment;
+                    result.operation = peek();
+                    ++position_;
+                    result.target = std::move(target);
+                    result.value = expression(0);
                 }
-                fail("E_AST_STATEMENT", "expected a declaration, assignment, lexical block, if or while statement, got '" + peek() + "'");
+                else
+                {
+                    result.kind = StatementKind::Expression;
+                    result.value = std::move(target);
+                }
+                return result;
             }
             static int precedence(const std::string& token)
             {
@@ -338,9 +425,10 @@ namespace my_compiler::ast
                         expect(")");
                     }
                 }
-                else if(peek() == "-" || peek() == "+")
+                else if(peek() == "-" || peek() == "+" || peek() == "&" || peek() == "*" || peek() == "++" || peek() == "--")
                 {
-                    node->kind = ExpressionKind::Unary;
+                    node->kind = peek() == "&" ? ExpressionKind::Address : peek() == "*" ? ExpressionKind::Dereference :
+                        (peek() == "++" || peek() == "--") ? ExpressionKind::Update : ExpressionKind::Unary;
                     node->operation = peek();
                     ++position_;
                     node->left = primary();
@@ -412,16 +500,40 @@ namespace my_compiler::ast
                 }
                 else
                     fail("E_AST_EXPR", "expected an expression, got '" + peek() + "'");
-                // 成员节点拥有左侧对象；下标由语义检查写回，不使用源码偏移猜内存布局。
-                while(peek() == ".")
+                // 后缀从左到右组合，&和*在上面的递归中保持一元优先级。
+                while(peek() == "." || peek() == "->" || peek() == "[" || peek() == "++" || peek() == "--")
                 {
-                    auto member = std::make_unique<Expression>();
-                    member->kind = ExpressionKind::Member;
-                    member->line = line();
-                    expect(".");
-                    member->name = identifier();
-                    member->left = std::move(node);
-                    node = std::move(member);
+                    auto next = std::make_unique<Expression>();
+                    next->line = line();
+                    if(peek() == "[")
+                    {
+                        next->kind = ExpressionKind::Index;
+                        expect("[");
+                        next->right = expression(0);
+                        expect("]");
+                    }
+                    else if(peek() == "++" || peek() == "--")
+                    {
+                        next->kind = ExpressionKind::Update;
+                        next->operation = "post" + peek();
+                        ++position_;
+                    }
+                    else
+                    {
+                        if(peek() == "->")
+                        {
+                            auto dereference = std::make_unique<Expression>();
+                            dereference->kind = ExpressionKind::Dereference;
+                            dereference->line = line();
+                            dereference->left = std::move(node);
+                            node = std::move(dereference);
+                        }
+                        ++position_;
+                        next->kind = ExpressionKind::Member;
+                        next->name = identifier();
+                    }
+                    next->left = std::move(node);
+                    node = std::move(next);
                 }
                 return node;
             }
