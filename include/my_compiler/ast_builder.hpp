@@ -8,6 +8,6 @@ namespace my_compiler::ast
     // 过渡实现：原表驱动 Parser 接受后，再遍历同一份 Token 构建 AST。
     // 只支持明确限定的子集，尚未把 AST 构造合并到原 Parser。
     Program build(const std::vector<my_compiler_token::Token>& tokens,
-        const std::string& source_file);
+        const std::string& source_file, bool includes_stdio = false);
 }
 #endif

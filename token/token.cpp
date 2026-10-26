@@ -27,10 +27,13 @@ string my_compiler_token::get_token_name(my_compiler_token::TokenType type)
             return "Error";
         case TokenType::BOOLEAN:
             return "Boolean";
+        case TokenType::CHARACTER:
+            return "Character";
+        case TokenType::STRING:
+            return "String";
         default:
             return "Default";
     }
 }
-
 
 

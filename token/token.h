@@ -22,7 +22,9 @@ namespace my_compiler_token
         END = 6,
         DEFAULT = 7,
         BOOLEAN,
-        ERR = 9
+        ERR = 9,
+        STRING = 10,
+        CHARACTER = 11
     };
 
 
@@ -96,6 +98,16 @@ namespace my_compiler_token
         [[nodiscard]] bool is_number() const noexcept
         {
             return this->token_name_ == TokenType::NUMBER;
+        }
+
+        [[nodiscard]] bool is_string() const noexcept
+        {
+            return this->token_name_ == TokenType::STRING;
+        }
+
+        [[nodiscard]] bool is_character() const noexcept
+        {
+            return token_name_ == TokenType::CHARACTER;
         }
 
         [[nodiscard]] bool is_keyword() const noexcept

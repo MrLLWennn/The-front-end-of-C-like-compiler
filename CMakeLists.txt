@@ -5,6 +5,7 @@ add_library(compiler_core STATIC
         header_files.cpp
         compiler.cpp
         front_end/front_end.cpp
+        front_end/preprocessor.cpp
         front_end/ast.cpp
         front_end/ast_builder.cpp
         front_end/parser/parser.cpp
@@ -130,6 +131,30 @@ if(BUILD_TESTING)
                     "${CMAKE_CURRENT_BINARY_DIR}/test-runs")
         set_tests_properties(compiler_branch_semantics PROPERTIES TIMEOUT 60)
 
+        add_test(NAME compiler_program_semantics
+                COMMAND "${Python3_EXECUTABLE}"
+                    "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_programs.py"
+                    "$<TARGET_FILE:my_compiler>"
+                    "${CMAKE_CURRENT_SOURCE_DIR}/files/04-grammar.txt"
+                    "${CMAKE_CURRENT_BINARY_DIR}/test-runs")
+        set_tests_properties(compiler_program_semantics PROPERTIES TIMEOUT 90)
+
+        add_test(NAME compiler_headers_printf_semantics
+                COMMAND "${Python3_EXECUTABLE}"
+                    "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_headers_printf.py"
+                    "$<TARGET_FILE:my_compiler>"
+                    "${CMAKE_CURRENT_SOURCE_DIR}/files/04-grammar.txt"
+                    "${CMAKE_CURRENT_BINARY_DIR}/test-runs")
+        set_tests_properties(compiler_headers_printf_semantics PROPERTIES TIMEOUT 120)
+
+        add_test(NAME compiler_types_structures_semantics
+                COMMAND "${Python3_EXECUTABLE}"
+                    "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_types_structures.py"
+                    "$<TARGET_FILE:my_compiler>"
+                    "${CMAKE_CURRENT_SOURCE_DIR}/files/04-grammar.txt"
+                    "${CMAKE_CURRENT_BINARY_DIR}/test-runs")
+        set_tests_properties(compiler_types_structures_semantics PROPERTIES TIMEOUT 180)
+
         if(MY_COMPILER_ENABLE_LLVM)
                 find_program(LLVM_TEST_CLANG NAMES clang-18
                         HINTS "${LLVM_TOOLS_BINARY_DIR}" REQUIRED)
@@ -157,6 +182,30 @@ if(BUILD_TESTING)
                             "${CMAKE_CURRENT_BINARY_DIR}/test-runs"
                             --clang "${LLVM_TEST_CLANG}")
                 set_tests_properties(compiler_branch_llvm PROPERTIES TIMEOUT 120)
+                add_test(NAME compiler_program_llvm
+                        COMMAND "${Python3_EXECUTABLE}"
+                            "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_programs.py"
+                            "$<TARGET_FILE:my_compiler>"
+                            "${CMAKE_CURRENT_SOURCE_DIR}/files/04-grammar.txt"
+                            "${CMAKE_CURRENT_BINARY_DIR}/test-runs"
+                            --clang "${LLVM_TEST_CLANG}")
+                set_tests_properties(compiler_program_llvm PROPERTIES TIMEOUT 180)
+                add_test(NAME compiler_headers_printf_llvm
+                        COMMAND "${Python3_EXECUTABLE}"
+                            "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_headers_printf.py"
+                            "$<TARGET_FILE:my_compiler>"
+                            "${CMAKE_CURRENT_SOURCE_DIR}/files/04-grammar.txt"
+                            "${CMAKE_CURRENT_BINARY_DIR}/test-runs"
+                            --clang "${LLVM_TEST_CLANG}")
+                set_tests_properties(compiler_headers_printf_llvm PROPERTIES TIMEOUT 240)
+                add_test(NAME compiler_types_structures_llvm
+                        COMMAND "${Python3_EXECUTABLE}"
+                            "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_types_structures.py"
+                            "$<TARGET_FILE:my_compiler>"
+                            "${CMAKE_CURRENT_SOURCE_DIR}/files/04-grammar.txt"
+                            "${CMAKE_CURRENT_BINARY_DIR}/test-runs"
+                            --clang "${LLVM_TEST_CLANG}")
+                set_tests_properties(compiler_types_structures_llvm PROPERTIES TIMEOUT 300)
         endif()
 
 endif()

@@ -17,6 +17,7 @@ namespace my_compiler_token
     const string FOR = "for";
     const string RETURN = "return";
     const string BREAK = "break";
+    const string CONTINUE = "continue";
     const string ELSE = "else";
     const string VOIDD = "void";
     const string FLOAT = "float";
@@ -25,6 +26,7 @@ namespace my_compiler_token
     const string SWITCH = "switch";
     const string CONS = "const";
     const string DOUBLE = "double";
+    const string CHAR_ = "char";
     const string STRUCT = "struct";
     const string INCLUDE = "include";
     const string BOOL_ = "bool";
@@ -94,6 +96,10 @@ namespace my_compiler_token
             {
                 return out << token_type << "(\"" << BREAK << "\")";
             }
+            else if(rhs.get_attribute_value() == CONTINUE)
+            {
+                return out << token_type << "(\"" << CONTINUE << "\")";
+            }
             else if(is_for_token(rhs))
             {
                 return out << token_type << "(\"" << FOR << "\")";
@@ -121,6 +127,10 @@ namespace my_compiler_token
             else if(is_const_token(rhs))
             {
                 return out << token_type << "(\"" << CONS << "\")";
+            }
+            else if(rhs.get_attribute_value() == CHAR_)
+            {
+                return out << token_type << "(\"" << CHAR_ << "\")";
             }
             else if(is_double_token(rhs))
             {

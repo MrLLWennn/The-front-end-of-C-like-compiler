@@ -6,6 +6,9 @@
 #define MY_COMPILER_LEXER_H
 
 #include "my_compiler/compilation_error.hpp"
+#include "my_compiler/preprocessor.hpp"
+#include <cctype>
+#include <regex>
 
 
 #include"../../token/token_header.h"
@@ -108,68 +111,41 @@ namespace my_compiler
 
         Return remove_blank_aux(const string& from_file, const string& to_file)
         {
-            //文件操作
             input_file(file_in_, from_file);
             output_file(file_out_, to_file);
-
             if(file_in_.fail() || file_out_.fail())
-            {
                 return FAILED;
-            }
-            char temp{}, pre{};
-            int status = 0;
-            const auto is_spacing = [](char value) {
-                return value == ' ' || value == '\t' || value == '\n' || value == '\r';
-            };
-            file_in_ >> std::noskipws;
-            bool has_content = false;
-            while (file_in_ >> temp)
+            char ch = 0, quote = 0;
+            bool escaped = false, has_content = false, pending_space = false, pending_line = false;
+            while(file_in_.get(ch))
             {
-                if (!is_spacing(temp))
+                if(quote)
                 {
-                    has_content = true;
-                    break;
+                    // 字符串内部逐字保留，不能折叠空格或制表符。
+                    file_out_.put(ch);
+                    if(escaped)
+                        escaped = false;
+                    else if(ch == '\\')
+                        escaped = true;
+                    else if(ch == quote)
+                        quote = 0;
+                    continue;
                 }
-            }
-            if (file_in_.bad())
-                throw std::runtime_error("Cannot read input file: " + from_file);
-            if (!has_content)
-            {
-                // EOF 是流的结束状态，不能当成字符写入。
-                close_file(file_in_, file_out_);
-                return SUCCEED;
-            }
-            file_out_ << temp;
-            pre = temp;
-            while (file_in_ >> temp)
-            {
-                if (!status) status = 1;
-                switch (status)
+                if(ch == ' ' || ch == '\t' || ch == '\r' || ch == '\n')
                 {
-                    case 1:
-                        if (is_spacing(temp))
-                            status = 2;
-                        else
-                        {
-                            file_out_ << temp;
-                        }
-                        pre = temp;
-                        break;
-                    case 2:
-                        if (!is_spacing(temp))
-                        {
-                            status = 1;
-                            file_out_ << pre << temp;				//2 状态接收到一个非空白字符 则输出最近的一个空白字符
-                        }
-                        if (pre!='\n')
-                            pre = temp;				//如换行与制表符或空格同时出现 保留换行 保证程序大体格式不被改变
-                        break;
-                    default:
-                        cout << "An error occurred!" << endl;
-                        break;						//进入default分支 说明发生比较神奇的错误
+                    pending_space = true;
+                    pending_line = pending_line || ch == '\n';
+                    continue;
                 }
+                if(has_content && pending_space)
+                    file_out_.put(pending_line ? '\n' : ' ');
+                pending_space = pending_line = false;
+                has_content = true;
+                file_out_.put(ch);
+                if(ch == '"' || ch == '\'')
+                    quote = ch;
             }
-            if (file_in_.bad())
+            if(file_in_.bad())
                 throw std::runtime_error("Cannot read input file: " + from_file);
             close_file(file_in_, file_out_);
             return SUCCEED;
@@ -178,91 +154,14 @@ namespace my_compiler
         //预处理
 
 
-//状态转移图如下：
-// 起始状态：0
-// 状态：1	读取字符 ch
-//		'/'		转到状态 2	--
-//		'*'		转到状态 1	输出 ch
-//		其他字符	转到状态 1	输出 ch
-// 状态：2	读取字符 ch
-//		'/'		转到状态 2	输出 '/'
-//		'*'		转到状态 3	--
-//		其他字符	转到状态 1	输出 '/' 和 ch
-// 状态：3	读取字符 ch
-//		'/'		转到状态 3	--
-//		'*'		转到状态 4	--
-//		其他字符	转到状态 3	--
-// 状态：4	读取字符 ch
-//		'/'		转到状态 5	--
-//		'*'		转到状态 4	--
-//		其他字符	转到状态 3	--
-// 状态：5	读取字符 ch
-//		'/'		转到状态 2	--
-//		'*'		转到状态 1	输出 ch
-//		其他字符	转到状态 1	输出 ch
+        // 先展开本地头文件并去注释；stdio.h提供受限printf声明契约。
         Return remove_comment_aux(const string& from_file, const string& to_file)
         {
-            //文件操作
-            input_file(file_in_, from_file);
-            output_file(file_out_, to_file);
-            int status = 0;
-
-            if(file_in_.fail() || file_out_.fail())
-            {
-                return FAILED;
-            }
-
-            file_in_ >> std::noskipws;
-
-            while (file_in_ >> next_char_) {
-                switch (status) {
-                    case 0:
-                        if (next_char_ == '/') {
-                            status = 1;
-                        } else {
-                            file_out_ << next_char_;
-                        }
-                        break;
-
-                    case 1:
-                        if (next_char_ == '/') {
-                            status = 2;
-                        } else if (next_char_ == '*') {
-                            status = 3;
-                        } else {
-                            file_out_ << '/';
-                            file_out_ << next_char_;
-                            status = 0;
-                        }
-                        break;
-
-                    case 2:
-                        if (next_char_ == '\n') {
-                            file_out_ << next_char_;
-                            status = 0;
-                        }
-                        break;
-
-                    case 3:
-                        if (next_char_ == '*') {
-                            status = 4;
-                        }
-                        break;
-
-                    case 4:
-                        if (next_char_ == '/') {
-                            status = 0;
-                        } else {
-                            status = 3;
-                        }
-                        break;
-
-                    default:  // 错误状态
-                        cout << "An error occurred!" << endl;
-                        return FAILED;
-                }
-            }
-            close_file(file_in_, file_out_);
+            const auto result = preprocessing::prepare(
+                from_file, to_file, legacy_compilation_paths().output_files());
+            includes_stdio_ = result.includes_stdio;
+            for(const auto& header : result.headers)
+                cout << "导入头文件：" << header << endl;
             return SUCCEED;
         }
 
@@ -308,310 +207,124 @@ namespace my_compiler
         {
             input_file(file_in_, from_file);
             output_file(file_out_, to_file);
-
-            string str;
-            char ch, pre;
-            vector<string> strings;
-            //词法单元序列
             vector<Token> tokens;
-            ErrorDefines error;
-
-            while (!file_in_.eof())
+            char ch = 0;
+            const auto emit = [&](TokenType kind, const string& value, size_t line, size_t column)
             {
-                ch = file_in_.get();
-                if (file_in_.fail())
-                    break;
-                if (is_blank_character(ch))     // 处理空白字符
+                Token token(kind, value, line);
+                tokens.push_back(token);
+                file_out_ << token << " on line: " << line << " and column: " << column << endl;
+            };
+            // 整数、带小数点或指数的浮点数；f/F后缀只属于浮点字面量。
+            const std::regex number_pattern(
+                R"((?:[0-9]+|(?:(?:[0-9]+\.[0-9]*|\.[0-9]+)(?:[eE][+-]?[0-9]+)?|[0-9]+[eE][+-]?[0-9]+)[fF]?))");
+            while(file_in_.get(ch))
+            {
+                if(is_blank_character(ch))
+                    continue;
+                const auto token_line = current_line_;
+                const auto token_column = current_column_++;
+                if(ch == '"' || ch == '\'')
                 {
-                    str.clear();
-                }
-                else if (isalpha(static_cast<unsigned char>(ch)))       // 处理标识符或保留字(其第一个字符不能是数字)
-                {
-                    pre = ch;
-                    while (isalpha(static_cast<unsigned char>(ch)) || isdigit(static_cast<unsigned char>(ch)) || ch == '_')
+                    const char quote = ch;
+                    const bool character = quote == '\'';
+                    const string code = character ? "E_LEX_CHARACTER" : "E_LEX_STRING";
+                    string literal(1, quote);
+                    bool closed = false;
+                    size_t units = 0;
+                    while(file_in_.get(ch))
                     {
-                        str.push_back(ch);
-                        current_column_++;
-                        ch = file_in_.get();
-                    }
-                    strings.push_back(str);
-
-                    if(str == "false" || str == "true")
-                    {
-                        auto token = Token(TokenType::BOOLEAN, str, current_line_);
-                        tokens.push_back(token);
-                        file_out_ << token << "on line: " << current_line_ << "and column: " << current_column_ - str.length() << endl;
-                    }
-                    else if (KeywordToken::is_keyword(str))
-                    {
-                        auto token = KeywordToken(str, current_line_);
-                        tokens.push_back(token);
-                        file_out_ << token << " on line: " << current_line_ << " and column: " << current_column_ - str.length() << endl;
-                    }
-                    else
-                    {
-                        auto token = IdentifierToken(str, current_line_);
-                        tokens.push_back(token);
-                        file_out_ << token << "on line: " << current_line_ << " and column: " << current_column_ - str.length() << endl;
-                    }
-
-                    str.clear();
-                    retract(file_in_);
-                }
-                else if (NumberToken::is_number(ch))         // 处理数字
-                {
-                    pre = ch;
-                    while (isdigit(static_cast<unsigned char>(ch)) || ch == '.')
-                    {
-                        str.push_back(ch);
-                        current_column_++;
-                        ch = file_in_.get();
-                    }
-                    strings.push_back(str);
-                    // 如果数字后面出现字母，报告错误
-                    if (isalpha(static_cast<unsigned char>(ch)))
-                    {
-                        cout << "[Lexical Error] [line: " << current_line_ << ", column: " << current_column_ - str.length() << "] Invalid : " << str << ch << endl;
-
-                        while (isalpha(static_cast<unsigned char>(ch)) || isdigit(static_cast<unsigned char>(ch)))
+                        ++current_column_;
+                        if(ch == '\n' || ch == '\r' || ch == '\0')
+                            throw CompilationError(code, from_file, token_line, token_column,
+                                character ? "newline or NUL in character literal" :
+                                "newline or NUL in string literal");
+                        literal += ch;
+                        if(ch == quote)
                         {
-                            str.push_back(ch);
-                            current_column_++;
-                            ch = file_in_.get();
+                            closed = true;
+                            break;
                         }
-                        //出现 illegal word 错误
-                        error = ILLEGAL_WORD;
-                        file_out_ << "[Lexical Error] " << errors_.find(error) + "\"" + str + "\"" << " [line: "<< current_line_ << ", column: " << current_column_ - str.length() << endl;
-                        throw CompilationError("E_LEX_NUMBER", from_file,
-                            current_line_, current_column_ - str.length(),
-                            "invalid numeric literal '" + str + "'");
+                        if(ch == '\\')
+                        {
+                            if(!file_in_.get(ch))
+                                break;
+                            ++current_column_;
+                            if(ch != 'n' && ch != 't' && ch != 'r' && ch != '\\' && ch != '"' &&
+                               ch != '\'' && !(character && ch == '0'))
+                                throw CompilationError(code, from_file, token_line, token_column,
+                                    character ? "unsupported character escape" : "unsupported string escape");
+                            literal += ch;
+                        }
+                        else if(character && static_cast<unsigned char>(ch) > 127)
+                            throw CompilationError(code, from_file, token_line, token_column,
+                                "character literals support ASCII bytes only");
+                        ++units;
                     }
-                    else
+                    if(!closed)
+                        throw CompilationError(code, from_file, token_line, token_column,
+                            character ? "unterminated character literal" : "unterminated string literal");
+                    if(character && units != 1)
+                        throw CompilationError(code, from_file, token_line, token_column,
+                            "character literal requires exactly one character");
+                    emit(character ? TokenType::CHARACTER : TokenType::STRING, literal, token_line, token_column);
+                }
+                else if(std::isalpha(static_cast<unsigned char>(ch)) || ch == '_')
+                {
+                    string value(1, ch);
+                    while(file_in_.peek() != EOF &&
+                          (std::isalnum(static_cast<unsigned char>(file_in_.peek())) || file_in_.peek() == '_'))
                     {
-                        auto token = NumberToken(str, current_line_);
-                        tokens.push_back(token);
-                        file_out_ << token << " on line: " << current_line_ << " and column: " << current_column_ - str.length() << std::endl;
+                        value += static_cast<char>(file_in_.get());
+                        ++current_column_;
                     }
-
-                    str.clear();
-                    retract(file_in_);
+                    const auto kind = value == "true" || value == "false" ? TokenType::BOOLEAN :
+                        KeywordToken::is_keyword(value) ? TokenType::KEYWORD : TokenType::IDENTIFIER;
+                    emit(kind, value, token_line, token_column);
+                }
+                else if(std::isdigit(static_cast<unsigned char>(ch)) ||
+                        (ch == '.' && file_in_.peek() != EOF && std::isdigit(static_cast<unsigned char>(file_in_.peek()))))
+                {
+                    string value(1, ch);
+                    while(file_in_.peek() != EOF)
+                    {
+                        const auto next = static_cast<char>(file_in_.peek());
+                        const bool exponent_sign = (next == '+' || next == '-') &&
+                            (value.back() == 'e' || value.back() == 'E');
+                        if(!std::isalnum(static_cast<unsigned char>(next)) && next != '.' && !exponent_sign)
+                            break;
+                        value += static_cast<char>(file_in_.get());
+                        ++current_column_;
+                    }
+                    if(!std::regex_match(value, number_pattern))
+                        throw CompilationError("E_LEX_NUMBER", from_file, token_line, token_column,
+                            "invalid numeric literal '" + value + "'");
+                    emit(TokenType::NUMBER, value, token_line, token_column);
                 }
                 else if(DelimiterToken::is_delimiter(ch))
-                {
-                    auto token = DelimiterToken(ch, current_line_);
-                    current_column_++;
-                    tokens.push_back(token);
-                    file_out_ << token << " on line: " << current_line_ << " and column: " << current_column_  - 1<< endl;
-                }
+                    emit(TokenType::DELIMITER, string(1, ch), token_line, token_column);
                 else if(OperatorToken::is_operator(ch))
                 {
-                    auto token = OperatorToken(ch, current_line_);
-                    pre = ch;
-                    switch (ch) //其他OP类字符
+                    string value(1, ch);
+                    const int next = file_in_.peek();
+                    if(next == '=' || (ch == '+' && next == '+') || (ch == '-' && next == '-'))
                     {
-                        case '=':
-                            current_column_++;
-                            ch = file_in_.get();
-                            if (ch == '=')
-                            {
-                                token.set_attribute_value(string(1, pre) + ch);
-                                current_column_++;
-                                file_out_ << "Operator(\"" << string(1, pre) << ch << "\") on line: " << current_line_ << " and column: " << current_column_ - 2 << endl;
-                            }
-                            else
-                            {
-                                if(isdigit(static_cast<unsigned char>(ch)) || isalpha(static_cast<unsigned char>(ch)) || is_blank_character(ch))
-                                {
-                                    file_out_ << token << " on line: " << current_line_ << " and column: " << current_column_ - 1 << endl;
-                                    retract(file_in_);
-                                }
-                                else
-                                {
-                                    token.error();
-                                    current_column_++;
-                                    error = ILLEGAL_WORD;
-                                    file_out_ << "[Lexical Error \"" << errors_.find(error) << "\"] " << "Expression is not assignable, line: " << current_line_ << endl;
-                                }
-                            }
-                            break;
-                        case '<':
-                            current_column_++;
-                            ch = file_in_.get();
-                            if (ch == '=')
-                            {
-                                token.set_attribute_value(string(1, pre) + ch);
-                                current_column_++;
-                                file_out_ << "Operator(\"" << string(1, pre) + ch << "\") on line: " << current_line_ << " and column: " << current_column_ - 2 << endl;
-                            }
-                            else
-                            {
-                                if(isdigit(static_cast<unsigned char>(ch)) || isalpha(static_cast<unsigned char>(ch)) || is_blank_character(ch))
-                                {
-                                    file_out_ << token << " on line: " << current_line_ << " and column: " << current_column_ - 1 << endl;
-                                    retract(file_in_);
-                                }
-                                else
-                                {
-                                    token.error();
-                                    current_column_++;
-                                    error = EXPECTED;
-                                    file_out_ << "[Lexical Error \"" << string(1, pre) << ch << "\"] " << errors_.find(error) << "expression, on line: " << current_line_ << endl;
-                                }
-                            }
-                            break;
-                        case '>':
-                            current_column_++;
-                            ch = file_in_.get();
-                            if (ch == '=')
-                            {
-                                token.set_attribute_value(string(1, pre) + ch);
-                                current_column_++;
-                                file_out_ << "OperatorToken(\"" << string(1, pre) + ch << "\")" << " on line: " << current_line_ << " and column: " << current_column_ - 2 << endl;
-                            }
-                            else
-                            {
-                                if(isdigit(static_cast<unsigned char>(ch)) || isalpha(static_cast<unsigned char>(ch)) || is_blank_character(ch))
-                                {
-                                    file_out_ << token << " " << current_line_ << " " << current_column_ - 1 << endl;
-                                    retract(file_in_);
-                                }
-                                else
-                                {
-                                    token.error();
-                                    current_column_++;
-                                    error = EXPECTED;
-                                    file_out_ << "[Lexical Error \"" << string(1, pre) + ch << "\"] " << errors_.find(error) << "expression, on line: " << current_line_ << endl;
-                                }
-                            }
-                            break;
-                        case '!':
-                            current_column_++;
-                            ch = file_in_.get();
-                            if (ch == '=')
-                            {
-                                token.set_attribute_value(string(1, pre) + ch);
-                                current_column_++;
-                                file_out_ << "Operator(\"" << string(1, pre) << ch << "\") on line: " << current_line_ << " and column: " << current_column_ - 2 << endl;
-                            }
-                            else
-                            {
-                                if(isdigit(static_cast<unsigned char>(ch)) || isalpha(static_cast<unsigned char>(ch)) || is_blank_character(ch))
-                                {
-                                    file_out_ << token << " on line: " << current_line_ << " and column: " << current_column_ - 1 << endl;
-                                    retract(file_in_);
-                                }
-                                else
-                                {
-                                    token.error();
-                                    current_column_++;
-                                    error = EXPECTED;
-                                    file_out_ << "[Lexical Error \"" << string(1, pre) << ch << "\"] " << errors_.find(error) << "expression, on line: " << current_line_ << endl;
-                                }
-                            }
-                            break;
-                        case '+':
-                            current_column_++;
-                            ch = file_in_.get();
-                            if(ch == '=' || ch == '+')
-                            {
-                                current_column_++;
-                                token.set_attribute_value(string(1, pre) + ch);
-                                file_out_ << "Operator(\"" << string(1, pre) + ch << "\") on line: " << current_line_ - 2 << " and column: " << current_column_ << endl;
-                            }
-                            else
-                            {
-                                if(isdigit(static_cast<unsigned char>(ch)) || isalpha(static_cast<unsigned char>(ch)) || is_blank_character(ch))
-                                {
-                                    file_out_ << token << " on line: " << current_line_ << " and column: " << current_column_ - 1 << endl;
-                                    retract(file_in_);
-                                }
-                                else
-                                {
-                                    token.error();
-                                    current_column_++;
-                                    error = ILLEGAL_WORD;
-                                    file_out_ << "[Lexical Error \"" << errors_.find(error) << "\"] " << "Expression result unused, on line: " << current_line_ << endl;
-                                }
-                            }
-                            break;
-                        case '-':
-                            current_column_++;
-                            ch = file_in_.get();
-                            if(ch == '=' || ch == '-')
-                            {
-                                current_column_++;
-                                token.set_attribute_value(string(1, pre) + ch);
-                                file_out_ << "Operator(\"" << string(1, pre) + ch << "\") on line: " << current_line_ - 2 << " and column: " << current_column_ << endl;
-                            }
-                            else
-                            {
-                                if(isdigit(static_cast<unsigned char>(ch)) || isalpha(static_cast<unsigned char>(ch)) || is_blank_character(ch))
-                                {
-                                    file_out_ << token << " on line: " << current_line_ << " and column: " << current_column_ - 1 << endl;
-                                    retract(file_in_);
-                                }
-                                else
-                                {
-                                    token.error();
-                                    current_column_++;
-                                    error = ILLEGAL_WORD;
-                                    file_out_ << "[Lexical Error \"" << errors_.find(error) << "\"] " << "Expression result unused, on line: " << current_line_ << endl;
-                                }
-                            }
-                            break;
-                        case '/':
-                        case '*':
-                        case '^':
-                            current_column_++;
-                            ch = file_in_.get();
-                            if(ch == '=')
-                            {
-                                current_column_++;
-                                token.set_attribute_value(string(1, pre) + ch);
-                                file_out_ << "Operator(\"" << string(1, pre) + ch << "\") on line: " << current_line_ - 2 << " and column: " << current_column_ << endl;
-                            }
-                            else
-                            {
-                                if(isdigit(static_cast<unsigned char>(ch)) || isalpha(static_cast<unsigned char>(ch)) || is_blank_character(ch))
-                                {
-                                    file_out_ << token << " on line: " << current_line_ << " and column: " << current_column_ - 1 << endl;
-                                    retract(file_in_);
-                                }
-                                else
-                                {
-                                    token.error();
-                                    current_column_++;
-                                    error = ILLEGAL_WORD;
-                                    file_out_ << "[Lexical Error \"" << errors_.find(error) << "\"] " << "Expression result unused, on line: " << current_line_ << endl;
-                                }
-                            }
-                            break;
-                        default:	//未识别成功的信息 显示出错信息
-                            current_column_++;
-                            file_out_ << "[Lexical Error] " << " [" << current_line_ << "," << current_column_ - 1 << "] " << "UnKnown Expression" << ch << endl;
-                            throw CompilationError("E_LEX_OPERATOR", from_file,
-                                current_line_, current_column_ - 1,
-                                "unsupported operator '" + string(1, ch) + "'");
+                        value += static_cast<char>(file_in_.get());
+                        ++current_column_;
                     }
-                    tokens.push_back(token);
+                    emit(TokenType::OPERATOR, value, token_line, token_column);
                 }
                 else
-                {
-                    throw CompilationError("E_LEX_CHAR", from_file,
-                        current_line_, current_column_,
-                        "unsupported character byte " +
-                        std::to_string(static_cast<unsigned char>(ch)));
-                }
+                    throw CompilationError("E_LEX_CHAR", from_file, token_line, token_column,
+                        "unsupported character byte " + std::to_string(static_cast<unsigned char>(ch)));
             }
+            if(file_in_.bad())
+                throw std::runtime_error("Cannot read input file: " + from_file);
             file_out_ << "总行数: " << current_line_ << endl;
-            file_out_ << "词法分析阶段错误总数：" << errors_.total_error_number() << endl;
+            file_out_ << "词法分析阶段错误总数：0" << endl;
             close_file(file_in_, file_out_);
-            if (errors_.total_error_number() != 0)
-                throw CompilationError("E_LEX", from_file, 0, 0,
-                    "lexical errors; details: " + to_file);
             return tokens;
         }
-
 
         void _remove_comment(const string& from_file, const string& to_file)
         {
@@ -656,8 +369,15 @@ namespace my_compiler
 
 
 
+        bool includes_stdio() const noexcept
+        {
+            return includes_stdio_;
+        }
+
         vector<Token> lexical_analysis()
         {
+            current_line_ = current_column_ = 1;
+            includes_stdio_ = false;
             //去除注释
             cout << "************------------ 过程：" << period[1] << "----步骤：" << step[1] << "------------************" << endl;
             cout << "文件" << source_file << "去除注释..." << endl;
@@ -689,6 +409,7 @@ namespace my_compiler
         //当前列数
         size_t current_column_;
         ErrorTable errors_;
+        bool includes_stdio_ = false;
     };
 
 

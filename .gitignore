@@ -19,3 +19,6 @@ back_end/
 
 
 web_visualization/
+
+# 本机专用CMake预设不进入共享版本
+CMakeUserPresets.json

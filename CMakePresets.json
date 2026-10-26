@@ -1,0 +1,108 @@
+{
+    "version": 6,
+    "cmakeMinimumRequired": {
+        "major": 3,
+        "minor": 25,
+        "patch": 0
+    },
+    "configurePresets": [
+        {
+            "name": "base",
+            "hidden": true,
+            "generator": "Unix Makefiles",
+            "cacheVariables": {
+                "CMAKE_BUILD_TYPE": "Debug",
+                "BUILD_TESTING": "ON",
+                "CMAKE_EXPORT_COMPILE_COMMANDS": "ON"
+            }
+        },
+        {
+            "name": "frontend-debug",
+            "displayName": "前端调试与回归",
+            "inherits": "base",
+            "binaryDir": "${sourceDir}/build-presets/frontend-debug",
+            "cacheVariables": {
+                "MY_COMPILER_ENABLE_LLVM": "OFF"
+            }
+        },
+        {
+            "name": "llvm-debug",
+            "displayName": "LLVM18调试与回归",
+            "inherits": "base",
+            "binaryDir": "${sourceDir}/build-presets/llvm-debug",
+            "cacheVariables": {
+                "MY_COMPILER_ENABLE_LLVM": "ON"
+            }
+        }
+    ],
+    "buildPresets": [
+        {
+            "name": "frontend-debug",
+            "configurePreset": "frontend-debug",
+            "jobs": 2
+        },
+        {
+            "name": "llvm-debug",
+            "configurePreset": "llvm-debug",
+            "jobs": 2
+        }
+    ],
+    "testPresets": [
+        {
+            "name": "frontend-debug",
+            "configurePreset": "frontend-debug",
+            "output": {
+                "outputOnFailure": true
+            },
+            "execution": {
+                "noTestsAction": "error"
+            }
+        },
+        {
+            "name": "llvm-debug",
+            "configurePreset": "llvm-debug",
+            "output": {
+                "outputOnFailure": true
+            },
+            "execution": {
+                "noTestsAction": "error"
+            }
+        }
+    ],
+    "workflowPresets": [
+        {
+            "name": "frontend-check",
+            "steps": [
+                {
+                    "type": "configure",
+                    "name": "frontend-debug"
+                },
+                {
+                    "type": "build",
+                    "name": "frontend-debug"
+                },
+                {
+                    "type": "test",
+                    "name": "frontend-debug"
+                }
+            ]
+        },
+        {
+            "name": "llvm-check",
+            "steps": [
+                {
+                    "type": "configure",
+                    "name": "llvm-debug"
+                },
+                {
+                    "type": "build",
+                    "name": "llvm-debug"
+                },
+                {
+                    "type": "test",
+                    "name": "llvm-debug"
+                }
+            ]
+        }
+    ]
+}

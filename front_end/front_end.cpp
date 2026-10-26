@@ -9,7 +9,7 @@ my_compiler::ast::Program my_compiler::FrontEnd::build_typed_program()
 {
     tokens_ = lexer_.lexical_analysis();
     parser_.grammatical_analysis(tokens_, false);
-    return ast::build(tokens_, pretreatment_file);
+    return ast::build(tokens_, pretreatment_file, lexer_.includes_stdio());
 }
 
 

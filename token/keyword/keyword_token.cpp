@@ -75,6 +75,7 @@ set<string> my_compiler_token::KeywordToken::keywords_ = {
         FOR,
         RETURN,
         BREAK,
+        CONTINUE,
         ELSE,
         VOIDD,
         FLOAT,
@@ -85,6 +86,7 @@ set<string> my_compiler_token::KeywordToken::keywords_ = {
         SWITCH,
         BOOL_,
         DOUBLE,
+        CHAR_,
         STRUCT,
         DEFAULT_
 };
@@ -137,7 +139,6 @@ bool my_compiler_token::KeywordToken::is_default_token(const my_compiler_token::
     KeywordToken default_token = KeywordToken(DEFAULT_);
     return token == default_token;
 }
-
 
 
 

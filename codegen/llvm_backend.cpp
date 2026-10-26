@@ -37,112 +37,327 @@ namespace my_compiler::llvm_backend
         using Builder = llvm::IRBuilder<llvm::NoFolder>;
         using Scope = std::unordered_map<std::string, llvm::AllocaInst*>;
         using Scopes = std::vector<Scope>;
-
-        llvm::AllocaInst* find_slot(const Scopes& scopes, const std::string& name)
+        class Lowering
         {
-            for(auto scope = scopes.rbegin(); scope != scopes.rend(); ++scope)
+        public:
+            Lowering(const ast::Program& program, llvm::Module& module, Builder& builder)
+                : program_(program), module_(module), builder_(builder)
             {
-                const auto found = scope->find(name);
-                if(found != scope->end())
-                    return found->second;
             }
-            throw std::logic_error("unbound name in checked AST: " + name);
-        }
 
-        // 临时 Builder 只负责入口块分配，不改变主 Builder 当前语句的插入点。
-        // 作用域结束撤掉名字绑定；入口块槽位可继续由 LLVM 按生命周期优化。
-        llvm::AllocaInst* create_slot(llvm::Function& function, Builder& builder,
-                                     const std::string& name)
-        {
-            llvm::IRBuilder<> allocation(&function.getEntryBlock(), function.getEntryBlock().begin());
-            return allocation.CreateAlloca(builder.getInt32Ty(), nullptr, name + ".addr");
-        }
-
-        llvm::Value* expression(const ast::Expression& node, Builder& builder,
-                                const Scopes& names)
-        {
-            switch(node.kind)
+            void run()
             {
-            case ast::ExpressionKind::Integer:
-                return llvm::ConstantInt::get(builder.getInt32Ty(), static_cast<std::uint64_t>(node.integer), true);
-            case ast::ExpressionKind::Name:
-                // 名字现在映射到槽位地址；表达式需要的是槽位当前存放的值。
-                return builder.CreateLoad(builder.getInt32Ty(), find_slot(names, node.name), node.name + ".value");
-            case ast::ExpressionKind::Unary:
-                return builder.CreateNeg(expression(*node.left, builder, names), "neg");
-            case ast::ExpressionKind::Binary:
-            {
-                auto* left = expression(*node.left, builder, names);
-                auto* right = expression(*node.right, builder, names);
-                // 当前语言定义 i32 加减乘按位回绕，不添加 nsw/nuw 溢出假设。
-                switch(node.operation)
+                for(const auto& structure : program_.structures)
+                    structures_.emplace(structure.name,
+                        llvm::StructType::create(builder_.getContext(), "struct." + structure.name));
+                for(const auto& structure : program_.structures)
                 {
-                case '+':
-                    return builder.CreateAdd(left, right, "add");
-                case '-':
-                    return builder.CreateSub(left, right, "sub");
-                case '*':
-                    return builder.CreateMul(left, right, "mul");
-                default:
-                    throw std::logic_error("unexpected binary operator in checked AST");
+                    std::vector<llvm::Type*> fields;
+                    for(const auto& member : structure.members)
+                        fields.push_back(type(member.type));
+                    structures_.at(structure.name)->setBody(fields, false);
+                }
+                if(program_.includes_stdio)
+                {
+                    auto* signature = llvm::FunctionType::get(builder_.getInt32Ty(), {builder_.getPtrTy()}, true);
+                    llvm::Function::Create(signature, llvm::Function::ExternalLinkage, "printf", &module_);
+                }
+                for(const auto& function : program_.functions)
+                {
+                    declarations_.emplace(function.name, &function);
+                    if(module_.getFunction(function.name))
+                        continue;
+                    std::vector<llvm::Type*> parameters;
+                    bool aggregate = function.return_type.kind == ast::TypeKind::Structure;
+                    for(const auto& parameter : function.parameters)
+                    {
+                        parameters.push_back(type(parameter.type));
+                        aggregate = aggregate || parameter.type.kind == ast::TypeKind::Structure;
+                    }
+                    auto* signature = llvm::FunctionType::get(type(function.return_type), parameters, false);
+                    // 按值结构体仅在本翻译单元内互调，不把LLVM聚合签名冒充平台C ABI。
+                    auto* generated = llvm::Function::Create(signature, aggregate ? llvm::Function::InternalLinkage
+                        : llvm::Function::ExternalLinkage, function.name, &module_);
+                    if(function.return_type.kind == ast::TypeKind::Char)
+                        generated->addRetAttr(llvm::Attribute::SExt);
+                    else if(function.return_type.kind == ast::TypeKind::Bool)
+                        generated->addRetAttr(llvm::Attribute::ZExt);
+                    for(std::size_t i = 0; i < function.parameters.size(); ++i)
+                    {
+                        if(function.parameters[i].type.kind == ast::TypeKind::Char)
+                            generated->addParamAttr(i, llvm::Attribute::SExt);
+                        else if(function.parameters[i].type.kind == ast::TypeKind::Bool)
+                            generated->addParamAttr(i, llvm::Attribute::ZExt);
+                    }
+                }
+                for(const auto& function : program_.functions)
+                {
+                    if(function.declaration_only)
+                        continue;
+                    auto* generated = module_.getFunction(function.name);
+                    builder_.SetInsertPoint(llvm::BasicBlock::Create(builder_.getContext(), "entry", generated));
+                    Scopes names(1);
+                    std::size_t index = 0;
+                    for(auto& argument : generated->args())
+                    {
+                        const auto& parameter = function.parameters[index++];
+                        argument.setName(parameter.name);
+                        auto* slot = create_slot(*generated, parameter.type, parameter.name);
+                        builder_.CreateStore(&argument, slot);
+                        names.back().emplace(parameter.name, slot);
+                    }
+                    for(const auto& node : function.statements)
+                        statement(node, *generated, names);
+                    if(function.return_type.kind == ast::TypeKind::Void)
+                        builder_.CreateRetVoid();
+                    else
+                        builder_.CreateRet(convert(expression(*function.returned, names),
+                            function.returned->type, function.return_type));
                 }
             }
-            }
-            throw std::logic_error("unexpected expression kind in checked AST");
-        }
 
-        void statement(const ast::Statement& node, llvm::Function& function,
-                       Builder& builder, Scopes& names)
-        {
-            switch(node.kind)
-            {
-            case ast::StatementKind::Declaration:
-            {
-                auto* slot = create_slot(function, builder, node.name);
-                // 与前端一致：声明点先引入新绑定，初值随后求值。
-                names.back().emplace(node.name, slot);
-                if(node.value)
-                    builder.CreateStore(expression(*node.value, builder, names), slot);
-                break;
-            }
-            case ast::StatementKind::Assignment:
-                builder.CreateStore(expression(*node.value, builder, names), find_slot(names, node.name));
-                break;
-            case ast::StatementKind::Conditional:
-            {
-                auto* value = expression(*node.condition, builder, names);
-                auto* condition = builder.CreateICmpNE(value, builder.getInt32(0), "if.condition");
-                auto& context = builder.getContext();
-                auto* then_block = llvm::BasicBlock::Create(context, "if.then", &function);
-                auto* else_block = node.else_branch
-                    ? llvm::BasicBlock::Create(context, "if.else", &function) : nullptr;
-                auto* merge_block = llvm::BasicBlock::Create(context, "if.end", &function);
-                builder.CreateCondBr(condition, then_block, else_block ? else_block : merge_block);
+        private:
+            const ast::Program& program_;
+            llvm::Module& module_;
+            Builder& builder_;
+            std::unordered_map<std::string, llvm::StructType*> structures_;
+            std::unordered_map<std::string, const ast::Function*> declarations_;
 
-                builder.SetInsertPoint(then_block);
-                statement(*node.then_branch, function, builder, names);
-                // 递归生成嵌套 if 后，当前块可能已是内层汇合块。
-                // 继续从 Builder 当前块连到外层汇合点，不回到最初的 then 块追加。
-                builder.CreateBr(merge_block);
-
-                if(node.else_branch)
+            llvm::Type* type(const ast::Type& value)
+            {
+                switch(value.kind)
                 {
-                    builder.SetInsertPoint(else_block);
-                    statement(*node.else_branch, function, builder, names);
-                    builder.CreateBr(merge_block);
+                case ast::TypeKind::Void:
+                    return builder_.getVoidTy();
+                case ast::TypeKind::Bool:
+                    return builder_.getInt1Ty();
+                case ast::TypeKind::Char:
+                    return builder_.getInt8Ty();
+                case ast::TypeKind::Int:
+                    return builder_.getInt32Ty();
+                case ast::TypeKind::Float:
+                    return builder_.getFloatTy();
+                case ast::TypeKind::Double:
+                    return builder_.getDoubleTy();
+                case ast::TypeKind::Structure:
+                    return structures_.at(value.tag);
+                case ast::TypeKind::String:
+                    return builder_.getPtrTy();
                 }
-                builder.SetInsertPoint(merge_block);
-                break;
+                throw std::logic_error("unknown checked AST type");
             }
-            case ast::StatementKind::Block:
-                names.emplace_back();
-                for(const auto& child : node.statements)
-                    statement(child, function, builder, names);
-                names.pop_back();
-                break;
-            }
-        }
 
+            llvm::AllocaInst* create_slot(llvm::Function& function, const ast::Type& value, const std::string& name)
+            {
+                // 入口块统一分配；浮点、字符和结构体都按自己的类型和目标布局存储。
+                llvm::IRBuilder<> allocation(&function.getEntryBlock(), function.getEntryBlock().begin());
+                return allocation.CreateAlloca(type(value), nullptr, name + ".addr");
+            }
+
+            static llvm::AllocaInst* find(const Scopes& names, const std::string& name)
+            {
+                for(auto scope = names.rbegin(); scope != names.rend(); ++scope)
+                {
+                    const auto found = scope->find(name);
+                    if(found != scope->end())
+                        return found->second;
+                }
+                throw std::logic_error("unbound name in checked AST: " + name);
+            }
+
+            static bool named_place(const ast::Expression& node)
+            {
+                return node.kind == ast::ExpressionKind::Name ||
+                       (node.kind == ast::ExpressionKind::Member && named_place(*node.left));
+            }
+
+            llvm::Value* address(const ast::Expression& node, const Scopes& names)
+            {
+                if(node.kind == ast::ExpressionKind::Name)
+                    return find(names, node.name);
+                return builder_.CreateStructGEP(type(node.left->type), address(*node.left, names),
+                    static_cast<unsigned>(node.member_index), node.name + ".addr");
+            }
+
+            llvm::Value* truth(llvm::Value* value)
+            {
+                if(value->getType()->isFloatingPointTy())
+                    return builder_.CreateFCmpUNE(value, llvm::ConstantFP::get(value->getType(), 0), "truth.fp");
+                return builder_.CreateICmpNE(value, llvm::ConstantInt::get(value->getType(), 0), "truth.int");
+            }
+
+            llvm::Value* convert(llvm::Value* value, const ast::Type& from, const ast::Type& to)
+            {
+                if(from == to)
+                    return value;
+                if(to.kind == ast::TypeKind::Bool)
+                    return truth(value);
+                if(from.floating() && to.floating())
+                    return from.kind == ast::TypeKind::Float
+                        ? builder_.CreateFPExt(value, type(to), "fp.extend")
+                        : builder_.CreateFPTrunc(value, type(to), "fp.narrow");
+                if(from.floating())
+                    return builder_.CreateFPToSI(value, type(to), "fp.to.int");
+                if(to.floating())
+                    return from.kind == ast::TypeKind::Bool ? builder_.CreateUIToFP(value, type(to), "bool.to.fp")
+                        : builder_.CreateSIToFP(value, type(to), "int.to.fp");
+                return builder_.CreateIntCast(value, type(to), from.kind != ast::TypeKind::Bool, "int.convert");
+            }
+
+            llvm::Value* expression(const ast::Expression& node, const Scopes& names)
+            {
+                using ast::ExpressionKind;
+                switch(node.kind)
+                {
+                case ExpressionKind::String:
+                    return builder_.CreateGlobalStringPtr(node.text, "str", 0, &module_);
+                case ExpressionKind::Integer:
+                case ExpressionKind::Character:
+                case ExpressionKind::Boolean:
+                    return llvm::ConstantInt::get(type(node.type), static_cast<std::uint64_t>(node.integer), true);
+                case ExpressionKind::Floating:
+                    return llvm::ConstantFP::get(type(node.type), node.floating);
+                case ExpressionKind::Name:
+                    return builder_.CreateLoad(type(node.type), address(node, names), node.name + ".value");
+                case ExpressionKind::Member:
+                    if(named_place(node))
+                        return builder_.CreateLoad(type(node.type), address(node, names), node.name + ".value");
+                    return builder_.CreateExtractValue(expression(*node.left, names),
+                        {static_cast<unsigned>(node.member_index)}, node.name + ".value");
+                case ExpressionKind::Cast:
+                    return convert(expression(*node.left, names), node.left->type, node.type);
+                case ExpressionKind::Unary:
+                {
+                    auto* value = convert(expression(*node.left, names), node.left->type, node.type);
+                    if(node.operation == "+")
+                        return value;
+                    return node.type.floating() ? builder_.CreateFNeg(value, "neg.fp") : builder_.CreateNeg(value, "neg");
+                }
+                case ExpressionKind::Binary:
+                {
+                    auto* left = convert(expression(*node.left, names), node.left->type, node.operand_type);
+                    auto* right = convert(expression(*node.right, names), node.right->type, node.operand_type);
+                    const bool fp = node.operand_type.floating();
+                    // 不加整数nsw/nuw或浮点fast-math假设；旧i32回绕语义保留。
+                    if(node.operation == "+")
+                        return fp ? builder_.CreateFAdd(left, right, "add.fp") : builder_.CreateAdd(left, right, "add");
+                    if(node.operation == "-")
+                        return fp ? builder_.CreateFSub(left, right, "sub.fp") : builder_.CreateSub(left, right, "sub");
+                    if(node.operation == "*")
+                        return fp ? builder_.CreateFMul(left, right, "mul.fp") : builder_.CreateMul(left, right, "mul");
+                    llvm::Value* compared = nullptr;
+                    if(node.operation == "<")
+                        compared = fp ? builder_.CreateFCmpOLT(left, right) : builder_.CreateICmpSLT(left, right);
+                    else if(node.operation == "<=")
+                        compared = fp ? builder_.CreateFCmpOLE(left, right) : builder_.CreateICmpSLE(left, right);
+                    else if(node.operation == ">")
+                        compared = fp ? builder_.CreateFCmpOGT(left, right) : builder_.CreateICmpSGT(left, right);
+                    else if(node.operation == ">=")
+                        compared = fp ? builder_.CreateFCmpOGE(left, right) : builder_.CreateICmpSGE(left, right);
+                    else if(node.operation == "==")
+                        compared = fp ? builder_.CreateFCmpOEQ(left, right) : builder_.CreateICmpEQ(left, right);
+                    else if(node.operation == "!=")
+                        compared = fp ? builder_.CreateFCmpUNE(left, right) : builder_.CreateICmpNE(left, right);
+                    else throw std::logic_error("unexpected checked binary operator");
+                    return builder_.CreateZExt(compared, builder_.getInt32Ty(), "cmp.value");
+                }
+                case ExpressionKind::Call:
+                {
+                    auto* callee = module_.getFunction(node.name);
+                    std::vector<llvm::Value*> arguments;
+                    for(std::size_t i = 0; i < node.arguments.size(); ++i)
+                    {
+                        const auto& argument = *node.arguments[i];
+                        auto* value = expression(argument, names);
+                        if(callee->isVarArg())
+                        {
+                            // printf默认参数提升：float到double，char/bool到int；格式串仍是ptr。
+                            if(argument.type.kind == ast::TypeKind::Float)
+                                value = convert(value, argument.type, {ast::TypeKind::Double, {}});
+                            else if(argument.type.kind == ast::TypeKind::Char || argument.type.kind == ast::TypeKind::Bool)
+                                value = convert(value, argument.type, {ast::TypeKind::Int, {}});
+                        }
+                        else
+                        {
+                            // 取源码中相容签名的参数类型；原型与定义可能参数名不同。
+                            const auto* declaration = declarations_.at(node.name);
+                            value = convert(value, argument.type, declaration->parameters[i].type);
+                        }
+                        arguments.push_back(value);
+                    }
+                    auto* call = builder_.CreateCall(callee, arguments,
+                        callee->getReturnType()->isVoidTy() ? "" : node.name + ".result");
+                    call->setAttributes(callee->getAttributes());
+                    return call;
+                }
+                }
+                throw std::logic_error("unknown checked expression");
+            }
+
+            void statement(const ast::Statement& node, llvm::Function& function, Scopes& names)
+            {
+                using ast::StatementKind;
+                switch(node.kind)
+                {
+                case StatementKind::Expression:
+                    expression(*node.value, names);
+                    break;
+                case StatementKind::Declaration:
+                {
+                    auto* slot = create_slot(function, node.type, node.name);
+                    names.back().emplace(node.name, slot);
+                    if(node.value)
+                        builder_.CreateStore(convert(expression(*node.value, names), node.value->type, node.type), slot);
+                    break;
+                }
+                case StatementKind::Assignment:
+                    builder_.CreateStore(convert(expression(*node.value, names), node.value->type, node.target->type),
+                        address(*node.target, names));
+                    break;
+                case StatementKind::Conditional:
+                {
+                    auto* condition = truth(expression(*node.condition, names));
+                    auto& context = builder_.getContext();
+                    auto* yes = llvm::BasicBlock::Create(context, "if.then", &function);
+                    auto* no = node.else_branch ? llvm::BasicBlock::Create(context, "if.else", &function) : nullptr;
+                    auto* end = llvm::BasicBlock::Create(context, "if.end", &function);
+                    builder_.CreateCondBr(condition, yes, no ? no : end);
+                    builder_.SetInsertPoint(yes);
+                    statement(*node.then_branch, function, names);
+                    builder_.CreateBr(end);
+                    if(node.else_branch)
+                    {
+                        builder_.SetInsertPoint(no);
+                        statement(*node.else_branch, function, names);
+                        builder_.CreateBr(end);
+                    }
+                    builder_.SetInsertPoint(end);
+                    break;
+                }
+                case StatementKind::While:
+                {
+                    auto& context = builder_.getContext();
+                    auto* condition = llvm::BasicBlock::Create(context, "while.condition", &function);
+                    auto* body = llvm::BasicBlock::Create(context, "while.body", &function);
+                    auto* end = llvm::BasicBlock::Create(context, "while.end", &function);
+                    builder_.CreateBr(condition);
+                    builder_.SetInsertPoint(condition);
+                    builder_.CreateCondBr(truth(expression(*node.condition, names)), body, end);
+                    builder_.SetInsertPoint(body);
+                    statement(*node.body, function, names);
+                    builder_.CreateBr(condition);
+                    builder_.SetInsertPoint(end);
+                    break;
+                }
+                case StatementKind::Block:
+                    names.emplace_back();
+                    for(const auto& child : node.statements)
+                        statement(child, function, names);
+                    names.pop_back();
+                    break;
+                }
+            }
+        };
         // 校验 IR 的结构和类型一致性；不能替代源语言名字检查或运行结果验证。
         void verify(llvm::Module& module, const std::string& file)
         {
@@ -153,7 +368,6 @@ namespace my_compiler::llvm_backend
             if(invalid)
                 throw CompilationError("E_LLVM_VERIFY", file, 0, 0, message);
         }
-
         std::string module_text(llvm::Module& module)
         {
             std::string text;
@@ -162,7 +376,6 @@ namespace my_compiler::llvm_backend
             out.flush();
             return text;
         }
-
         // O0 不运行优化管线；O2 注册分析与代理后运行 LLVM 标准模块优化管线。
         void optimize(llvm::Module& module, llvm::TargetMachine* target, int level)
         {
@@ -188,8 +401,8 @@ namespace my_compiler::llvm_backend
             pipeline.run(module, modules);
         }
     } // namespace
-
     // 建立目标布局与模块，将 AST 降为 IR，校验/优化后写出 IR 和原生 .o。
+
     void emit(const ast::Program& program, const CompilationPaths& paths, int optimization_level)
     {
         output::print_stage("中间代码生成", "构造并校验LLVM IR");
@@ -207,41 +420,18 @@ namespace my_compiler::llvm_backend
             triple, "generic", "", target_options, llvm::Reloc::PIC_, std::nullopt, codegen_level));
         if(!machine)
             throw std::runtime_error("cannot create LLVM target machine");
-
         llvm::LLVMContext context;
         llvm::Module module("my_compiler", context);
         module.setSourceFileName(program.source_file);
         module.setTargetTriple(triple);
         module.setDataLayout(machine->createDataLayout());
         Builder builder(context); // NoFolder 保留原始指令，让构建 IR 与优化变换分开可观察。
-        for(const auto& function : program.functions)
-        {
-            std::vector<llvm::Type*> parameter_types(function.parameters.size(), builder.getInt32Ty());
-            auto* signature = llvm::FunctionType::get(builder.getInt32Ty(), parameter_types, false);
-            auto* generated = llvm::Function::Create(signature, llvm::Function::ExternalLinkage,
-                                                      function.name, &module);
-            auto* entry = llvm::BasicBlock::Create(context, "entry", generated);
-            builder.SetInsertPoint(entry);
-            Scopes names(1);
-            std::size_t index = 0;
-            for(auto& argument : generated->args())
-            {
-                const auto& parameter = function.parameters[index++];
-                argument.setName(parameter.name);
-                auto* slot = create_slot(*generated, builder, parameter.name);
-                builder.CreateStore(&argument, slot);
-                names.back().emplace(parameter.name, slot);
-            }
-            for(const auto& node : function.statements)
-                statement(node, *generated, builder, names);
-            builder.CreateRet(expression(*function.returned, builder, names));
-        }
+        Lowering(program, module, builder).run();
         verify(module, program.source_file);
         const auto before = module_text(module);
         std::cout << "目标平台：" << triple << std::endl;
         std::cout << "原始LLVM IR构造及校验成功" << std::endl;
         output::finish_stage();
-
         output::print_stage("优化", optimization_level == 0
             ? "保留原始LLVM IR（O0）" : "运行LLVM标准优化管线（O2）");
         optimize(module, machine.get(), optimization_level);
@@ -259,7 +449,6 @@ namespace my_compiler::llvm_backend
         ast::write_text(paths.llvm_after_file, after);
         std::cout << "文件写入" << paths.llvm_after_file << std::endl;
         output::finish_stage();
-
         output::print_stage("目标代码生成", "生成原生目标文件");
         std::error_code error;
         llvm::raw_fd_ostream object(paths.object_file, error, llvm::sys::fs::OF_None);

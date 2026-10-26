@@ -157,36 +157,37 @@ void my_compiler::Parser::predictive_analysis_aux()
     vector<string> productions_;
 
     vector<string> input;
-    for(size_t i = 0;i < tokens_.size();i++)
+    for(size_t i = 0; i < tokens_.size(); ++i)
     {
-        if(tokens_[i].is_number())
-        {
+        const auto value = tokens_[i].get_attribute_value();
+        if(tokens_[i].is_string())
+            input.emplace_back("string-literal");
+        else if(tokens_[i].is_character())
+            input.emplace_back("character-literal");
+        else if(tokens_[i].is_number())
             input.emplace_back("number");
-        }
-        else if(tokens_[i].is_identifier() && i + 1 < tokens_.size() && tokens_[i + 1].get_attribute_value() == "(")  //函数标识符
-        {
-            input.emplace_back("identifier-function");
-        }
-        else if(tokens_[i].is_identifier() && i > 0 && tokens_[i - 1].get_attribute_value() == "struct")
-        {
-            input.emplace_back("identifier-struct");
-        }
-        else if(tokens_[i].is_identifier() && i + 1 < tokens_.size() && (tokens_[i + 1].get_attribute_value() == "="
-                                            || tokens_[i + 1].get_attribute_value() == "+="
-                                            || tokens_[i + 1].get_attribute_value() == "-="
-                                            || tokens_[i + 1].get_attribute_value() == "/="
-                                            || tokens_[i + 1].get_attribute_value() == "*=")) //变量1 标识符
-        {
-            input.emplace_back("identifier1");
-        }
         else if(tokens_[i].is_identifier())
         {
-            input.emplace_back("identifier");
+            if(i > 0 && tokens_[i - 1].get_attribute_value() == "struct")
+                input.emplace_back("identifier-struct");
+            else if(i > 0 && tokens_[i - 1].get_attribute_value() == ".")
+                input.emplace_back("identifier");
+            else if(i + 1 < tokens_.size() && tokens_[i + 1].get_attribute_value() == "(")
+                input.emplace_back("identifier-function");
+            else
+            {
+                // p.inner.x = ...归类的是根对象p，成员名字保持identifier。
+                auto after = i + 1;
+                while(after + 1 < tokens_.size() && tokens_[after].get_attribute_value() == "." &&
+                      tokens_[after + 1].is_identifier())
+                    after += 2;
+                const auto next = after < tokens_.size() ? tokens_[after].get_attribute_value() : "";
+                input.emplace_back(next == "=" || next == "+=" || next == "-=" || next == "/=" || next == "*="
+                    ? "identifier1" : "identifier");
+            }
         }
-        else    //对于关键字和定界符
-        {
-            input.emplace_back(tokens_[i].get_attribute_value());
-        }
+        else
+            input.push_back(value);
     }
 
     for (const auto& non : predictive_analysis_table_.Vn_)
@@ -266,6 +267,15 @@ void my_compiler::Parser::predictive_analysis_aux()
         {
             stack_.pop();
             ++cur;
+        }
+        else if(top == "<declaration>" && symbol == "struct")
+        {
+            // struct Tag { ... };、struct Tag f(...)和struct Tag value分别分派。
+            const string rule = peek(next_next) == "{" ? "<struct-declaration>" :
+                peek(next_next) == "identifier-function" ? "<func-declaration>" : "<var-declaration>";
+            stack_.pop();
+            stack_.emplace(rule);
+            productions_.emplace_back(top + " -> " + rule);
         }
         else if(top == "<declaration>" && peek(next_next) == "identifier-function" && input[cur] == "const")
         {
@@ -355,14 +365,6 @@ void my_compiler::Parser::predictive_analysis_aux()
             string prod = top.append(" -> empty");
             productions_.emplace_back(prod);
         }
-        else if(top == "<expression>" && (symbol == "true" || symbol == "false"))
-        {
-            //替换为 <expression> -> <boolean>
-            stack_.pop();
-            stack_.emplace("<boolean>");
-            string prod = top.append(" -> ").append(symbol);
-            productions_.emplace_back(prod);
-        }
         else if(top == "<statement-list>'" && symbol != "}")
         {
             //51 <statement-list>' -> <statement> <statement-list>'
@@ -392,7 +394,10 @@ void my_compiler::Parser::predictive_analysis_aux()
                (symbol != "int" &&
                 symbol != "double" &&
                 symbol != "bool" &&
-                symbol != "float"))
+                symbol != "float" &&
+                symbol != "char" &&
+                symbol != "void" &&
+                symbol != "struct"))
         {
             //<local-declaration>' -> empty
             stack_.pop();
@@ -403,7 +408,10 @@ void my_compiler::Parser::predictive_analysis_aux()
                (symbol != "int" &&
                 symbol != "double" &&
                 symbol != "bool" &&
-                symbol != "float"))
+                symbol != "float" &&
+                symbol != "char" &&
+                symbol != "void" &&
+                symbol != "struct"))
         {
             //<assign-expression> -> <expression>
             stack_.pop();

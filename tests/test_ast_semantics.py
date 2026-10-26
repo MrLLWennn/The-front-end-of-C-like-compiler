@@ -27,8 +27,8 @@ def main():
         ("undeclared", "int f(int x) { return y; }\n", "E_SEMA_NAME", "undeclared name 'y'"),
         ("duplicate_parameter", "int f(int x, int x) { return x; }\n", "E_SEMA_PARAMETER", "duplicate parameter"),
         ("duplicate_function", "int f(void) { return 1; } int f(void) { return 2; }\n", "E_SEMA_FUNCTION", "duplicate function"),
-        ("return_type", "float f(void) { return 1; }\n", "E_AST_TYPE", "int return type"),
-        ("fraction", "int f(void) { return 1.5; }\n", "E_AST_LITERAL", "decimal literal"),
+        ("return_type", "float f(void) { return 1; }\n", None, "函数 f -> float"),
+        ("fraction", "int f(void) { return 1.5; }\n", None, "浮点 1.5 : double"),
         ("literal_range", "int f(void) { return 2147483648; }\n", "E_AST_LITERAL", "decimal literal"),
         ("uninitialized_local", "int f(void) { int x; return x; }\n", "E_SEMA_UNINITIALIZED", "uninitialized name 'x'"),
     ]
