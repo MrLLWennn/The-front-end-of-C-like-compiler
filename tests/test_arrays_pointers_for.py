@@ -72,6 +72,8 @@ NEGATIVE = [
  ('bool_increment','int main(void) { bool x=true; x++; return 0; }','E_SEMA_POINTER'),
 ]
 NEGATIVE += [
+ ('void_array_parameter','void f(void a[]) { } int main(void) { return 0; }','E_SEMA_TYPE'),
+ ('void_matrix_parameter','void f(void a[][2]) { } int main(void) { return 0; }','E_SEMA_TYPE'),
  ('missing_inferred_init','int main(void) { int a[]; return 0; }','E_AST_ARRAY'),
  ('temporary_array_member','struct P { int a[2]; }; struct P make(void) { struct P p; p.a[0]=1; p.a[1]=2; return p; } int main(void) { return make().a[0]; }','E_SEMA_LVALUE'),
 ]

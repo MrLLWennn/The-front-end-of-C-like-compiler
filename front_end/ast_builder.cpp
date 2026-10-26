@@ -108,6 +108,7 @@ namespace my_compiler::ast
 
             Type dimensions(Type base, bool parameter = false)
             {
+                const bool void_element = base.kind == TypeKind::Void;
                 std::vector<std::size_t> counts;
                 while(peek() == "[")
                 {
@@ -128,6 +129,9 @@ namespace my_compiler::ast
                     if(counts.size() > 8)
                         fail("E_AST_ARRAY", "array nesting exceeds 8 dimensions");
                 }
+                // 参数数组在退化为指针前检查元素类型，不能让void[]伪装成合法void*。
+                if(parameter && void_element && !counts.empty())
+                    fail("E_SEMA_TYPE", "array element cannot have void type");
                 for(auto i = counts.rbegin(); i != counts.rend(); ++i)
                     base = Type::array(std::move(base), *i);
                 return parameter ? base.decayed() : base;
